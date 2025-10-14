@@ -21,8 +21,23 @@
 
     <!-- Right: Login + Register -->
     <nav class="d-flex align-items-center gap-2">
-      <button class="btn btn-login">Đăng nhập</button>
-      <button class="btn btn-login">Đăng ký</button>
+      <template v-if="!isLoggedIn">
+        <button @click="goToLogin" class="btn btn-login">Đăng nhập</button>
+        <button @click="goToRegister" class="btn btn-login">Đăng ký</button>
+      </template>
+      <template v-else>
+        <div class="dropdown">
+          <button class="btn btn-login dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{ userInfo.ho_va_ten || 'Tài khoản' }}
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" @click="viewProfile">Thông tin cá nhân</a></li>
+            <li><a class="dropdown-item" href="#" @click="viewOrders">Đơn hàng của tôi</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" @click="logout">Đăng xuất</a></li>
+          </ul>
+        </div>
+      </template>
     </nav>
   </header>
 </template>
@@ -30,7 +45,17 @@
   <script>
 export default {
   name: "Top",
-  methods: {},
+  methods: {
+    // Điều hướng đến trang đăng nhập
+    goToLogin() {
+      this.$router.push('/client-login');
+    },
+    
+    // Điều hướng đến trang đăng ký
+    goToRegister() {
+      this.$router.push('/client-register');
+    }
+  },
 };
 </script>
   
