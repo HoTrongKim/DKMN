@@ -14,6 +14,7 @@
 import Top from "../components/Top.vue";
 import MenuAdmin from "../components/MenuAdmin.vue";
 import Bot from "../components/Bot.vue";
+
 export default {
 	name: "AdminLayout",
 	components: { Top, MenuAdmin, Bot },
@@ -32,4 +33,5 @@ export default {
 .page-content {
 	padding: 16px;
 }
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 </style>

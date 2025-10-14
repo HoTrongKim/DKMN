@@ -1,107 +1,185 @@
 <template>
-    <header class="topbar d-flex align-items-center justify-content-between px-4 py-2">
-      <!-- Left: Logo + tagline -->
-      <div class="d-flex align-items-center gap-3">
-        <a href="/" class="d-flex align-items-center text-white text-decoration-none">
-          <img src="/src/assets/images/logo.png" alt="DKMN logo" class="logo me-2" />
-          <h5 class="m-0 fw-bold text-white">DKMN</h5>
-        </a>
-        <p class="tagline m-0 small text-white-50">
-          Cam kết hoàn <strong>150%</strong> nếu nhà xe không cung cấp dịch vụ vận chuyển (*)
-        </p>
-      </div>
-  
-      <!-- Right: nav -->
-      <nav class="d-flex align-items-center gap-3">
-        <a href="#" class="nav-link text-white text-decoration-none small">Đơn hàng của tôi</a>
-        <a href="#" class="nav-link text-white text-decoration-none small">Mở bán vé trên DKMN</a>
-        <div class="dropdown">
-          <a
-            href="#"
-            class="nav-link text-white text-decoration-none small dropdown-toggle"
-            data-bs-toggle="dropdown"
+  <div class="container-xxl d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="card shadow border-0 p-4 w-100" style="max-width: 1100px;">
+      <!-- Tabs -->
+      <ul class="nav nav-tabs justify-content-center mb-4">
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            :class="{ active: activeTab === 'bus' }"
+            @click="activeTab = 'bus'"
           >
-            Trở thành đối tác
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Nhà xe</a></li>
-            <li><a class="dropdown-item" href="#">Đại lý</a></li>
+            <i class="bx bx-bus me-2"></i> Xe khách
+          </button>
+        </li>
+       
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            :class="{ active: activeTab === 'train' }"
+            @click="activeTab = 'train'"
+          >
+            <i class="bx bx-train me-2"></i> Tàu hỏa
+          </button>
+        </li>
+
+
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            :class="{ active: activeTab === 'plane' }"
+            @click="activeTab = 'plane'"
+          >
+          <i class="fa-solid fa-plane"></i> Máy bay
+          </button>
+        </li>
+
+      </ul>
+
+      <!-- Search form -->
+      <div class="row g-3 align-items-end">
+        <!-- From -->
+        <div class="col-md-3">
+          <label class="form-label text-secondary small">Nơi xuất phát</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bx bx-radio-circle-marked text-primary"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0"
+              v-model="from"
+              placeholder="Chọn tỉnh / thành"
+              @focus="showFromList = true"
+              @blur="hideList('from')"
+            />
+          </div>
+          <ul
+            v-if="showFromList"
+            class="list-group position-absolute mt-1 shadow-sm w-100"
+            style="max-height: 240px; overflow-y: auto; z-index: 10;"
+          >
+            <li class="list-group-item text-warning small fst-italic">
+              *Lưu ý: tên địa phương trước sáp nhập
+            </li>
+            <li
+              class="list-group-item list-group-item-action"
+              v-for="(city, i) in provinces"
+              :key="i"
+              @mousedown.prevent="selectFrom(city)"
+            >
+              {{ city }}
+            </li>
           </ul>
         </div>
-  
-        <!-- Language -->
-        <img src="/src/assets/images/icons/flag-en.png" alt="English" class="flag" />
-  
-        <!-- Hotline -->
-        <button class="btn btn-hotline d-flex align-items-center gap-1">
-          <i class="bi bi-telephone-fill"></i>
-          <span>Hotline 24/7</span>
-        </button>
-  
-        <!-- Login -->
-        <button class="btn btn-login">Đăng nhập</button>
-      </nav>
-    </header>
-  </template>
-  
-  <script>
-  export default {
-    name: "Top",
-    methods: {
-      callHotline() {
-        window.location.href = "tel:19001000";
-      },
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .topbar {
-    background-color: #0056d2;
-    color: white;
-    height: 56px;
-  }
-  .logo {
-    height: 30px;
-    width: auto;
-  }
-  .tagline {
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
-    padding-left: 10px;
-  }
-  .flag {
-    width: 24px;
-    height: 16px;
-    border-radius: 2px;
-  }
-  .btn-hotline {
-    background-color: white;
-    color: #0056d2;
-    border: none;
-    font-weight: 600;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    padding: 4px 10px;
-    transition: 0.3s;
-  }
-  .btn-hotline:hover {
-    background-color: #f5f5f5;
-  }
-  .btn-login {
-    background-color: white;
-    color: #0056d2;
-    border: none;
-    font-weight: 600;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    padding: 4px 14px;
-    transition: 0.3s;
-  }
-  .btn-login:hover {
-    background-color: #f5f5f5;
-  }
-  .dropdown-menu {
-    font-size: 0.85rem;
-  }
-  </style>
-  
+
+        <!-- Swap -->
+        <div class="col-auto d-flex justify-content-center">
+          <button class="btn btn-outline-secondary rounded-circle" @click="swapPlaces">
+            <i class="bx bx-transfer-alt"></i>
+          </button>
+        </div>
+
+        <!-- To -->
+        <div class="col-md-3">
+          <label class="form-label text-secondary small">Nơi đến</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bx bx-map-pin text-danger"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0"
+              v-model="to"
+              placeholder="Chọn tỉnh / thành"
+              @focus="showToList = true"
+              @blur="hideList('to')"
+            />
+          </div>
+          <ul
+            v-if="showToList"
+            class="list-group position-absolute mt-1 shadow-sm w-100"
+            style="max-height: 240px; overflow-y: auto; z-index: 10;"
+          >
+            <li class="list-group-item text-warning small fst-italic">
+              *Lưu ý: tên địa phương sau sáp nhập
+            </li>
+            <li
+              class="list-group-item list-group-item-action"
+              v-for="(city, i) in provinces"
+              :key="i"
+              @mousedown.prevent="selectTo(city)"
+            >
+              {{ city }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Date -->
+        <div class="col-md-3">
+          <label class="form-label text-secondary small">Ngày đi</label>
+          <input type="date" class="form-control" v-model="departDate" />
+        </div>
+
+        <!-- Search Button -->
+        <div class="col-md-2">
+          <button class="btn btn-warning w-100 fw-semibold" @click="search">
+            Tìm kiếm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from "vue";
+
+const activeTab = ref("bus");
+const from = ref("An Giang");
+const to = ref("An Giang");
+const departDate = ref("2025-11-07");
+const showFromList = ref(false);
+const showToList = ref(false);
+
+const provinces = [
+  "An Giang", "Bà Rịa - Vũng Tàu", "Bạc Liêu", "Bắc Giang", "Bắc Kạn", "Bắc Ninh",
+  "Bến Tre", "Bình Dương", "Bình Định", "Bình Phước", "Bình Thuận", "Cà Mau",
+  "Cao Bằng", "Cần Thơ", "Đà Nẵng", "Đắk Lắk", "Đắk Nông", "Điện Biên", "Đồng Nai",
+  "Đồng Tháp", "Gia Lai", "Hà Giang", "Hà Nam", "Hà Nội", "Hà Tĩnh", "Hải Dương",
+  "Hải Phòng", "Hậu Giang", "Hòa Bình", "Hưng Yên", "Khánh Hòa", "Kiên Giang",
+  "Kon Tum", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai", "Long An", "Nam Định",
+  "Nghệ An", "Ninh Bình", "Ninh Thuận", "Phú Thọ", "Phú Yên", "Quảng Bình",
+  "Quảng Nam", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sóc Trăng", "Sơn La",
+  "Tây Ninh", "Thái Bình", "Thái Nguyên", "Thanh Hóa", "Thừa Thiên Huế",
+  "Tiền Giang", "TP. Hồ Chí Minh", "Trà Vinh", "Tuyên Quang", "Vĩnh Long",
+  "Vĩnh Phúc", "Yên Bái",
+];
+
+function swapPlaces() {
+  const temp = from.value;
+  from.value = to.value;
+  to.value = temp;
+}
+
+function selectFrom(city) {
+  from.value = city;
+  showFromList.value = false;
+}
+
+function selectTo(city) {
+  to.value = city;
+  showToList.value = false;
+}
+
+function hideList(type) {
+  setTimeout(() => {
+    if (type === "from") showFromList.value = false;
+    else showToList.value = false;
+  }, 150);
+}
+
+function search() {
+  alert(`Tìm chuyến từ ${from.value} đến ${to.value} ngày ${departDate.value}`);
+}
+</script>
