@@ -16,11 +16,7 @@
                     </p>
                   </div>
   
-                  <div class="d-flex gap-2 justify-content-center mb-3">
-                    <!-- Nút điền nhanh và đăng nhập demo -->
-                    <button class="btn btn-outline-secondary btn-sm" @click="fillDemo">Điền tài khoản demo</button>
-                    <button class="btn btn-outline-primary btn-sm" @click="loginDemo">Đăng nhập demo</button>
-                  </div>
+               
   
                   <div class="login-separater text-center mb-4">
                     <span>OR</span>
