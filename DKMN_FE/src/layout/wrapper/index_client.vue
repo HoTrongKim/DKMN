@@ -2,36 +2,38 @@
 	<div class="wrapper">
 		<Top />
 		<div class="page-wrapper d-flex">
-			<MenuClient />
+			<MenuAdmin />
 			<main class="page-content flex-grow-1">
 				<router-view />
 			</main>
 		</div>
 		<Bot />
 	</div>
+
+
 </template>
 <script>
 import Top from "../components/Top.vue";
-import MenuClient from "../components/MenuClient.vue";
+import MenuAdmin from "../components/MenuAdmin.vue";
 import Bot from "../components/Bot.vue";
+
 export default {
-	name: "ClientLayout",
-	components: { Top, MenuClient, Bot },
+	name: "AdminLayout",
+	components: { Top, MenuAdmin, Bot },
 };
 </script>
-<style>
-@import "../../assets/plugins/simplebar/css/simplebar.css";
-@import "../../assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css";
-@import "../../assets/plugins/metismenu/css/metisMenu.min.css";
-@import "../../assets/css/pace.min.css";
-@import "../../assets/css/bootstrap.min.css";
-@import "../../assets/css/bootstrap-extended.css";
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap");
-@import "../../assets/css/app.css";
-@import "../../assets/css/icons.css";
-@import "../../assets/css/dark-theme.css";
-@import "../../assets/css/semi-dark.css";
-@import "../../assets/css/header-colors.css";
+<style scoped>
+.wrapper {
+	background: #f5f7fb;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+.page-wrapper {
+	flex: 1;
+}
+.page-content {
+	padding: 16px;
+}
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 </style>
-

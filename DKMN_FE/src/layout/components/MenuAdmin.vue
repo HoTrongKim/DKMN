@@ -1,16 +1,13 @@
-<template>
-    <div>
-      <!-- Trang admin ở đây -->
-    </div>
-  </template>
+/<template>
   
-  <script>
-  export default {
-    name: " MenuAdmin ",
-  };
-  </script>
-  
-  <style scoped>
-  /* CSS của admin */
-  </style>
-  
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style>
+
+</style>

@@ -8,6 +8,7 @@ import Client from './layout/wrapper/index_client.vue'
 import './assets/css/bootstrap.min.css'
 import './assets/css/icons.css'
 import './assets/css/app.css'
+import './assets/css/global.css'
 
 // Vendor JS (Bootstrap)
 import './assets/js/bootstrap.bundle.min.js'

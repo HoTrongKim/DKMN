@@ -7,6 +7,11 @@ const routes = [
 		meta: { layout: 'client' }
 	},
 	{
+		path: '/TrangChu',
+		component: () => import('../components/Client/TrangChu/TrangChu.vue'),
+		meta: { layout: 'client' }
+	},
+	{
 		path: '/client-login',
 		component: () => import('../components/Client/Login/index.vue'),
 		meta: { layout: 'client' }
