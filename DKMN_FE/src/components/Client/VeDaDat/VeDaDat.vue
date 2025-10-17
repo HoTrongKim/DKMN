@@ -65,11 +65,7 @@
               <div class="d-flex gap-2">
                 <router-link to="/TrangChu" class="btn btn-outline-secondary">Về trang chủ</router-link>
                 <button class="btn btn-danger" @click="clearTicket">Xóa vé đã lưu</button>
-                <router-link
-                  v-if="canRate"
-                  :to="{ path: '/client-danh-gia' }"
-                  class="btn btn-primary"
-                >Đánh giá chuyến đi</router-link>
+                <button v-if="canRate && ticket?.tripId" class="btn btn-primary" @click="goRate">Đánh giá</button>
               </div>
             </div>
           </div>
@@ -84,7 +80,30 @@ export default {
   name: 'VeDaDat',
   data() {
     return {
-      ticket: null
+      ticket: null,
+      ratingsIndex: {}
+    }
+  },
+  computed: {
+    canRate() {
+      if (!this.ticket) return false
+      const dateStr = this.ticket.date
+      if (!dateStr) return false
+      const endOfTrip = (() => {
+        try {
+          const [y, m, d] = String(dateStr).split('-').map(n => parseInt(n, 10))
+          if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+            const dt = new Date(y, (m - 1), d, 23, 59, 59, 999)
+            return dt.getTime()
+          }
+        } catch (e) {}
+        const t = Date.parse(dateStr)
+        return isNaN(t) ? 0 : (t + 24 * 60 * 60 * 1000 - 1)
+      })()
+      const now = Date.now()
+      const finished = now > endOfTrip
+      const alreadyRated = this.ticket?.tripId ? !!this.ratingsIndex[String(this.ticket.tripId)] : false
+      return finished && !alreadyRated
     }
   },
   methods: {
@@ -102,14 +121,29 @@ export default {
     clearTicket() {
       try { localStorage.removeItem('dkmn:lastTicket') } catch (e) {}
       this.ticket = null
-    }
-  },
-  computed: {
-    canRate() {
-      if (!this.ticket) return false
-      const created = Number(this.ticket.createdAt || 0)
-      const oneMinute = 60 * 1000
-      return !!this.ticket.tripId && Date.now() - created > oneMinute
+    },
+    loadRatingsIndex() {
+      try {
+        const raw = localStorage.getItem('dkmn:ratings')
+        const arr = raw ? JSON.parse(raw) : []
+        const idx = {}
+        arr.forEach(r => { idx[String(r.tripId)] = true })
+        this.ratingsIndex = idx
+      } catch (e) {
+        this.ratingsIndex = {}
+      }
+    },
+    goRate() {
+      if (!this.ticket?.tripId) return
+      this.$router.push({
+        path: '/client-danh-gia',
+        query: {
+          tripId: String(this.ticket.tripId || ''),
+          from: this.ticket.from || '',
+          to: this.ticket.to || '',
+          date: this.ticket.date || ''
+        }
+      })
     }
   },
   mounted() {
@@ -140,6 +174,7 @@ export default {
     } catch (e) {
       this.ticket = null
     }
+    this.loadRatingsIndex()
   }
 }
 </script>
