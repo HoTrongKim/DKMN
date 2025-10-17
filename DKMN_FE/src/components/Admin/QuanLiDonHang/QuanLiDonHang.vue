@@ -1,15 +1,7 @@
 <template>
   <div class="quan-ly-don-hang">
     <div class="card p-4 shadow-sm">
-      <!-- Header -->
-      <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-        <h4 class="page-title text-dk-blue m-0">
-          <i class="fas fa-file-invoice me-2"></i> Quản Lý Đơn Hàng
-        </h4>
-        <button class="btn btn-outline-primary" @click="fetchOrders">
-          <i class="fas fa-sync-alt me-1"></i> Tải lại dữ liệu
-        </button>
-      </div>
+     
 
       <!-- Bộ lọc -->
       <div class="row g-2 mb-3">

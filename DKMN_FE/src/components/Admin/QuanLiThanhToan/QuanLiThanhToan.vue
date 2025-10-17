@@ -1,20 +1,7 @@
 <template>
   <div class="quan-ly-thanh-toan">
     <div class="card p-4 shadow-sm">
-      <!-- HEADER -->
-      <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-        <h4 class="page-title m-0">
-          <i class="fas fa-credit-card me-2"></i> Quản Lý Thanh Toán & Giao Dịch
-        </h4>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-primary" @click="fetchTransactions">
-            <i class="fas fa-sync-alt me-1"></i> Tải lại
-          </button>
-          <button class="btn btn-primary" @click="exportReport">
-            <i class="fas fa-file-excel me-1"></i> Xuất báo cáo
-          </button>
-        </div>
-      </div>
+     
 
       <!-- BỘ LỌC -->
       <div class="row g-2 mb-3">

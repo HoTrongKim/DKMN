@@ -1,13 +1,7 @@
 <template>
   <div class="admin-dashboard">
     <div class="card p-4 shadow-sm">
-      <!-- Header chuẩn -->
-      <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-        <h4 class="page-title m-0 text-dark">
-          <i class="fas fa-chart-line me-2"></i> Bảng điều khiển
-        </h4>
-        <div></div>
-      </div>
+  
 
       <!-- Tổng quan -->
       <div class="stats-grid">

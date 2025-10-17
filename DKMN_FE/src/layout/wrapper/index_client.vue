@@ -2,7 +2,7 @@
 	<div class="wrapper">
 		<Top />
 		<div class="page-wrapper d-flex">
-			<MenuAdmin />
+			<MenuClient />
 			<main class="page-content flex-grow-1">
 				<router-view />
 			</main>
@@ -14,12 +14,12 @@
 </template>
 <script>
 import Top from "../components/Top.vue";
-import MenuAdmin from "../components/MenuAdmin.vue";
+import MenuClient from "../components/MenuClient.vue";
 import Bot from "../components/Bot.vue";
 
 export default {
 	name: "AdminLayout",
-	components: { Top, MenuAdmin, Bot },
+	components: { Top, MenuClient, Bot },
 };
 </script>
 <style scoped>

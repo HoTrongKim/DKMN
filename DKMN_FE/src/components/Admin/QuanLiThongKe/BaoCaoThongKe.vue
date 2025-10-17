@@ -1,14 +1,6 @@
 <template>
   <div class="bao-cao-thong-ke card p-4 shadow-sm">
-    <!-- Tiêu đề -->
-    <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-      <h4 class="page-title m-0">
-        <i class="fas fa-chart-line me-2"></i> Báo Cáo & Thống Kê
-      </h4>
-      <button class="btn btn-primary" @click="fetchStatistics">
-        <i class="fas fa-sync-alt me-1"></i> Tải lại
-      </button>
-    </div>
+  
 
     <!-- Bộ lọc -->
     <div class="row mb-4">

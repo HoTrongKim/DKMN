@@ -2,22 +2,7 @@
   <div class="quan-ly-chuyen-di-page">
     <div class="page-container">
       <div class="card p-4 shadow-sm">
-        <!-- Header -->
-        <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-          <h4 class="page-title m-0 text-dark">
-            <i class="fas fa-route me-2"></i> Quản Lý Chuyến Đi
-          </h4>
-
-          <div class="d-flex gap-2">
-            <button class="btn btn-success" @click="openCreate">
-              <i class="fas fa-plus-circle me-1"></i> Thêm chuyến
-            </button>
-            <button class="btn btn-outline-primary" @click="toggleLoading">
-              <i class="fas fa-rotate me-1"></i> Demo tải
-            </button>
-          </div>
-        </div>
-
+      
         <!-- Filters -->
         <div class="row g-2 mb-3">
           <div class="col-12 col-md-3">

@@ -23,4 +23,6 @@ const app = createApp(App)
 app.use(router)
 app.component('default-layout', Default)
 app.component('client-layout', Client)
+// Ensure admin routes (meta.layout === 'admin') resolve to admin shell
+app.component('admin-layout', Default)
 app.mount('#app')

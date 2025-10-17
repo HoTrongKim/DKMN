@@ -1,14 +1,6 @@
 <template>
   <div class="quan-ly-danh-gia card p-4 shadow-sm">
-    <!-- Tiêu đề -->
-    <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-      <h4 class="page-title m-0">
-        <i class="fas fa-star-half-alt me-2"></i> Quản Lý Đánh Giá & Phản Hồi
-      </h4>
-      <button class="btn btn-primary" @click="fetchReviews">
-        <i class="fas fa-sync-alt me-1"></i> Tải lại
-      </button>
-    </div>
+   
 
     <!-- Bộ lọc -->
     <div class="row g-2 mb-3">

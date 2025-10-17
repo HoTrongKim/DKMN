@@ -1,14 +1,6 @@
 <template>
   <div class="quan-ly-nguoi-dung card p-4 shadow-sm">
-    <!-- Tiêu đề -->
-    <div class="header-bar d-flex align-items-center justify-content-between mb-3">
-      <h4 class="page-title m-0 text-dark">
-        <i class="fas fa-users me-2"></i> Quản Lý Người Dùng
-      </h4>
-      <button class="btn btn-success">
-        <i class="fas fa-sync-alt me-1"></i> Tải lại
-      </button>
-    </div>
+ 
 
     <!-- Bộ lọc -->
     <div class="row g-2 mb-3">
