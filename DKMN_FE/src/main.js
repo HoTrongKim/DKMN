@@ -14,6 +14,7 @@ import Client from './layout/wrapper/index_client.vue'
 // KHÔNG import lại bootstrap.min.css bản copy local để tránh trùng
 import './assets/css/icons.css'
 import './assets/css/app.css'
+import './assets/css/global.css'
 
 // ⚠️ BỎ DÒNG NÀY để tránh nạp JS Bootstrap lần 2 (đã có 'bootstrap' ở trên)
 // import './assets/js/bootstrap.bundle.min.js'
