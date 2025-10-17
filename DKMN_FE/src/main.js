@@ -1,21 +1,25 @@
+// Bootstrap (từ npm) — chỉ cần 2 dòng này
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap'
+
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+
+// Layouts
 import Default from './layout/wrapper/index_admin.vue'
 import Client from './layout/wrapper/index_client.vue'
 
-// Global styles for Client UI
-import './assets/css/bootstrap.min.css'
+// (TÙY CHỌN) CSS của bạn — CHỈ import những file tự viết/tuỳ biến,
+// KHÔNG import lại bootstrap.min.css bản copy local để tránh trùng
 import './assets/css/icons.css'
 import './assets/css/app.css'
 
-// Vendor JS (Bootstrap)
-import './assets/js/bootstrap.bundle.min.js'
+// ⚠️ BỎ DÒNG NÀY để tránh nạp JS Bootstrap lần 2 (đã có 'bootstrap' ở trên)
+// import './assets/js/bootstrap.bundle.min.js'
 
 const app = createApp(App)
-
 app.use(router)
-app.component("default-layout", Default);
-app.component("client-layout", Client);
-// app.component("Admin-layout", Default);
-app.mount("#app")
+app.component('default-layout', Default)
+app.component('client-layout', Client)
+app.mount('#app')
