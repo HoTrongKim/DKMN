@@ -1,6 +1,7 @@
-/<template>
+<template> 
   <div class="container py-4">
     <div class="row g-4">
+      <!-- Cột trái -->
       <div class="col-lg-8">
         <div class="card shadow-sm h-100">
           <div class="card-header bg-white d-flex align-items-center justify-content-between">
@@ -11,74 +12,91 @@
             <div class="mb-3">
               <label class="form-label fw-semibold">Chọn ví/cổng thanh toán</label>
               <div class="row g-3">
-                <div class="col-md-6">
+                <!-- MoMo -->
+                <div class="col-md-4">
                   <div class="form-check border rounded p-3 h-100">
-                    <input class="form-check-input" type="radio" name="gateway" id="gw-momo" value="momo" v-model="selectedGateway">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="gateway"
+                      id="gw-momo"
+                      value="momo"
+                      v-model="selectedGateway"
+                    />
                     <label class="form-check-label d-block" for="gw-momo">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <span>MoMo</span>
-                        <span class="text-muted small">Phí ~ {{ (fees.momo * 100).toFixed(2) }}%</span>
-                      </div>
+                      <span>MoMo</span>
                     </label>
                   </div>
                 </div>
-                <div class="col-md-6">
+
+                <!-- Ngân hàng -->
+                <div class="col-md-4">
                   <div class="form-check border rounded p-3 h-100">
-                    <input class="form-check-input" type="radio" name="gateway" id="gw-card" value="card" v-model="selectedGateway">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="gateway"
+                      id="gw-card"
+                      value="card"
+                      v-model="selectedGateway"
+                    />
                     <label class="form-check-label d-block" for="gw-card">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <span>Thẻ ngân hàng (Visa/Master/JCB)</span>
-                        <span class="text-muted small">Phí ~ {{ (fees.card * 100).toFixed(2) }}%</span>
-                      </div>
+                      <span>Thẻ ngân hàng</span>
                     </label>
                   </div>
                 </div>
-                
+
+                <!-- Thanh toán sau -->
+                <div class="col-md-4">
+                  <div class="form-check border rounded p-3 h-100">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="gateway"
+                      id="gw-later"
+                      value="later"
+                      v-model="selectedGateway"
+                    />
+                    <label class="form-check-label d-block" for="gw-later">
+                      <span>Thanh toán sau</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Card form -->
-            <div v-if="selectedGateway === 'card'" class="mb-3">
-              <div class="row g-3">
-                <div class="col-12">
-                  <label class="form-label">Số thẻ</label>
-                  <input type="text" class="form-control" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" v-model.trim="cardForm.number" @input="formatCardNumber" :disabled="status.isProcessing">
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Tên chủ thẻ</label>
-                  <input type="text" class="form-control" autocomplete="cc-name" placeholder="NGUYEN VAN A" v-model.trim="cardForm.name" :disabled="status.isProcessing">
-                </div>
-                <div class="col-6">
-                  <label class="form-label">Hết hạn (MM/YY)</label>
-                  <input type="text" class="form-control" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" v-model.trim="cardForm.expiry" @input="formatExpiry" :disabled="status.isProcessing">
-                </div>
-                <div class="col-6">
-                  <label class="form-label">CVV</label>
-                  <input type="password" class="form-control" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="***" v-model.trim="cardForm.cvv" :disabled="status.isProcessing">
-                </div>
-              </div>
-              <div v-if="selectedGateway === 'card' && !cardFormValid" class="form-text text-danger mt-1">Vui lòng nhập thông tin thẻ hợp lệ.</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Mã khuyến mãi</label>
-              <div class="input-group">
-                <input type="text" class="form-control" placeholder="Nhập mã (vd: GIAM10, FREESHIP)" v-model.trim="promoCode" :disabled="status.isProcessing">
-                <button class="btn btn-outline-primary" @click="applyPromo" :disabled="!promoCode || status.isProcessing">Áp dụng</button>
-              </div>
-              <div v-if="promoMessage" class="form-text" :class="{ 'text-success': promoApplied, 'text-danger': !promoApplied }">{{ promoMessage }}</div>
-            </div>
-
+            <!-- Nút hành động -->
             <div class="d-flex gap-2">
-              <button class="btn btn-primary" @click="startPayment" :disabled="!canPay">
+              <button
+                v-if="selectedGateway !== 'later'"
+                class="btn btn-primary"
+                @click="startPayment"
+                :disabled="!canPay"
+              >
                 <i class="bx bx-credit-card me-1"></i> Thanh toán ngay
               </button>
-              <button class="btn btn-outline-secondary" @click="resetSelection" :disabled="status.isProcessing">Làm mới</button>
+
+              <button
+                v-else
+                class="btn btn-success"
+                @click="payLater"
+              >
+                <i class="bx bx-time-five me-1"></i> Thanh toán sau
+              </button>
+
+              <button
+                class="btn btn-outline-secondary"
+                @click="resetSelection"
+                :disabled="status.isProcessing"
+              >
+                Làm mới
+              </button>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- ✅ Cột phải (Tóm tắt đơn hàng lấy từ query) -->
       <div class="col-lg-4">
         <div class="card shadow-sm">
           <div class="card-header bg-white">
@@ -89,52 +107,40 @@
               <li class="list-group-item">
                 <div class="d-flex justify-content-between">
                   <span class="fw-semibold">Hành trình</span>
-                  <span class="text-muted" v-if="fromCity && toCity">{{ fromCity }} → {{ toCity }}</span>
+                  <span class="text-muted">{{ fromCity }} → {{ toCity }}</span>
                 </div>
                 <div class="d-flex justify-content-between mt-1">
                   <span class="fw-semibold">Ngày đi</span>
-                  <span class="text-muted" v-if="travelDate">{{ travelDate }}</span>
+                  <span class="text-muted">{{ travelDate }}</span>
                 </div>
               </li>
-              <li class="list-group-item" v-if="company">
+              <li class="list-group-item">
                 <div class="d-flex justify-content-between">
                   <span class="fw-semibold">Nhà vận hành</span>
                   <span class="text-muted">{{ company }}</span>
                 </div>
               </li>
-              <li class="list-group-item" v-if="pickupStation || dropoffStation">
+              <li class="list-group-item">
                 <div class="d-flex justify-content-between">
                   <span class="fw-semibold">Điểm đón</span>
-                  <span class="text-muted">{{ pickupStation || '-' }}</span>
+                  <span class="text-muted">{{ pickupStation }}</span>
                 </div>
                 <div class="d-flex justify-content-between mt-1">
                   <span class="fw-semibold">Điểm trả</span>
-                  <span class="text-muted">{{ dropoffStation || '-' }}</span>
+                  <span class="text-muted">{{ dropoffStation }}</span>
                 </div>
               </li>
-              <li class="list-group-item" v-if="passengers">
+              <li class="list-group-item">
                 <div class="d-flex justify-content-between">
                   <span class="fw-semibold">Số hành khách</span>
                   <span class="text-muted">{{ passengers }}</span>
                 </div>
               </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span>Tạm tính</span>
-                <strong>{{ formatCurrency(subtotal) }}</strong>
-              </li>
-              <li v-if="selectedSeats.length" class="list-group-item">
+              <li class="list-group-item" v-if="selectedSeats && selectedSeats.length">
                 <div class="d-flex justify-content-between">
                   <span>Ghế đã chọn</span>
                   <span class="text-muted">{{ selectedSeats.join(', ') }}</span>
                 </div>
-              </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span>Phí cổng thanh toán</span>
-                <strong>{{ formatCurrency(paymentFee) }}</strong>
-              </li>
-              <li class="list-group-item d-flex justify-content-between align-items-center" v-if="discountAmount > 0">
-                <span>Khuyến mãi</span>
-                <strong class="text-success">-{{ formatCurrency(discountAmount) }}</strong>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 <span>Tổng thanh toán</span>
@@ -156,310 +162,239 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal QR -->
+    <div v-if="qrModal.visible" class="qr-modal-backdrop" @click="closeQrModal">
+      <div class="qr-modal" @click.stop>
+        <div class="qr-modal-header">
+          <h5 class="mb-0">
+            Thanh toán bằng {{ selectedGateway === 'momo' ? 'MoMo' : 'Ngân hàng' }}
+          </h5>
+          <button class="btn-close" @click="closeQrModal"></button>
+        </div>
+
+        <div class="qr-modal-body">
+          <div class="text-center mb-3">
+            <div class="qr-code-container">
+              <div v-if="!qrModal.qrData" class="qr-code-placeholder">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Đang tạo mã QR...</span>
+                </div>
+                <p class="mt-2 text-muted">Đang tạo mã QR...</p>
+              </div>
+
+              <div v-else class="qr-code">
+                <img
+                  v-if="selectedGateway === 'momo'"
+                  src="https://img.vietqr.io/image/MOMO-0366818392-compact.png?amount=150000&addInfo=Thanh+toan+ve+DKMN"
+                  alt="QR Momo 0366818392"
+                  width="280"
+                />
+                <img
+                  v-else
+                  src="https://img.vietqr.io/image/VCB-1037240068-compact.png?amount=150000&addInfo=Thanh+toan+ve+xe+DKMN"
+                  alt="VietQR HO TRONG KIM"
+                  width="300"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="payment-info">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="info-item">
+                  <span class="label">Số tiền:</span>
+                  <span class="value">{{ formatCurrency(total) }}</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="info-item">
+                  <span class="label">Mã giao dịch:</span>
+                  <span class="value">{{ qrModal.paymentId }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="instructions">
+            <h6>Hướng dẫn thanh toán:</h6>
+            <ol class="list-unstyled">
+              <li><i class="bx bx-check-circle text-success me-2"></i>Mở ứng dụng {{ selectedGateway === 'momo' ? 'MoMo' : 'Ngân hàng' }}</li>
+              <li><i class="bx bx-check-circle text-success me-2"></i>Chọn “Quét mã QR”</li>
+              <li><i class="bx bx-check-circle text-success me-2"></i>Quét mã QR trên màn hình</li>
+              <li><i class="bx bx-check-circle text-success me-2"></i>Xác nhận thanh toán</li>
+            </ol>
+          </div>
+
+          <div class="qr-modal-footer">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge" :class="qrModal.statusClass">{{ qrModal.statusText }}</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" @click="closeQrModal">Hủy</button>
+                <button
+                  class="btn btn-primary btn-sm"
+                  @click="checkPaymentStatus"
+                  :disabled="qrModal.isChecking"
+                >
+                  <span v-if="qrModal.isChecking" class="spinner-border spinner-border-sm me-1"></span>
+                  Kiểm tra
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
-  name: 'ThanhToan',
+  name: "ThanhToan",
   data() {
     return {
-      // In a real app, these would come from cart/booking state or API
-      subtotal: 0, // VND; will load from route if available
-      selectedGateway: 'momo',
-      promoCode: '',
-      promoApplied: false,
-      promoMessage: '',
-      appliedDiscount: { type: null, value: 0 },
+      subtotal: 0,
+      fromCity: "",
+      toCity: "",
+      travelDate: "",
+      company: "",
+      pickupStation: "",
+      dropoffStation: "",
+      passengers: 0,
       selectedSeats: [],
-      tripId: null,
-      // ticket summary fields from query
-      fromCity: '',
-      toCity: '',
-      travelDate: '',
-      passengers: '',
-      pickupStation: '',
-      dropoffStation: '',
-      company: '',
-      cardForm: {
-        number: '',
-        name: '',
-        expiry: '',
-        cvv: ''
-      },
-      // percentage fees for simple estimation
-      fees: {
-        momo: 0.011,      // ~1.1%
-        card: 0.015       // ~1.5% (ví dụ)
-      },
-      // status state for real-time updates
+      total: 0,
+      selectedGateway: "momo",
       status: {
-        code: 'idle', // idle | creating | pending | success | failed | cancelled
-        label: 'Chưa thanh toán',
-        detail: '',
+        code: "idle",
+        label: "Chưa thanh toán",
+        detail: "",
         progress: 0,
-        isProcessing: false
+        isProcessing: false,
       },
-      pollTimer: null,
-      mockPaymentId: null
-    }
-  },
-  computed: {
-    paymentFee() {
-      if (!this.selectedGateway) return 0
-      const rate = this.fees[this.selectedGateway] || 0
-      return Math.round(this.subtotal * rate)
-    },
-    cardFormValid() {
-      if (this.selectedGateway !== 'card') return true
-      const sanitized = this.cardForm.number.replace(/\s+/g, '')
-      const isNumberOk = /^\d{16}$/.test(sanitized)
-      const isNameOk = this.cardForm.name.length >= 3
-      const isExpiryOk = /^(0[1-9]|1[0-2])\/\d{2}$/.test(this.cardForm.expiry)
-      const isCvvOk = /^\d{3,4}$/.test(this.cardForm.cvv)
-      return isNumberOk && isNameOk && isExpiryOk && isCvvOk
-    },
-    discountAmount() {
-      if (!this.appliedDiscount.type) return 0
-      if (this.appliedDiscount.type === 'percent') {
-        return Math.round((this.subtotal + this.paymentFee) * this.appliedDiscount.value)
-      }
-      if (this.appliedDiscount.type === 'flat') {
-        return Math.min(this.appliedDiscount.value, this.subtotal + this.paymentFee)
-      }
-      return 0
-    },
-    total() {
-      const raw = this.subtotal + this.paymentFee - this.discountAmount
-      return raw > 0 ? raw : 0
-    },
-    canPay() {
-      const cardOk = this.selectedGateway !== 'card' || this.cardFormValid
-      return !!this.selectedGateway && !this.status.isProcessing && this.total > 0 && cardOk
-    },
-
-    statusBadgeClass() {
-      switch (this.status.code) {
-        case 'success':
-          return 'badge bg-success'
-        case 'failed':
-        case 'cancelled':
-          return 'badge bg-danger'
-        case 'pending':
-        case 'creating':
-          return 'badge bg-warning text-dark'
-        default:
-          return 'badge bg-secondary'
-      }
-    }
-  },
-  methods: {
-    formatCurrency(value) {
-      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
-    },
-    formatCardNumber() {
-      const digits = this.cardForm.number.replace(/\D+/g, '').slice(0, 16)
-      this.cardForm.number = digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
-    },
-    formatExpiry() {
-      const digits = this.cardForm.expiry.replace(/\D+/g, '').slice(0, 4)
-      if (digits.length <= 2) {
-        this.cardForm.expiry = digits
-      } else {
-        this.cardForm.expiry = digits.slice(0, 2) + '/' + digits.slice(2)
-      }
-    },
-    resetSelection() {
-      if (this.status.isProcessing) return
-      this.selectedGateway = 'momo'
-      this.promoCode = ''
-      this.promoApplied = false
-      this.promoMessage = ''
-      this.appliedDiscount = { type: null, value: 0 }
-      this.setStatus('idle', 'Chưa thanh toán', '', 0, false)
-    },
-    applyPromo() {
-      if (!this.promoCode) return
-      const code = this.promoCode.toUpperCase()
-      // Demo promo logic
-      if (code === 'GIAM10') {
-        this.appliedDiscount = { type: 'percent', value: 0.1 }
-        this.promoApplied = true
-        this.promoMessage = 'Áp dụng giảm 10% thành công.'
-      } else if (code === 'FREESHIP') {
-        this.appliedDiscount = { type: 'flat', value: 20000 }
-        this.promoApplied = true
-        this.promoMessage = 'Áp dụng giảm 20.000đ phí thành công.'
-      } else {
-        this.appliedDiscount = { type: null, value: 0 }
-        this.promoApplied = false
-        this.promoMessage = 'Mã không hợp lệ hoặc đã hết hạn.'
-      }
-    },
-    setStatus(code, label, detail, progress, isProcessing) {
-      this.status = { code, label, detail, progress, isProcessing }
-    },
-    async startPayment() {
-      if (!this.canPay) return
-      // Step 1: Create payment (mock)
-      this.setStatus('creating', 'Đang khởi tạo', 'Tạo yêu cầu thanh toán...', 10, true)
-      try {
-        // Replace this with your backend endpoint
-        // const { data } = await axios.post('/api/payments/create', { total: this.total, gateway: this.selectedGateway, meta: { promo: this.appliedDiscount } })
-        // For demo, simulate API
-        const data = await this.mockCreatePayment()
-        this.mockPaymentId = data.id
-        if (this.selectedGateway === 'card') {
-          this.setStatus('pending', 'Đang xác thực thẻ', 'Đang xác thực thông tin thẻ...', 40, true)
-          await this.mockCardAuthorize(this.cardForm)
-          this.setStatus('pending', 'Đang trừ tiền', 'Đang thực hiện giao dịch...', 60, true)
-          await this.mockCardCapture()
-        } else {
-          this.setStatus('pending', 'Đang chờ thanh toán', 'Mở cổng thanh toán...', 40, true)
-          // Step 2: Redirect/open gateway (mock) - MoMo only
-          await this.mockOpenGateway(this.selectedGateway)
-          this.setStatus('pending', 'Đang xử lý', 'Vui lòng xác nhận trong ứng dụng MoMo.', 55, true)
-        }
-
-        // Step 3: Poll status
-        this.beginPollingStatus()
-      } catch (e) {
-        this.setStatus('failed', 'Thất bại', 'Không thể khởi tạo thanh toán. Vui lòng thử lại.', 0, false)
-      }
-    },
-    beginPollingStatus() {
-      this.clearPolling()
-      // Simulate status updates every 1.2s
-      this.pollTimer = setInterval(async () => {
-        try {
-          const result = await this.mockQueryStatus(this.mockPaymentId)
-          if (result.status === 'success') {
-            this.setStatus('success', 'Thành công', 'Thanh toán đã được xác nhận.', 100, false)
-            this.clearPolling()
-            // Lưu vé và chuyển trang
-            const ticket = {
-              paymentId: this.mockPaymentId,
-              gateway: this.selectedGateway,
-              total: this.total,
-              tripId: this.tripId,
-              seats: this.selectedSeats,
-              from: this.fromCity,
-              to: this.toCity,
-              date: this.travelDate,
-              passengers: this.passengers,
-              pickupStation: this.pickupStation,
-              dropoffStation: this.dropoffStation,
-              company: this.company,
-              createdAt: Date.now()
-            }
-            try { localStorage.setItem('dkmn:lastTicket', JSON.stringify(ticket)) } catch (e) {}
-            this.$router.push({
-              path: '/client-ve-da-dat',
-              query: {
-                paymentId: ticket.paymentId,
-                gateway: ticket.gateway,
-                total: ticket.total,
-                tripId: ticket.tripId || '',
-                seats: (ticket.seats || []).join(','),
-                createdAt: ticket.createdAt,
-                from: ticket.from || '',
-                to: ticket.to || '',
-                date: ticket.date || '',
-                passengers: ticket.passengers || '',
-                pickupStation: ticket.pickupStation || '',
-                dropoffStation: ticket.dropoffStation || '',
-                company: ticket.company || ''
-              }
-            })
-          } else if (result.status === 'failed' || result.status === 'cancelled') {
-            const label = result.status === 'failed' ? 'Thất bại' : 'Đã hủy'
-            this.setStatus(result.status, label, result.message || 'Giao dịch không thành công.', 100, false)
-            this.clearPolling()
-          } else {
-            // pending update progress
-            const next = Math.min(95, this.status.progress + 8)
-            this.setStatus('pending', 'Đang xử lý', 'Đang đợi phản hồi từ cổng thanh toán...', next, true)
-          }
-        } catch (e) {
-          // transient error, keep polling but update detail
-          const next = Math.min(95, this.status.progress + 3)
-          this.setStatus('pending', 'Đang xử lý', 'Mất kết nối tạm thời, đang thử lại...', next, true)
-        }
-      }, 1200)
-    },
-    clearPolling() {
-      if (this.pollTimer) {
-        clearInterval(this.pollTimer)
-        this.pollTimer = null
-      }
-    },
-    // ------- Mock helpers below (replace with real API integration) -------
-    async mockCreatePayment() {
-      // simulate network
-      await new Promise(r => setTimeout(r, 600))
-      return { id: 'PM_' + Math.random().toString(36).slice(2), status: 'pending' }
-    },
-    async mockOpenGateway() {
-      // simulate user interaction delay for MoMo
-      await new Promise(r => setTimeout(r, 1200))
-      return true
-    },
-    async mockCardAuthorize() {
-      // simulate 3DS/checks
-      await new Promise(r => setTimeout(r, 1200))
-      return { status: 'authorized' }
-    },
-    async mockCardCapture() {
-      // simulate capture/settlement
-      await new Promise(r => setTimeout(r, 900))
-      return { status: 'captured' }
-    },
-    async mockQueryStatus() {
-      // randomly decide when to finish
-      // 65% success, 25% keep pending, 10% fail
-      const roll = Math.random()
-      if (roll < 0.65 && this.status.progress >= 80) {
-        return { status: 'success' }
-      }
-      if (roll > 0.9 && this.status.progress >= 70) {
-        return { status: 'failed', message: 'Cổng thanh toán từ chối giao dịch.' }
-      }
-      return { status: 'pending' }
-    }
+      qrModal: {
+        visible: false,
+        qrData: null,
+        paymentId: null,
+        statusText: "Đang chờ thanh toán",
+        statusClass: "bg-warning text-dark",
+        isChecking: false,
+      },
+    };
   },
   mounted() {
-    // Initialize from route query (coming from seat selection)
-    const q = this.$route?.query || {}
-    if (q.total) {
-      const t = parseInt(q.total)
-      this.subtotal = Number.isFinite(t) ? t : 0
-    }
-    if (q.seats) {
-      this.selectedSeats = String(q.seats)
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean)
-    }
-    if (q.tripId) {
-      this.tripId = String(q.tripId)
-    }
-    // extra ticket info
-    if (q.from) this.fromCity = String(q.from)
-    if (q.to) this.toCity = String(q.to)
-    if (q.date) this.travelDate = String(q.date)
-    if (q.passengers) this.passengers = String(q.passengers)
-    if (q.pickupStation) this.pickupStation = String(q.pickupStation)
-    if (q.dropoffStation) this.dropoffStation = String(q.dropoffStation)
-    if (q.company) this.company = String(q.company)
+    this.loadFromQuery();
   },
-  beforeUnmount() {
-    this.clearPolling()
-  }
-}
+  methods: {
+    // ✅ Lấy thông tin từ query router
+    loadFromQuery() {
+      const q = this.$route.query;
+      this.fromCity = q.from || "";
+      this.toCity = q.to || "";
+      this.travelDate = q.date || "";
+      this.company = q.company || "";
+      this.pickupStation = q.pickupStation || "";
+      this.dropoffStation = q.dropoffStation || "";
+      this.passengers = q.passengers || 1;
+      this.selectedSeats = q.seats ? q.seats.split(",") : [];
+      this.subtotal = Number(q.total) || 0;
+      this.total = this.subtotal;
+    },
+    formatCurrency(v) {
+      return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(v || 0);
+    },
+    setStatus(code, label, detail, progress, isProcessing) {
+      this.status = { code, label, detail, progress, isProcessing };
+    },
+    async startPayment() {
+      if (!this.canPay) return;
+      this.setStatus("creating", "Đang khởi tạo", "Chuẩn bị thanh toán...", 20, true);
+      await new Promise((r) => setTimeout(r, 500));
+      const paymentId = "PM_" + Math.random().toString(36).slice(2);
+      await this.showQrModal(paymentId);
+      this.setStatus("pending", "Đang chờ thanh toán", "Đang tạo mã QR...", 50, true);
+    },
+    async showQrModal(paymentId) {
+      this.qrModal.visible = true;
+      this.qrModal.paymentId = paymentId;
+      this.qrModal.qrData = true;
+    },
+    async checkPaymentStatus() {
+      this.qrModal.isChecking = true;
+      await new Promise((r) => setTimeout(r, 1000));
+      this.qrModal.statusText = "Thanh toán thành công";
+      this.qrModal.statusClass = "bg-success";
+      this.setStatus("success", "Thành công", "Đã xác nhận thanh toán", 100, false);
+      this.qrModal.isChecking = false;
+    },
+    closeQrModal() {
+      this.qrModal.visible = false;
+      this.qrModal.qrData = null;
+    },
+    payLater() {
+      this.setStatus("success", "Thanh toán sau", "Khách sẽ thanh toán khi nhận vé", 100, false);
+      alert("Bạn đã chọn hình thức Thanh toán sau!");
+    },
+    resetSelection() {
+      this.selectedGateway = "momo";
+      this.setStatus("idle", "Chưa thanh toán", "", 0, false);
+    },
+  },
+  computed: {
+    canPay() {
+      return !!this.selectedGateway && this.total > 0 && !this.status.isProcessing;
+    },
+    statusBadgeClass() {
+      const c = this.status.code;
+      if (c === "success") return "badge bg-success";
+      if (c === "failed") return "badge bg-danger";
+      if (c === "pending" || c === "creating") return "badge bg-warning text-dark";
+      return "badge bg-secondary";
+    },
+  },
+};
 </script>
 
 <style>
-/* Scoped page-specific helpers (kept minimal; rely on Bootstrap) */
+/* giữ nguyên CSS gốc */
+.qr-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+.qr-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  overflow-y: auto;
+}
+.qr-modal-header,
+.qr-modal-body,
+.qr-modal-footer {
+  padding: 20px 24px;
+}
+.qr-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e9ecef;
+}
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
 </style>
