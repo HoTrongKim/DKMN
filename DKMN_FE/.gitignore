@@ -139,3 +139,19 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+# --- DKMN_FE project specific ---
+# Build output & dependencies
+DKMN_FE/node_modules/
+DKMN_FE/dist/
+DKMN_FE/.vite/
+
+# Local environment
+*.env
+*.env.local
+.env.*
+!.env.example
+
+# OS & Editor junk
+.DS_Store
+Thumbs.db
+
