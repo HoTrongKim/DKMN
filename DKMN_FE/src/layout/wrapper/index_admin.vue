@@ -1,39 +1,74 @@
+<!-- src/layouts/AdminLayout.vue -->
 <template>
-	<div class="wrapper">
-		<TopAdmin />
-		<div class="page-wrapper d-flex">
-			<MenuAdmin />
-			<main class="page-content flex-grow-1">
-				<router-view />
-			</main>
-		</div>
-		<Bot />
-	</div>
+  <div class="layout" :data-collapsed="isCollapsed">
+    <TopAdmin @toggle-sidebar="toggleSidebar" />
+    
+    <div class="content-wrapper">
+      <div class="sidebar">
+        <MenuAdmin :collapsed="isCollapsed" @toggle="toggleSidebar" />
+      </div>
 
-
+      <div class="main">
+        <main class="page-content">
+          <router-view />
+        </main>
+        <Bot />
+      </div>
+    </div>
+  </div>
 </template>
+
 <script>
 import MenuAdmin from "../components/MenuAdmin.vue";
-import Bot from "../components/Bot.vue";
 import TopAdmin from "../components/TopAdmin.vue";
+import Bot from "../components/Bot.vue";
 
 export default {
-	name: "AdminLayout",
-	components: { TopAdmin, MenuAdmin, Bot },
-};
+  name: "AdminLayout",
+  components: { MenuAdmin, TopAdmin, Bot },
+  data() { return { isCollapsed: false }; },
+  methods: { toggleSidebar(){ this.isCollapsed = !this.isCollapsed } }
+}
 </script>
+
 <style scoped>
-.wrapper {
-	background: #f5f7fb;
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
+.layout{
+  /* sidebar width controlled here */
+  --sidebar-w: 240px;
+  display: flex;
+  flex-direction: column;
+  background:#f5f7fb;
+  min-height: 100vh;
 }
-.page-wrapper {
-	flex: 1;
+.layout[data-collapsed="true"]{ --sidebar-w: 72px; }
+
+/* Content wrapper chứa sidebar và main content */
+.content-wrapper{
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  flex: 1;
+  min-height: 0;
 }
-.page-content {
-	padding: 16px;
+
+/* Sidebar */
+.sidebar{ 
+  position: sticky; 
+  top: 0; 
+  height: calc(100vh - 64px); /* trừ chiều cao TopAdmin */
+  overflow-y: auto;
 }
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
+
+/* Main content area */
+.main{ 
+  display: flex; 
+  flex-direction: column; 
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.page-content{ 
+  flex: 1; 
+  padding: 20px 30px; 
+  overflow-y: auto; 
+}
 </style>

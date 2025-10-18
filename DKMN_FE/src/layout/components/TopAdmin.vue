@@ -36,7 +36,7 @@ export default {
 .topbar {
   background-color: #0b3b6e; color: white;
   padding: 12px 24px; display: flex; justify-content: space-between; align-items: center;
-  position: sticky; top: 0; z-index: 10;
+  position: relative; z-index: 10;
 }
 .left { display: flex; align-items: center; gap: 12px; }
 .menu-toggle { background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer; }
