@@ -21,11 +21,31 @@ const routes = [
 		component: () => import('../components/Client/Register/index.vue'),
 		meta: { layout: 'client' }
 	},
+  {
+    path: '/client-profile',
+    component: () => import('../components/Client/Profile/Profile.vue'),
+    meta: { layout: 'client' }
+  },
 	{
 		path: '/client-menu',
 		component: () => import('../layout/components/MenuClient.vue'),
 		meta: { layout: 'client' }
 	},
+  {
+    path: '/client-thanh-toan',
+    component: () => import('../components/Client/ThanhToan/ThanhToan.vue'),
+    meta: { layout: 'client' }
+  },
+  {
+    path: '/client-ve-da-dat',
+    component: () => import('../components/Client/VeDaDat/VeDaDat.vue'),
+    meta: { layout: 'client' }
+  },
+  {
+    path: '/client-danh-gia',
+    component: () => import('../components/Client/DanhGia/DanhGia.vue'),
+    meta: { layout: 'client' }
+  },
   ///CLientCLient
   {
     path: "/view/home",
