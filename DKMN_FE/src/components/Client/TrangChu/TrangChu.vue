@@ -172,6 +172,19 @@
            </select>
          </div>
        </div>
+       <div class="sort-options mb-4">
+         <div class="d-flex justify-content-between align-items-center">
+           <h5>Kết quả tìm kiếm ({{ filteredTrips.length }} chuyến)</h5>
+           <select v-model="sortBy" class="form-select w-auto">
+             <option value="default">Mặc định</option>
+             <option value="time-early">Giờ đi sớm</option>
+             <option value="time-late">Giờ đi muộn</option>
+             <option value="price-low">Giá thấp</option>
+             <option value="price-high">Giá cao</option>
+             <option value="rating">Đánh giá cao</option>
+           </select>
+         </div>
+       </div>
 
        <!-- Trip Cards -->
        <div class="trip-cards">
