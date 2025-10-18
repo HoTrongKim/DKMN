@@ -199,53 +199,162 @@
           </button>
         </div>
         <div class="p-3">
-          <div class="mb-2 text-muted small">
+          <div class="mb-3 text-muted small">
             Có thể chọn tối đa {{ maxSelectableSeats }} ghế.
           </div>
-          <!-- Lower deck: seats S1 - S16 (first 4 rows) -->
-          <div class="mb-2 fw-semibold">Tầng dưới (S1 - S16)</div>
-          <div class="seat-grid mb-3">
-            <div
-              v-for="row in seatModal.layout.slice(0, 4)"
-              :key="'r' + row[0].id"
-              class="d-contents"
-            >
-              <div
-                v-for="seat in row"
-                :key="seat.id"
-                class="seat-btn"
-                :class="{
-                  unavailable: !seat.available,
-                  selected: seatModal.seatsSelected.includes(seat.id),
-                  'force-normal': seat.id === 16,
-                }"
-                @click="toggleSeat(seat)"
-              >
-                {{ seat.label }}
-              </div>
+          
+          <!-- Seat Status Legend -->
+          <div class="seat-legend mb-3">
+            <div class="legend-item">
+              <div class="legend-color seat-empty"></div>
+              <span>Ghế trống</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color seat-selected"></div>
+              <span>Đang chọn</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color seat-booked"></div>
+              <span>Đã đặt</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color seat-unavailable"></div>
+              <span>Không bán</span>
             </div>
           </div>
+          
+          <!-- Bus Seat Layout Container -->
+          <div class="bus-seat-container">.driver-icon
+            <!-- Two Column Layout -->
+            <div class="two-column-layout">
+              <!-- Left Column: Lower Deck -->
+              <div class="deck-column lower-deck">
+                <div class="deck-title">TẦNG DƯỚI</div>
+                
+                 <!-- Driver Row -->
+<!-- Driver Row -->
+<div class="driver-row">
+  <div class="driver-icon">
+    <img
+      src="https://icons.veryicon.com/png/o/miscellaneous/icheyong/steering-wheel-14.png"
+      alt="Steering Wheel Icon"
+      width="36"
+      height="36"
+    />
+  </div>
+</div>
 
-          <!-- Upper deck: seats S17 - S32 (last 4 rows) -->
-          <div class="mb-2 fw-semibold">Tầng trên (S17 - S32)</div>
-          <div class="seat-grid mb-3">
-            <div
-              v-for="row in seatModal.layout.slice(4)"
-              :key="'r' + row[0].id"
-              class="d-contents"
-            >
-              <div
-                v-for="seat in row"
-                :key="seat.id"
-                class="seat-btn"
-                :class="{
-                  unavailable: !seat.available,
-                  selected: seatModal.seatsSelected.includes(seat.id),
-                  'force-normal': seat.id === 16,
-                }"
-                @click="toggleSeat(seat)"
-              >
-                {{ seat.label }}
+     
+                <!-- Seat Matrix -->
+                <div class="seat-matrix">
+                  <div
+                    v-for="row in seatModal.layout.slice(0, 4)"
+                    :key="'lower-r' + row[0].id"
+                    class="seat-row"
+                  >
+                    <!-- Left Column -->
+                    <div class="seat-column">
+                      <div
+                        v-for="seat in row.slice(0, 2)"
+                        :key="seat.id"
+                        class="seat-btn"
+                        :class="{
+                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                          'seat-unavailable': !seat.available,
+                          'seat-booked': seat.booked
+                        }"
+                        @click="toggleSeat(seat)"
+                        :title="seat.label"
+                      >
+                        {{ seat.label }}
+                      </div>
+                    </div>
+                    
+                    <!-- Aisle -->
+                    <div class="aisle"></div>
+                    
+                    <!-- Right Column -->
+                    <div class="seat-column">
+                      <div
+                        v-for="seat in row.slice(2, 4)"
+                        :key="seat.id"
+                        class="seat-btn"
+                        :class="{
+                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                          'seat-unavailable': !seat.available,
+                          'seat-booked': seat.booked
+                        }"
+                        @click="toggleSeat(seat)"
+                        :title="seat.label"
+                      >
+                        {{ seat.label }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vertical Divider -->
+              <div class="vertical-divider"></div>
+
+              <!-- Right Column: Upper Deck -->
+              <div class="deck-column upper-deck">
+                <div class="deck-title">TẦNG TRÊN</div>
+                
+                <!-- Empty Driver Row for alignment -->
+                <div class="driver-row empty"></div>
+                
+                <!-- Seat Matrix -->
+                <div class="seat-matrix">
+                  <div
+                    v-for="row in seatModal.layout.slice(4)"
+                    :key="'upper-r' + row[0].id"
+                    class="seat-row"
+                  >
+                    <!-- Left Column -->
+                    <div class="seat-column">
+                      <div
+                        v-for="seat in row.slice(0, 2)"
+                        :key="seat.id"
+                        class="seat-btn"
+                        :class="{
+                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                          'seat-unavailable': !seat.available,
+                          'seat-booked': seat.booked
+                        }"
+                        @click="toggleSeat(seat)"
+                        :title="seat.label"
+                      >
+                        {{ seat.label }}
+                      </div>
+                    </div>
+                    
+                    <!-- Aisle -->
+                    <div class="aisle"></div>
+                    
+                    <!-- Right Column -->
+                    <div class="seat-column">
+                      <div
+                        v-for="seat in row.slice(2, 4)"
+                        :key="seat.id"
+                        class="seat-btn"
+                        :class="{
+                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                          'seat-unavailable': !seat.available,
+                          'seat-booked': seat.booked
+                        }"
+                        @click="toggleSeat(seat)"
+                        :title="seat.label"
+                      >
+                        {{ seat.label }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1083,17 +1192,35 @@ export default {
       const totalSeats = maxRows * maxCols;
       const layout = [];
       let seatNumber = 1;
+      
       for (let r = 0; r < maxRows; r++) {
         const row = [];
         for (let c = 0; c < maxCols; c++) {
           const id = seatNumber;
-          // All seats are clickable; availability reflects trip capacity (for information only)
           const available = id <= trip.availableSeats;
-          row.push({ id, label: "S" + id, available });
+          // Randomly assign some seats as booked or unavailable
+          const randomStatus = Math.random();
+          let booked = false;
+          let unavailable = false;
+          
+          if (randomStatus < 0.1) {
+            booked = true; // 10% chance of being booked
+          } else if (randomStatus < 0.2) {
+            unavailable = true; // 10% chance of being unavailable
+          }
+          
+          row.push({ 
+            id, 
+            label: "S" + id, 
+            available: available && !booked && !unavailable,
+            booked,
+            unavailable
+          });
           seatNumber++;
         }
         layout.push(row);
       }
+      
       this.seatModal = {
         visible: true,
         trip,
@@ -1102,6 +1229,11 @@ export default {
       };
     },
     toggleSeat(seat) {
+      // Don't allow selection of booked or unavailable seats
+      if (seat.booked || seat.unavailable) {
+        return;
+      }
+      
       const maxSelect = this.maxSelectableSeats || 1;
       const idx = this.seatModal.seatsSelected.indexOf(seat.id);
       if (idx >= 0) {
@@ -1175,52 +1307,293 @@ export default {
 
 
 <style>
-/* Quick modal for seat selection */
+/* 🔹 Modal nhanh khi chọn ghế (nền tối và khung pop-up) */
 .seat-modal-backdrop {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0; /* phủ toàn màn hình */
+  background: rgba(0, 0, 0, 0.5); /* nền mờ đen */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
+  z-index: 1050; /* nổi lên trên cùng */
 }
 .seat-modal {
   background: #fff;
   width: 100%;
-  max-width: 720px;
+  max-width: 500px;
   border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); /* đổ bóng modal */
 }
-.seat-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-.seat-btn {
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 10px 0;
-  text-align: center;
+
+/* 🔹 Khung tổng thể chứa sơ đồ ghế */
+.bus-seat-container {
   background: #f8f9fa;
+  border: 1px solid #E0E0E0;
+  border-radius: 1px;
+  padding: 12px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  position: relative;
+}
+
+
+/* 🔹 Ghi chú chú thích trạng thái ghế */
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #495057;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* 🔸 Màu chú thích từng trạng thái ghế */
+.legend-color.seat-empty { background: #FFFFFF; border-color: #CCCCCC; }
+.legend-color.seat-selected { background: #28A745; border-color: #28A745; }
+.legend-color.seat-booked { background: #DC3545; border-color: #DC3545; }
+.legend-color.seat-unavailable { background: #ADB5BD; border-color: #ADB5BD; }
+
+/* 🔹 Bố cục chia 2 tầng (2 cột trái – phải) */
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* tầng trái - đường giữa - tầng phải */
+  gap: 16px;
+  align-items: start;
+}
+
+/* 🔹 Khối tầng (deck) */
+.deck-column {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  position: relative;
+}
+
+/* Thanh màu trên cùng của mỗi tầng */
+.deck-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 10px 10px 0 0;
+}
+
+/* Màu đại diện cho tầng dưới và tầng trên */
+.lower-deck::before { background: linear-gradient(90deg, #0056d2 0%, #007bff 100%); }
+.upper-deck::before { background: linear-gradient(90deg, #28a745 0%, #20c997 100%); }
+
+/* 🔹 Tiêu đề tầng */
+.deck-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 12px;
+  color: #333;
+  margin-bottom: 8px;
+  padding: 6px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  margin-top: 4px;
+}
+
+/* 🔹 Hàng tài xế */
+.driver-row {
+  display: flex;
+  justify-content: left;
+  margin-bottom: 8px;
+  height: 32px;
+}
+.driver-row.empty { visibility: hidden; }
+
+.driver-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #020407 0%, #bfc1c4 100%);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 86, 210, 0.3);
+  border: 2px solid #fff;
+}
+.driver-icon i {
+  font-size: 16px;
+  color: #fff;
+}
+
+/* 🔹 Đường phân chia dọc giữa 2 tầng */
+.vertical-divider {
+  width: 1px;
+  background: #E5E5E5;
+  height: 100%;
+  min-height: 200px;
+}
+
+/* 🔹 Bố cục hàng ghế */
+.seat-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Mỗi hàng gồm 2 cột ghế và 1 lối đi */
+.seat-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 44px;
+  align-items: center;
+}
+
+/* Cột ghế (trái hoặc phải) */
+.seat-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* 🔹 Lối đi giữa các hàng ghế */
+.aisle {
+  width: 20px;
+  height: 100%;
+  background: #f8f9fa;
+  border-radius: 2px;
+  border: 1px dashed #dee2e6;
+  position: relative;
+}
+.aisle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 80%;
+  background: #dee2e6;
+}
+
+/* 🔹 Nút ghế (Seat Button) */
+.seat-btn {
+  width: 32px;
+  height: 42px;
+  border-radius: 6px;
+  border: 2px solid #CCCCCC;
+  background: #FFFFFF;
   cursor: pointer;
   user-select: none;
-  color: #212529;
+  color: #333;
+  font-weight: 600;
+  font-size: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.seat-btn.unavailable {
-  background: #f1f1f1;
-  color: #212529;
-  cursor: not-allowed;
+
+/* Hiệu ứng khi rê chuột */
+.seat-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 }
-.seat-btn.selected {
-  background: #0d6efd;
+
+/* 🔹 Trạng thái từng loại ghế */
+.seat-empty { background: #FFFFFF; border-color: #CCCCCC; color: #333; }
+.seat-empty:hover { border-color: #00d23f; box-shadow: 0 6px 20px rgba(0, 86, 210, 0.2); }
+
+.seat-selected {
+  background: #28a745;
+  border-color: #28a745;
   color: #fff;
-  border-color: #0d6efd;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 86, 210, 0.4);
+  animation: seatPulse 0.6s ease-in-out;
 }
-.seat-btn.force-normal {
-  background: #f8f9fa;
-  color: #212529;
-  border-color: #e0e0e0;
-  cursor: pointer;
+
+.seat-unavailable {
+  background: #ADB5BD;
+  border-color: #ADB5BD;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
+
+.seat-booked {
+  background: #DC3545;
+  border-color: #DC3545;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.seat-unavailable:hover,
+.seat-booked:hover {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔹 Hiệu ứng chuyển động khi chọn ghế */
+@keyframes seatPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.05); }
+}
+
+/* 🔹 Hiệu ứng nhấn khi click chọn ghế */
+.seat-btn { animation: seatClick 0.2s ease-in-out; }
+@keyframes seatClick {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* 🔹 Hiệu ứng riêng cho ghế được chọn */
+.seat-selected { animation: seatSelected 0.2s ease-in-out; }
+@keyframes seatSelected {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1.05); }
+}
+
+/* 🔹 Giao diện responsive cho điện thoại */
+@media (max-width: 768px) {
+  .seat-modal { max-width: 95vw; margin: 10px; }
+  .two-column-layout { grid-template-columns: 1fr; gap: 12px; }
+  .vertical-divider { display: none; }
+  .bus-seat-container { padding: 16px; max-width: 100%; }
+  .seat-btn { width: 32px; height: 42px; font-size: 10px; }
+  .aisle { width: 10px; }
+  .driver-icon { width: 32px; height: 32px; }
+  .driver-icon i { font-size: 16px; }
+  .seat-legend { gap: 12px; padding: 8px; }
+  .legend-item { font-size: 11px; }
+  .legend-color { width: 14px; height: 14px; }
+}
+
 </style>

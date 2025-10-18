@@ -75,6 +75,147 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
+.top-home {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
 
+.top-home__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.brand:hover {
+  transform: scale(1.05);
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+}
+
+.nav-link:hover {
+  color: #ffd700;
+  background-color: rgba(255,255,255,0.1);
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+}
+
+.btn {
+  border-radius: 25px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-light {
+  border-color: white;
+  color: white;
+}
+
+.btn-outline-light:hover {
+  background-color: white;
+  color: #667eea;
+}
+
+.btn-primary {
+  border-color: white;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: white;
+  color: #667eea;
+}
+
+.dropdown-menu {
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  border: none;
+}
+
+.dropdown-item {
+  padding: 0.75rem 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item i {
+  color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .top-home__container {
+    padding: 0 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .nav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .auth-buttons {
+    justify-content: center;
+  }
+}
 </style>
