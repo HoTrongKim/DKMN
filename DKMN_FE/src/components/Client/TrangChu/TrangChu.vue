@@ -13,9 +13,7 @@
       <div class="hero__content">
         <div class="hero__glass shadow-lg">
           <div class="text-center mb-4">
-            <!-- <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis fw-semibold mb-3 px-3 py-2">
-       <h5 class="text-black">DKMN</h5>
-     </span> -->
+       
             <h1 class="hero__title">
               Tìm và đặt vé <span class="text-primary">dễ dàng</span>
             </h1>
@@ -223,175 +221,319 @@
             </div>
           </div>
           
-          <!-- Bus Seat Layout Container -->
-          <div class="bus-seat-container">.driver-icon
-            <!-- Two Column Layout -->
-            <div class="two-column-layout">
-              <!-- Left Column: Lower Deck -->
-              <div class="deck-column lower-deck">
-                <div class="deck-title">TẦNG DƯỚI</div>
-                
-                 <!-- Driver Row -->
-<!-- Driver Row -->
-<div class="driver-row">
-  <div class="driver-icon">
-    <img
-      src="https://icons.veryicon.com/png/o/miscellaneous/icheyong/steering-wheel-14.png"
-      alt="Steering Wheel Icon"
-      width="36"
-      height="36"
-    />
-  </div>
-</div>
+ <!-- Seat Layout B (hiển thị theo loại phương tiện) -->
+<div v-if="seatModal.trip?.vehicleType === 'Xe khách'" class="bus-seat-container">
+  <!-- Giữ nguyên layout xe khách 2 tầng -->
+  <!-- Two Column Layout -->
+  <div class="two-column-layout">
+    <!-- Left Column: Lower Deck -->
+    <div class="deck-column lower-deck">
+      <div class="deck-title">TẦNG DƯỚI</div>
 
-     
-                <!-- Seat Matrix -->
-                <div class="seat-matrix">
-                  <div
-                    v-for="row in seatModal.layout.slice(0, 4)"
-                    :key="'lower-r' + row[0].id"
-                    class="seat-row"
-                  >
-                    <!-- Left Column -->
-                    <div class="seat-column">
-                      <div
-                        v-for="seat in row.slice(0, 2)"
-                        :key="seat.id"
-                        class="seat-btn"
-                        :class="{
-                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
-                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
-                          'seat-unavailable': !seat.available,
-                          'seat-booked': seat.booked
-                        }"
-                        @click="toggleSeat(seat)"
-                        :title="seat.label"
-                      >
-                        {{ seat.label }}
-                      </div>
-                    </div>
-                    
-                    <!-- Aisle -->
-                    <div class="aisle"></div>
-                    
-                    <!-- Right Column -->
-                    <div class="seat-column">
-                      <div
-                        v-for="seat in row.slice(2, 4)"
-                        :key="seat.id"
-                        class="seat-btn"
-                        :class="{
-                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
-                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
-                          'seat-unavailable': !seat.available,
-                          'seat-booked': seat.booked
-                        }"
-                        @click="toggleSeat(seat)"
-                        :title="seat.label"
-                      >
-                        {{ seat.label }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <!-- Driver Row -->
+      <div class="driver-row">
+        <div class="driver-icon">
+          <img
+            src="https://icons.veryicon.com/png/o/miscellaneous/icheyong/steering-wheel-14.png"
+            alt="Steering Wheel Icon"
+            width="36"
+            height="36"
+          />
+        </div>
+      </div>
 
-              <!-- Vertical Divider -->
-              <div class="vertical-divider"></div>
-
-              <!-- Right Column: Upper Deck -->
-              <div class="deck-column upper-deck">
-                <div class="deck-title">TẦNG TRÊN</div>
-                
-                <!-- Empty Driver Row for alignment -->
-                <div class="driver-row empty"></div>
-                
-                <!-- Seat Matrix -->
-                <div class="seat-matrix">
-                  <div
-                    v-for="row in seatModal.layout.slice(4)"
-                    :key="'upper-r' + row[0].id"
-                    class="seat-row"
-                  >
-                    <!-- Left Column -->
-                    <div class="seat-column">
-                      <div
-                        v-for="seat in row.slice(0, 2)"
-                        :key="seat.id"
-                        class="seat-btn"
-                        :class="{
-                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
-                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
-                          'seat-unavailable': !seat.available,
-                          'seat-booked': seat.booked
-                        }"
-                        @click="toggleSeat(seat)"
-                        :title="seat.label"
-                      >
-                        {{ seat.label }}
-                      </div>
-                    </div>
-                    
-                    <!-- Aisle -->
-                    <div class="aisle"></div>
-                    
-                    <!-- Right Column -->
-                    <div class="seat-column">
-                      <div
-                        v-for="seat in row.slice(2, 4)"
-                        :key="seat.id"
-                        class="seat-btn"
-                        :class="{
-                          'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
-                          'seat-selected': seatModal.seatsSelected.includes(seat.id),
-                          'seat-unavailable': !seat.available,
-                          'seat-booked': seat.booked
-                        }"
-                        @click="toggleSeat(seat)"
-                        :title="seat.label"
-                      >
-                        {{ seat.label }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <!-- Seat Matrix -->
+      <div class="seat-matrix">
+        <div
+          v-for="row in seatModal.layout.slice(0, 4)"
+          :key="'lower-r' + row[0].id"
+          class="seat-row"
+        >
+          <!-- Left Column -->
+          <div class="seat-column">
+            <div
+              v-for="seat in row.slice(0, 2)"
+              :key="seat.id"
+              class="seat-btn"
+              :class="{
+                'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                'seat-unavailable': !seat.available,
+                'seat-booked': seat.booked
+              }"
+              @click="toggleSeat(seat)"
+              :title="seat.label"
+            >
+              {{ seat.label }}
             </div>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <span class="me-2">Đã chọn:</span>
-              <strong>{{ seatModal.seatsSelected.length }}</strong>
-              <span class="ms-2 text-muted"
-                >Tổng:
-                {{
-                  formatPrice(
-                    (seatModal.trip?.price || 0) *
-                      seatModal.seatsSelected.length
-                  )
-                }}</span
-              >
-            </div>
-            <div class="d-flex gap-2">
-              <button
-                class="btn btn-outline-secondary"
-                @click="cancelSeatSelection"
-              >
-                Hủy
-              </button>
-              <button
-                class="btn btn-primary"
-                :disabled="seatModal.seatsSelected.length === 0"
-                @click="confirmSeats"
-              >
-                Tiếp tục thanh toán
-              </button>
+
+          <!-- Aisle -->
+          <div class="aisle"></div>
+
+          <!-- Right Column -->
+          <div class="seat-column">
+            <div
+              v-for="seat in row.slice(2, 4)"
+              :key="seat.id"
+              class="seat-btn"
+              :class="{
+                'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                'seat-unavailable': !seat.available,
+                'seat-booked': seat.booked
+              }"
+              @click="toggleSeat(seat)"
+              :title="seat.label"
+            >
+              {{ seat.label }}
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Vertical Divider -->
+    <div class="vertical-divider"></div>
+
+    <!-- Right Column: Upper Deck -->
+    <div class="deck-column upper-deck">
+      <div class="deck-title">TẦNG TRÊN</div>
+
+      <!-- Empty Driver Row for alignment -->
+      <div class="driver-row empty"></div>
+
+      <!-- Seat Matrix -->
+      <div class="seat-matrix">
+        <div
+          v-for="row in seatModal.layout.slice(4)"
+          :key="'upper-r' + row[0].id"
+          class="seat-row"
+        >
+          <!-- Left Column -->
+          <div class="seat-column">
+            <div
+              v-for="seat in row.slice(0, 2)"
+              :key="seat.id"
+              class="seat-btn"
+              :class="{
+                'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                'seat-unavailable': !seat.available,
+                'seat-booked': seat.booked
+              }"
+              @click="toggleSeat(seat)"
+              :title="seat.label"
+            >
+              {{ seat.label }}
+            </div>
+          </div>
+
+          <!-- Aisle -->
+          <div class="aisle"></div>
+
+          <!-- Right Column -->
+          <div class="seat-column">
+            <div
+              v-for="seat in row.slice(2, 4)"
+              :key="seat.id"
+              class="seat-btn"
+              :class="{
+                'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+                'seat-selected': seatModal.seatsSelected.includes(seat.id),
+                'seat-unavailable': !seat.available,
+                'seat-booked': seat.booked
+              }"
+              @click="toggleSeat(seat)"
+              :title="seat.label"
+            >
+              {{ seat.label }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🚆 Layout cho Tàu hỏa -->
+<div
+  v-else-if="seatModal.trip?.vehicleType === 'Tàu hỏa'"
+  class="train-seat-container"
+>
+ 
+
+  <!-- Toa hiện tại -->
+  <div class="train-car mt-3">
+    <div class="train-car-title text-primary fw-bold mb-2">
+      Toa {{ activeCar + 1 }}A: Ngồi mềm
+    </div>
+    <p class="text-muted small mb-3">
+      Giá hiển thị trên ghế là giá vé cho 1 người lớn.
+    </p>
+
+    <!-- Khối hiển thị ghế -->
+    <div class="train-layout">
+      <!-- Mũi tên trái -->
+      <div class="arrow-btn left" @click="activeCar = Math.max(0, activeCar - 1)">
+        ‹
+      </div>
+
+      <div class="train-seats">
+        <!-- Hàng trên -->
+        <div class="seat-row" v-for="row in 1" :key="'upper-'+row">
+          <div
+            v-for="seat in 8"
+            :key="'upper-seat-'+row+'-'+seat"
+            class="train-seat"
+            :class="{ selected: seatModal.seatsSelected.includes(`T${activeCar}-${row}-${seat}`) }"
+            @click="toggleTrainSeat(`T${activeCar}-${row}-${seat}`)"
+          >
+            <span class="seat-number">{{ (row - 1) * 8 + seat }}</span>
+            <div class="seat-price">155K</div>
+          </div>
+        </div>
+
+        <div class="hallway">H À N H &nbsp; L A N G</div>
+
+        <!-- Hàng dưới -->
+        <div class="seat-row" v-for="row in 1" :key="'lower-'+row">
+          <div
+            v-for="seat in 8"
+            :key="'lower-seat-'+row+'-'+seat"
+            class="train-seat"
+            :class="{ selected: seatModal.seatsSelected.includes(`B${activeCar}-${row}-${seat}`) }"
+            @click="toggleTrainSeat(`B${activeCar}-${row}-${seat}`)"
+          >
+            <span class="seat-number">{{ (row - 1) * 8 + seat + 32 }}</span>
+            <div class="seat-price">155K</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mũi tên phải -->
+      <div class="arrow-btn right" @click="activeCar = Math.min(totalCars - 1, activeCar + 1)">
+        ›
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ✈️ Layout cho Máy bay -->
+<div
+  v-else-if="seatModal.trip?.vehicleType === 'Máy bay'"
+  class="plane-seat-container"
+>
+  <div class="plane-header text-center mb-3">
+    
+    <p class="text-muted small mb-0">Chọn ghế ngồi mong muốn của bạn</p>
+  </div>
+
+  <div class="plane-layout">
+    <div class="plane-wrapper">
+      <!-- ✅ Phần ghế -->
+      <div class="plane-seats">
+        <!-- Hàng A–C (bên trái hành lang) -->
+        <div
+          v-for="rowLabel in ['A','B','C']"
+          :key="'top-'+rowLabel"
+          class="seat-row"
+        >
+          <div
+            v-for="col in 12"
+            :key="rowLabel + col"
+            class="plane-seat"
+            :class="{
+              selected: seatModal.seatsSelected.includes(rowLabel + col)
+            }"
+            @click="togglePlaneSeat(rowLabel + col)"
+          >
+            {{ rowLabel + col }}
+          </div>
+        </div>
+
+        <!-- ✅ Hành lang -->
+        <div class="hallway">
+          H &nbsp;À&nbsp; N &nbsp;H &nbsp;L &nbsp;A &nbsp;N &nbsp;G
+        </div>
+
+        <!-- Hàng D–F (bên phải hành lang) -->
+        <div
+          v-for="rowLabel in ['D','E','F']"
+          :key="'bot-'+rowLabel"
+          class="seat-row"
+        >
+          <div
+            v-for="col in 12"
+            :key="rowLabel + col"
+            class="plane-seat"
+            :class="{
+              selected: seatModal.seatsSelected.includes(rowLabel + col)
+            }"
+            @click="togglePlaneSeat(rowLabel + col)"
+          >
+            {{ rowLabel + col }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="d-flex justify-content-between align-items-center">
+  <div>
+    <span class="me-2">Đã chọn:</span>
+    <strong>{{ seatModal.seatsSelected.length }}</strong>
+    <span class="ms-2 text-muted">
+      Tổng:
+      {{
+        formatPrice(
+          (seatModal.trip?.price || 0) *
+            seatModal.seatsSelected.length
+        )
+      }}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    <button
+      class="btn btn-outline-secondary"
+      @click="cancelSeatSelection"
+    >
+      Hủy
+    </button>
+    <button
+      class="btn btn-primary"
+      :disabled="seatModal.seatsSelected.length === 0"
+      @click="confirmSeats"
+    >
+      Tiếp tục thanh toán
+    </button>
+  </div>
+</div>
+
+
+        </div>
+      </div>
+    </div>
+
+   
+    
     <!-- Search Results Section -->
     <section v-if="showResults" class="results-section py-5">
       <div class="container">
@@ -590,54 +732,20 @@
       </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="features-section py-5">
-      <div class="container">
-        <div class="row text-center mb-5">
-          <div class="col-12">
-            <h2 class="section-title">Tại sao chọn DKMN?</h2>
-            <p class="section-subtitle">
-              Những lý do khiến DKMN trở thành lựa chọn hàng đầu
-            </p>
-          </div>
-        </div>
-        <div class="row g-4">
-          <div class="col-md-4">
-            <div class="feature-card">
-              <div class="feature-icon">
-                <i class="bx bx-search-alt"></i>
-              </div>
-              <h4>Tìm kiếm thông minh</h4>
-              <p>Tìm chuyến đi phù hợp với nhiều bộ lọc và tùy chọn sắp xếp</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="feature-card">
-              <div class="feature-icon">
-                <i class="bx bx-shield-check"></i>
-              </div>
-              <h4>Đặt vé an toàn</h4>
-              <p>Hệ thống thanh toán bảo mật và chính sách hủy/đổi linh hoạt</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="feature-card">
-              <div class="feature-icon">
-                <i class="bx bx-support"></i>
-              </div>
-              <h4>Hỗ trợ 24/7</h4>
-              <p>Đội ngũ chăm sóc khách hàng luôn sẵn sàng hỗ trợ bạn</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <FeaturesSection />
   </div>
 </template>
 
 <script>
+
+
+import FeaturesSection from "./FeaturesSection.vue";
+
 export default {
   name: "TrangChu",
+  components: {
+    FeaturesSection,
+  },
   data() {
     return {
       cities: [
@@ -893,6 +1001,8 @@ export default {
         seatsSelected: [],
         layout: [],
       },
+      activeCar: 0,       // 👉 toa hiện tại
+    totalCars: 8, 
     };
   },
   computed: {
@@ -1046,6 +1156,7 @@ export default {
     },
   },
   methods: {
+   
     searchTrips() {
       if (!this.isSearchValid) return;
       this.trips = this.generateMockTrips();
@@ -1243,34 +1354,83 @@ export default {
         this.seatModal.seatsSelected.push(seat.id);
       }
     },
+
+    toggleTrainSeat(seatId) {
+  const idx = this.seatModal.seatsSelected.indexOf(seatId);
+  if (idx >= 0) {
+    this.seatModal.seatsSelected.splice(idx, 1);
+  } else {
+    if (this.seatModal.seatsSelected.length >= this.maxSelectableSeats) return;
+    this.seatModal.seatsSelected.push(seatId);
+  }
+},
+
+togglePlaneSeat(seatCode) {
+  const idx = this.seatModal.seatsSelected.indexOf(seatCode);
+  if (idx >= 0) {
+    this.seatModal.seatsSelected.splice(idx, 1);
+  } else {
+    if (this.seatModal.seatsSelected.length >= this.maxSelectableSeats) return;
+    this.seatModal.seatsSelected.push(seatCode);
+  }
+},
+
     cancelSeatSelection() {
       this.seatModal.visible = false;
       this.seatModal.trip = null;
       this.seatModal.seatsSelected = [];
     },
-    confirmSeats() {
-      const selectedCount = this.seatModal.seatsSelected.length;
-      if (selectedCount === 0) return;
-      const trip = this.seatModal.trip;
-      const total = trip.price * selectedCount;
-      const seatsParam = this.seatModal.seatsSelected.join(",");
-      this.cancelSeatSelection();
-      this.$router.push({
-        path: "/client-thanh-toan",
-        query: {
-          total: String(total),
-          tripId: String(trip.id),
-          seats: seatsParam,
-          passengers: String(this.passengerCount),
-          from: this.searchForm.from,
-          to: this.searchForm.to,
-          date: this.searchForm.departureDate,
-          pickupStation: this.searchForm.pickupStation || "",
-          dropoffStation: this.searchForm.dropoffStation || "",
-          company: this.searchForm.company || "",
-        },
-      });
-    },
+  confirmSeats() {
+  const selectedCount = (this.seatModal?.seatsSelected || []).length;
+  if (selectedCount === 0) {
+    alert("Vui lòng chọn ghế trước khi tiếp tục thanh toán.");
+    return;
+  }
+
+  const trip = this.seatModal.trip || {};
+  const price = Number(trip.price || 0);
+  const total = price * selectedCount;
+ const formattedSeats = (this.seatModal.seatsSelected || []).map(code => {
+  if (this.seatModal.trip?.vehicleType === 'Tàu hỏa' && typeof code === 'string' && code.includes('-')) {
+    // Xóa ký tự chữ cái (T hoặc B) ở đầu, ví dụ: T0-1-3 → 0-1-3
+    const cleanCode = code.replace(/^[A-Za-z]/, '');
+    const [car, row, seat] = cleanCode.split('-').map(Number);
+    const seatNumber = (row - 1) * 8 + seat;
+    return `Toa ${car + 1} - Ghế ${seatNumber}`;
+  }
+  return code;
+});
+const seatsParam = formattedSeats.join(",");
+
+
+  // Đóng modal chọn ghế
+  this.cancelSeatSelection();
+
+  // Chuyển hướng sang trang thanh toán với đầy đủ thông tin
+  this.$router
+    .push({
+      path: "/client-thanh-toan",
+      query: {
+        total: String(total),
+        tripId: String(trip.id || ""),
+        seats: seatsParam,
+        passengers: String(this.passengerCount || selectedCount),
+        from: this.searchForm?.from || "",
+        to: this.searchForm?.to || "",
+        date: this.searchForm?.departureDate || "",
+        pickupStation: this.searchForm?.pickupStation || "",
+        dropoffStation: this.searchForm?.dropoffStation || "",
+        company: trip.company || "",
+        vehicleType: trip.vehicleType || "",
+        departureTime: trip.departureTime || "",
+        arrivalTime: trip.arrivalTime || "",
+        seatType: trip.seatType || ""
+      }
+    })
+    .catch(() => {
+      /* ignore navigation duplicate errors */
+    });
+},
     checkAuthStatus() {
       // Kiểm tra trạng thái đăng nhập từ localStorage
       const token = localStorage.getItem("token");
@@ -1305,295 +1465,9 @@ export default {
 };
 </script>
 
-
 <style>
-/* 🔹 Modal nhanh khi chọn ghế (nền tối và khung pop-up) */
-.seat-modal-backdrop {
-  position: fixed;
-  inset: 0; /* phủ toàn màn hình */
-  background: rgba(0, 0, 0, 0.5); /* nền mờ đen */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050; /* nổi lên trên cùng */
-}
-.seat-modal {
-  background: #fff;
-  width: 100%;
-  max-width: 500px;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); /* đổ bóng modal */
-}
-
-/* 🔹 Khung tổng thể chứa sơ đồ ghế */
-.bus-seat-container {
-  background: #f8f9fa;
-  border: 1px solid #E0E0E0;
-  border-radius: 1px;
-  padding: 12px;
-  margin: 0 auto;
-  width: 100%;
-  max-width: 450px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  position: relative;
-}
 
 
-/* 🔹 Ghi chú chú thích trạng thái ghế */
-.seat-legend {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 8px;
-  background: #fff;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 8px;
-}
 
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #495057;
-}
-
-.legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-/* 🔸 Màu chú thích từng trạng thái ghế */
-.legend-color.seat-empty { background: #FFFFFF; border-color: #CCCCCC; }
-.legend-color.seat-selected { background: #28A745; border-color: #28A745; }
-.legend-color.seat-booked { background: #DC3545; border-color: #DC3545; }
-.legend-color.seat-unavailable { background: #ADB5BD; border-color: #ADB5BD; }
-
-/* 🔹 Bố cục chia 2 tầng (2 cột trái – phải) */
-.two-column-layout {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr; /* tầng trái - đường giữa - tầng phải */
-  gap: 16px;
-  align-items: start;
-}
-
-/* 🔹 Khối tầng (deck) */
-.deck-column {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e9ecef;
-  position: relative;
-}
-
-/* Thanh màu trên cùng của mỗi tầng */
-.deck-column::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 10px 10px 0 0;
-}
-
-/* Màu đại diện cho tầng dưới và tầng trên */
-.lower-deck::before { background: linear-gradient(90deg, #0056d2 0%, #007bff 100%); }
-.upper-deck::before { background: linear-gradient(90deg, #28a745 0%, #20c997 100%); }
-
-/* 🔹 Tiêu đề tầng */
-.deck-title {
-  text-align: center;
-  font-weight: bold;
-  font-size: 12px;
-  color: #333;
-  margin-bottom: 8px;
-  padding: 6px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border: 1px solid #e9ecef;
-  margin-top: 4px;
-}
-
-/* 🔹 Hàng tài xế */
-.driver-row {
-  display: flex;
-  justify-content: left;
-  margin-bottom: 8px;
-  height: 32px;
-}
-.driver-row.empty { visibility: hidden; }
-
-.driver-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, #020407 0%, #bfc1c4 100%);
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 86, 210, 0.3);
-  border: 2px solid #fff;
-}
-.driver-icon i {
-  font-size: 16px;
-  color: #fff;
-}
-
-/* 🔹 Đường phân chia dọc giữa 2 tầng */
-.vertical-divider {
-  width: 1px;
-  background: #E5E5E5;
-  height: 100%;
-  min-height: 200px;
-}
-
-/* 🔹 Bố cục hàng ghế */
-.seat-matrix {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Mỗi hàng gồm 2 cột ghế và 1 lối đi */
-.seat-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 44px;
-  align-items: center;
-}
-
-/* Cột ghế (trái hoặc phải) */
-.seat-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-/* 🔹 Lối đi giữa các hàng ghế */
-.aisle {
-  width: 20px;
-  height: 100%;
-  background: #f8f9fa;
-  border-radius: 2px;
-  border: 1px dashed #dee2e6;
-  position: relative;
-}
-.aisle::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1px;
-  height: 80%;
-  background: #dee2e6;
-}
-
-/* 🔹 Nút ghế (Seat Button) */
-.seat-btn {
-  width: 32px;
-  height: 42px;
-  border-radius: 6px;
-  border: 2px solid #CCCCCC;
-  background: #FFFFFF;
-  cursor: pointer;
-  user-select: none;
-  color: #333;
-  font-weight: 600;
-  font-size: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Hiệu ứng khi rê chuột */
-.seat-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-}
-
-/* 🔹 Trạng thái từng loại ghế */
-.seat-empty { background: #FFFFFF; border-color: #CCCCCC; color: #333; }
-.seat-empty:hover { border-color: #00d23f; box-shadow: 0 6px 20px rgba(0, 86, 210, 0.2); }
-
-.seat-selected {
-  background: #28a745;
-  border-color: #28a745;
-  color: #fff;
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 86, 210, 0.4);
-  animation: seatPulse 0.6s ease-in-out;
-}
-
-.seat-unavailable {
-  background: #ADB5BD;
-  border-color: #ADB5BD;
-  color: #fff;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.seat-booked {
-  background: #DC3545;
-  border-color: #DC3545;
-  color: #fff;
-  cursor: not-allowed;
-  opacity: 0.8;
-}
-
-.seat-unavailable:hover,
-.seat-booked:hover {
-  transform: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 🔹 Hiệu ứng chuyển động khi chọn ghế */
-@keyframes seatPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1.05); }
-}
-
-/* 🔹 Hiệu ứng nhấn khi click chọn ghế */
-.seat-btn { animation: seatClick 0.2s ease-in-out; }
-@keyframes seatClick {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-/* 🔹 Hiệu ứng riêng cho ghế được chọn */
-.seat-selected { animation: seatSelected 0.2s ease-in-out; }
-@keyframes seatSelected {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1.05); }
-}
-
-/* 🔹 Giao diện responsive cho điện thoại */
-@media (max-width: 768px) {
-  .seat-modal { max-width: 95vw; margin: 10px; }
-  .two-column-layout { grid-template-columns: 1fr; gap: 12px; }
-  .vertical-divider { display: none; }
-  .bus-seat-container { padding: 16px; max-width: 100%; }
-  .seat-btn { width: 32px; height: 42px; font-size: 10px; }
-  .aisle { width: 10px; }
-  .driver-icon { width: 32px; height: 32px; }
-  .driver-icon i { font-size: 16px; }
-  .seat-legend { gap: 12px; padding: 8px; }
-  .legend-item { font-size: 11px; }
-  .legend-color { width: 14px; height: 14px; }
-}
 
 </style>

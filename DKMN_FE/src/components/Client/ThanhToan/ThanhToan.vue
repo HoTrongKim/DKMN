@@ -186,7 +186,7 @@
               <div v-else class="qr-code">
                 <img
                   v-if="selectedGateway === 'momo'"
-                  src="https://img.vietqr.io/image/MOMO-0366818392-compact.png?amount=150000&addInfo=Thanh+toan+ve+DKMN"
+                  src="./scr/assets/images/qrmomo.png"
                   alt="QR Momo 0366818392"
                   width="280"
                 />
@@ -246,6 +246,31 @@
         </div>
       </div>
     </div>
+
+    <!-- ✅ Modal Thanh toán sau -->
+    <div v-if="laterModal.visible" class="qr-modal-backdrop" @click="closeLaterModal">
+      <div class="qr-modal" @click.stop>
+        <div class="qr-modal-header">
+          <h5 class="mb-0">Xác nhận thanh toán sau</h5>
+          <button class="btn-close" @click="closeLaterModal"></button>
+        </div>
+
+        <div class="qr-modal-body text-center">
+          <i class="bx bx-time-five text-success fs-1 mb-3"></i>
+          <p class="mb-3">
+            Bạn đã chọn hình thức <strong>Thanh toán sau</strong>.<br />
+            Vui lòng hoàn tất thanh toán khi nhận vé hoặc tại quầy của nhà xe.
+          </p>
+          <p class="text-muted small">
+            Nhân viên DKMN sẽ liên hệ để xác nhận đơn hàng của bạn.
+          </p>
+        </div>
+
+        <div class="qr-modal-footer text-end">
+          <button class="btn btn-primary btn-sm" @click="closeLaterModal">Đã hiểu</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -279,6 +304,9 @@ export default {
         statusText: "Đang chờ thanh toán",
         statusClass: "bg-warning text-dark",
         isChecking: false,
+      },
+      laterModal: { // ✅ thêm modal cho thanh toán sau
+        visible: false,
       },
     };
   },
@@ -333,7 +361,10 @@ export default {
     },
     payLater() {
       this.setStatus("success", "Thanh toán sau", "Khách sẽ thanh toán khi nhận vé", 100, false);
-      alert("Bạn đã chọn hình thức Thanh toán sau!");
+      this.laterModal.visible = true; // ✅ mở modal thay vì alert
+    },
+    closeLaterModal() {
+      this.laterModal.visible = false;
     },
     resetSelection() {
       this.selectedGateway = "momo";
