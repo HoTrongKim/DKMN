@@ -396,6 +396,26 @@
       },
       methods: {
         // ✅ Lấy thông tin từ query router
+        saveTicketToLocal(paymentId) {
+          const ticket = {
+            paymentId: paymentId || ("PM_" + Math.random().toString(36).slice(2)),
+            gateway: this.selectedGateway,
+            total: this.total,
+            createdAt: Date.now(),
+            from: this.fromCity,
+            to: this.toCity,
+            date: this.travelDate,
+            passengers: this.passengers,
+            seats: this.selectedSeats,
+            pickupStation: this.pickupStation,
+            dropoffStation: this.dropoffStation,
+            company: this.company,
+            tripId: this.$route.query.tripId || "TRIP_" + Math.random().toString(36).slice(2) // 🔹 thêm dòng này
+          };
+          localStorage.setItem("dkmn:lastTicket", JSON.stringify(ticket));
+        },
+        
+
         loadFromQuery() {
           const q = this.$route.query;
           this.fromCity = q.from || "";
@@ -446,6 +466,9 @@
               false
             );
             this.laterModal.visible = true;
+            this.saveTicketToLocal(this.qrModal.paymentId);
+            this.$router.push("/client-ve-da-dat");
+
             return;
           }
 
@@ -472,7 +495,7 @@
         },
 
         // ✅ Giả lập kiểm tra thanh toán thành công
-        async checkPaymentStatus() {
+       async checkPaymentStatus() {
           this.qrModal.isChecking = true;
           await new Promise((r) => setTimeout(r, 1000));
           this.qrModal.statusText = "Thanh toán thành công";
@@ -485,11 +508,10 @@
             false
           );
           this.qrModal.isChecking = false;
-        },
 
-        resetSelection() {
-          this.selectedGateway = "momo";
-          this.setStatus("idle", "Chưa thanh toán", "", 0, false);
+          // 🔹 Lưu vé đã thanh toán
+          this.saveTicketToLocal(this.qrModal.paymentId);
+          this.$router.push("/client-ve-da-dat");
         },
       },
 

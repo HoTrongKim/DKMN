@@ -1,4 +1,4 @@
-/<template>
+<template>
   <div class="container py-4">
     <div class="row justify-content-center">
       <div class="col-lg-8">
@@ -7,12 +7,15 @@
             <h5 class="mb-0">Vé đã đặt</h5>
             <span class="badge bg-success" v-if="ticket">Thành công</span>
           </div>
+
           <div class="card-body">
+            <!-- ⚪ Khi chưa có vé -->
             <div v-if="!ticket" class="text-center py-4">
               <div class="mb-2">Chưa có vé nào được lưu.</div>
               <router-link class="btn btn-primary" to="/TrangChu">Đặt vé ngay</router-link>
             </div>
 
+            <!-- 🟢 Khi có vé -->
             <div v-else>
               <ul class="list-group list-group-flush mb-3">
                 <li class="list-group-item" v-if="ticket.from || ticket.to">
@@ -62,17 +65,40 @@
                 <li class="list-group-item d-flex justify-content-between"><span>Ngày giờ</span><strong>{{ formatTime(ticket.createdAt) }}</strong></li>
               </ul>
 
+              <!-- 🔘 Các nút hành động -->
               <div class="d-flex gap-2">
                 <router-link to="/TrangChu" class="btn btn-outline-secondary">Về trang chủ</router-link>
                 <button class="btn btn-danger" @click="clearTicket">Xóa vé đã lưu</button>
-                <button v-if="canRate && ticket?.tripId" class="btn btn-primary" @click="goRate">Đánh giá</button>
+                <button
+                  class="btn btn-primary"
+                  :disabled="!canRate"
+                  v-if="ticket?.tripId"
+                  @click="goRate"
+                >
+                  Đánh giá
+                    </button>
+                  </div>
+              </div>
+
+              <!-- ⚠️ Alert cảnh báo -->
+              <div
+                v-if="notice.visible"
+                class="alert alert-warning position-fixed bottom-0 start-0 m-3 shadow-sm d-flex align-items-center gap-2"
+                role="alert"
+              >
+                <i class="bx bx-info-circle fs-5"></i>
+                <span>{{ notice.text }}</span>
+                <button
+                  type="button"
+                  class="btn-close ms-auto"
+                  @click="notice.visible = false"
+                ></button>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script>
@@ -81,30 +107,20 @@ export default {
   data() {
     return {
       ticket: null,
-      ratingsIndex: {}
+      ratingsIndex: {},
+      notice: { visible: false, text: '' } // ⚠️ Alert hiện thông báo
     }
   },
   computed: {
     canRate() {
-      if (!this.ticket) return false
-      const dateStr = this.ticket.date
-      if (!dateStr) return false
-      const endOfTrip = (() => {
-        try {
-          const [y, m, d] = String(dateStr).split('-').map(n => parseInt(n, 10))
-          if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
-            const dt = new Date(y, (m - 1), d, 23, 59, 59, 999)
-            return dt.getTime()
-          }
-        } catch (e) {}
-        const t = Date.parse(dateStr)
-        return isNaN(t) ? 0 : (t + 24 * 60 * 60 * 1000 - 1)
-      })()
-      const now = Date.now()
-      const finished = now > endOfTrip
-      const alreadyRated = this.ticket?.tripId ? !!this.ratingsIndex[String(this.ticket.tripId)] : false
-      return finished && !alreadyRated
-    }
+      if (!this.ticket) return false;
+      const status = this.ticket.tripStatus;
+      const alreadyRated = this.ticket?.tripId
+        ? !!this.ratingsIndex[String(this.ticket.tripId)]
+        : false;
+      // 🔹 Chỉ được đánh giá khi admin đã xác nhận hoàn thành
+      return status === "completed" && !alreadyRated;
+    },
   },
   methods: {
     formatCurrency(value) {
@@ -133,8 +149,28 @@ export default {
         this.ratingsIndex = {}
       }
     },
+
+    // 🟢 Admin xác nhận hoàn thành vé
+    confirmByAdmin() {
+      if (!this.ticket) return;
+      this.ticket.tripStatus = "completed";
+      localStorage.setItem("dkmn:lastTicket", JSON.stringify(this.ticket));
+      this.notice.text = "✅ Admin đã xác nhận chuyến đi hoàn thành!";
+      this.notice.visible = false;
+    },
+
+    // 🟠 Chuyển đến trang đánh giá
     goRate() {
-      if (!this.ticket?.tripId) return
+      if (!this.ticket?.tripId) return;
+
+      // 🔹 Nếu admin chưa xác nhận thì cảnh báo
+      if (this.ticket.tripStatus !== "completed") {
+        this.notice.text = "⚠️ Chuyến đi chưa được admin xác nhận hoàn thành, bạn chưa thể đánh giá!";
+        this.notice.visible = true;
+        return;
+      }
+
+      // ✅ Nếu đã hoàn thành -> cho phép đánh giá
       this.$router.push({
         path: '/client-danh-gia',
         query: {
@@ -143,11 +179,11 @@ export default {
           to: this.ticket.to || '',
           date: this.ticket.date || ''
         }
-      })
+      });
     }
   },
   mounted() {
-    // Accept inline ticket via route query (fallback to storage)
+    // Lấy dữ liệu vé từ query hoặc localStorage
     const q = this.$route?.query || {}
     if (q && (q.paymentId || q.total)) {
       const inline = {
@@ -163,23 +199,37 @@ export default {
         passengers: q.passengers ? String(q.passengers) : '',
         pickupStation: q.pickupStation ? String(q.pickupStation) : '',
         dropoffStation: q.dropoffStation ? String(q.dropoffStation) : '',
-        company: q.company ? String(q.company) : ''
+        company: q.company ? String(q.company) : '',
+        tripStatus: q.tripStatus || 'pending'
       }
       this.ticket = inline
       return
     }
+
     try {
       const raw = localStorage.getItem('dkmn:lastTicket')
       if (raw) this.ticket = JSON.parse(raw)
     } catch (e) {
       this.ticket = null
     }
+
     this.loadRatingsIndex()
   }
 }
 </script>
 
 <style>
-
+.alert {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
-
