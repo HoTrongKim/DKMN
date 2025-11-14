@@ -1,0 +1,467 @@
+<template>
+  <div class="admin-dashboard">
+    <div class="card p-4 shadow-sm position-relative">
+      <div class="header-bar d-flex align-items-center justify-content-between mb-3">
+        <h4 class="page-title m-0 text-dark">
+          <i class="fas fa-chart-line me-2"></i> Bảng điều khiển
+        </h4>
+        <div class="d-flex align-items-center gap-2">
+          <small class="text-muted" v-if="lastUpdated">Cập nhật: {{ formatDate(lastUpdated) }}</small>
+          <button class="btn btn-light btn-sm" @click="loadDashboard" :disabled="loading">
+            <i class="fas fa-rotate me-1"></i> Làm mới
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="icon-box"><i class="fas fa-ticket-alt"></i></div>
+          <div class="info">
+            <h5>Vé bán hôm nay</h5>
+            <p>{{ formatNumber(summary.ticketsToday) }}</p>
+            <small>so với hôm qua: <span :class="trendClass(summary.ticketsTodayDelta)">
+              {{ formatTrend(summary.ticketsTodayDelta) }}
+            </span></small>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="icon-box"><i class="fas fa-sack-dollar"></i></div>
+          <div class="info">
+            <h5>Doanh thu hôm nay</h5>
+            <p>{{ formatCurrency(summary.revenueToday) }}</p>
+            <small>Δ {{ formatTrend(summary.revenueTodayDelta) }}</small>
+          </div>
+        </div>
+        <div class="stat-card purple">
+          <div class="icon-box"><i class="fas fa-user-plus"></i></div>
+          <div class="info">
+            <h5>Khách mới (7 ngày)</h5>
+            <p>{{ formatNumber(summary.newCustomers) }}</p>
+            <small>Tổng khách: {{ formatNumber(counters.customers) }}</small>
+          </div>
+        </div>
+        <div class="stat-card orange">
+          <div class="icon-box"><i class="fas fa-star"></i></div>
+          <div class="info">
+            <h5>Điểm đánh giá TB</h5>
+            <p>{{ (summary.ratingScore || 0).toFixed(1) }}</p>
+            <small>Trên {{ summary.ratingBase || 5 }} điểm</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-content">
+        <div class="chart-box flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Doanh thu 6 tháng gần nhất</h5>
+          </div>
+          <div v-if="monthlyRevenue.length" class="revenue-list">
+            <div class="revenue-row" v-for="item in monthlyRevenue" :key="item.month">
+              <div class="revenue-label">
+                <strong>{{ formatMonth(item.month) }}</strong>
+                <span>{{ formatCurrency(item.total) }}</span>
+              </div>
+              <div class="revenue-bar">
+                <span
+                  class="revenue-bar-inner"
+                  :style="{ width: computeRevenueWidth(item.total) }"
+                ></span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-box">Chưa có dữ liệu hiển thị</div>
+        </div>
+        <div class="activity-box">
+          <h5><i class="fas fa-clock me-2"></i> Hoạt động gần đây</h5>
+          <ul v-if="recentOrders.length" class="activity-list">
+            <li v-for="order in recentOrders" :key="order.id">
+              <div class="order-title">
+                <div>
+                  <strong>#{{ order.code }}</strong>
+                  <span class="badge status-badge">{{ mapStatus(order.status) }}</span>
+                </div>
+                <span>{{ formatCurrency(order.total) }}</span>
+              </div>
+              <div class="order-meta">
+                <span><i class="bx bx-user"></i> {{ order.customer }}</span>
+                <span><i class="bx bx-time-five"></i> {{ formatDate(order.createdAt) }}</span>
+              </div>
+            </li>
+          </ul>
+          <div v-else class="empty-box">Chưa có dữ liệu hiển thị</div>
+
+          <div class="top-routes" v-if="topRoutes.length">
+            <h6 class="mt-4 mb-2"><i class="fas fa-route me-1"></i> Tuyến được đặt nhiều</h6>
+            <ul>
+              <li v-for="route in topRoutes" :key="route.route">
+                <span>{{ route.route }}</span>
+                <strong>{{ route.total }}</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+      <div v-if="loading" class="loading-overlay">
+        <div class="spinner-border text-primary" role="status"></div>
+        <span class="ms-2">Đang tải dữ liệu...</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import api from '../../../services/api'
+
+const summary = ref({
+  ticketsToday: 0,
+  revenueToday: 0,
+  newCustomers: 0,
+  ratingScore: 0,
+  ticketsTodayDelta: 0,
+  revenueTodayDelta: 0,
+  ratingBase: 5,
+})
+const counters = ref({
+  trips: 0,
+  orders: 0,
+  customers: 0,
+  revenue: 0,
+})
+const monthlyRevenue = ref([])
+const recentOrders = ref([])
+const topRoutes = ref([])
+const loading = ref(false)
+const errorMessage = ref('')
+const lastUpdated = ref(null)
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
+const formatNumber = (value) => Number(value || 0).toLocaleString('vi-VN')
+const formatDate = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—')
+const formatMonth = (value) => {
+  if (!value) return '—'
+  const [year, month] = value.split('-')
+  return `${month}/${year}`
+}
+const computeRevenueWidth = (value) => {
+  const max = Math.max(...monthlyRevenue.value.map((item) => item.total), 1)
+  return `${Math.round((value / max) * 100)}%`
+}
+const formatTrend = (value) => {
+  const number = Number(value || 0)
+  if (number === 0) return '—'
+  return `${number > 0 ? '+' : ''}${formatNumber(number)}`
+}
+const trendClass = (value) => ({
+  'text-success': value > 0,
+  'text-danger': value < 0,
+})
+const mapStatus = (status) => {
+  const dict = {
+    cho_xu_ly: 'Chờ xử lý',
+    da_xac_nhan: 'Đã xác nhận',
+    hoan_tat: 'Hoàn tất',
+    da_huy: 'Đã huỷ',
+  }
+  return dict[status] || 'Không rõ'
+}
+
+const loadDashboard = async () => {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    const { data } = await api.get('/admin/statistics/overview')
+    const payload = data?.data || {}
+    summary.value = {
+      ticketsToday: payload.summary?.ticketsToday || 0,
+      revenueToday: payload.summary?.revenueToday || 0,
+      newCustomers: payload.summary?.newCustomers || 0,
+      ratingScore: payload.summary?.ratingScore || 0,
+      ticketsTodayDelta: payload.summary?.ticketsTodayDelta || 0,
+      revenueTodayDelta: payload.summary?.revenueTodayDelta || 0,
+      ratingBase: payload.summary?.ratingBase || 5,
+    }
+    counters.value = {
+      trips: payload.counters?.trips || 0,
+      orders: payload.counters?.orders || 0,
+      customers: payload.counters?.customers || 0,
+      revenue: payload.counters?.revenue || 0,
+    }
+    monthlyRevenue.value = payload.monthlyRevenue || []
+    recentOrders.value = payload.recentOrders || []
+    topRoutes.value = payload.topRoutes || []
+    lastUpdated.value = new Date().toISOString()
+  } catch (error) {
+    errorMessage.value =
+      error.response?.data?.message ||
+      'Không thể tải dữ liệu bảng điều khiển. Vui lòng thử lại.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadDashboard)
+</script>
+
+<style scoped>
+:root {
+  --dk-primary: #007bff;
+  --dk-secondary: #6c757d;
+  --dk-light-bg: #fdfdfe;
+  --dk-gray-bg: #f9fbfd;
+  --dk-text-main: #212529;
+  --dk-border: #e9ecef;
+}
+
+.admin-dashboard {
+  padding: 0;
+  background: var(--dk-gray-bg);
+  min-height: 100vh;
+}
+
+.card {
+  border: 1px solid var(--dk-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  background: var(--dk-light-bg);
+  overflow: hidden;
+}
+
+.header-bar {
+  border-bottom: 1px solid var(--dk-border);
+  padding-bottom: 15px;
+  margin-bottom: 25px !important;
+}
+.page-title {
+  color: var(--dk-text-main);
+  font-weight: 700;
+  font-size: 1.75rem;
+}
+.page-title i {
+  color: var(--dk-primary);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+.stat-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--dk-border);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.stat-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+.icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  color: #fff;
+  flex-shrink: 0;
+  margin-right: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.stat-card.blue .icon-box {
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+.stat-card.green .icon-box {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+.stat-card.purple .icon-box {
+  background: linear-gradient(135deg, #6f42c1, #e83e8c);
+  box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+}
+.stat-card.orange .icon-box {
+  background: linear-gradient(135deg, #fd7e14, #ffc107);
+  box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4);
+}
+.info h5 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--dk-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.info p {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--dk-text-main);
+  margin: 0;
+}
+.stat-card.green .info p {
+  color: #28a745;
+}
+
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-top: 30px;
+}
+.chart-box,
+.activity-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--dk-border);
+  min-height: 260px;
+}
+.chart-box h5,
+.activity-box h5 {
+  color: var(--dk-text-main);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 15px;
+}
+.chart-box h5 i,
+.activity-box h5 i {
+  color: var(--dk-primary);
+}
+
+.empty-box {
+  border: 2px dashed #d9e2f3;
+  border-radius: 10px;
+  color: var(--dk-secondary);
+  text-align: center;
+  padding: 50px 0;
+  margin-top: 12px;
+  font-style: italic;
+  background: var(--dk-gray-bg);
+  transition: all 0.3s ease;
+}
+.empty-box:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background: #eef4f8;
+}
+
+.revenue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.revenue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf0f6;
+}
+.revenue-row:last-child {
+  border-bottom: none;
+}
+.revenue-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 110px;
+  font-size: 0.95rem;
+}
+.revenue-bar {
+  flex: 1;
+  background: #edf0f6;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+.revenue-bar-inner {
+  display: block;
+  height: 100%;
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.activity-list li {
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #e0e7f1;
+}
+.activity-list li:last-child {
+  border-bottom: none;
+}
+.order-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  gap: 8px;
+}
+.order-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+.order-meta i {
+  margin-right: 4px;
+}
+.status-badge {
+  background: rgba(0, 123, 255, 0.12);
+  color: #0053c0;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+}
+
+.top-routes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.top-routes li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  border-bottom: 1px dashed #e0e7f1;
+  padding-bottom: 6px;
+}
+.top-routes li:last-child {
+  border-bottom: none;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 992px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
