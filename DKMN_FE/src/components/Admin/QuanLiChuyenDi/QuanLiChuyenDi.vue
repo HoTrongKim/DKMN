@@ -2,7 +2,6 @@
   <div class="quan-ly-chuyen-di-page">
     <div class="page-container">
       <div class="card p-4 shadow-sm rounded-3">
-
         <!-- ===== HEADER ===== -->
         <div class="header-bar d-flex align-items-center justify-content-between flex-wrap mb-3">
           <h4 class="page-title m-0">

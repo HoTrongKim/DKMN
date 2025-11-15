@@ -8,7 +8,6 @@
             <i class="fas fa-file-invoice text-primary fs-5"></i>
             <h4 class="page-title m-0 text-dark">Quản Lý Đơn Hàng (Đặt Vé)</h4>
           </div>
-
           <div class="d-flex flex-wrap gap-2">
             <button
               class="btn btn-complete"

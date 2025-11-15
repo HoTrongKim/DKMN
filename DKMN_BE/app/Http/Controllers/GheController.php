@@ -14,7 +14,6 @@ class GheController extends Controller
     {
         return response()->json(['data' => Ghe::orderByDesc('ngay_tao')->get()]);
     }
-
     public function getByChuyenDi(ChuyenDi $chuyenDi)
     {
         TripSeatSynchronizer::sync($chuyenDi);

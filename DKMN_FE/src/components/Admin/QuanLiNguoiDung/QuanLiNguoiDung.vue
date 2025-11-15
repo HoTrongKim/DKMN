@@ -6,7 +6,6 @@
         <h4 class="page-title m-0">
           <i class="fas fa-users me-2"></i> Quản Lý Người Dùng
         </h4>
-
         <div class="action-bar d-flex flex-wrap gap-2">
           <button type="button" class="btn btn-grad-add" @click="openAdd">
             <i class="fas fa-user-plus me-1"></i> Thêm người dùng

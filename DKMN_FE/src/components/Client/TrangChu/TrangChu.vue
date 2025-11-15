@@ -1633,6 +1633,7 @@ export default {
         normalized.includes("máy")
       ) {
         return "plane";
+        
       }
       if (
         normalized.includes("bus") ||

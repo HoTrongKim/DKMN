@@ -19,7 +19,6 @@
         </button>
       </div>
     </div>
-
     <div class="row g-2 mb-3">
       <div class="col-md-4">
         <select class="form-select" v-model="filterRating">
