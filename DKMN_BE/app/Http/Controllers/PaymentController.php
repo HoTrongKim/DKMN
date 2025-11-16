@@ -6,6 +6,8 @@ use App\Models\Payment;
 use App\Models\Ticket;
 use App\Services\PaymentProviderFactory;
 use App\Services\PaymentService;
+use App\Services\TicketNotificationService;
+use App\Services\TicketHoldService;
 use App\Support\PriceNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +19,8 @@ class PaymentController extends Controller
 {
     public function __construct(
         private readonly PaymentProviderFactory $providerFactory,
-        private readonly PaymentService $paymentService
+        private readonly PaymentService $paymentService,
+        private readonly TicketNotificationService $ticketNotificationService
     ) {
     }
 
@@ -38,6 +41,13 @@ class PaymentController extends Controller
         $ticket = Ticket::with('donHang')->findOrFail($validated['ticketId']);
         if ($response = $this->guardTicketOwner($request, $ticket)) {
             return $response;
+        }
+        if (TicketHoldService::isExpired($ticket)) {
+            TicketHoldService::expireTicket($ticket);
+            return response()->json([
+                'status' => false,
+                'message' => 'Phiên giữ ghế đã hết hạn. Vui lòng đặt lại chuyến.',
+            ], 410);
         }
         $channel = $validated['channel'] ?? config('payments.default_provider', 'vietqr');
         $provider = $this->providerFactory->getProvider($channel);
@@ -174,7 +184,8 @@ class PaymentController extends Controller
             return $this->respondWithPayment($payment->fresh());
         }
 
-        DB::transaction(function () use ($payment, $idempotencyKey) {
+        $ticketForMail = null;
+        DB::transaction(function () use ($payment, $idempotencyKey, &$ticketForMail) {
             $payment->update([
                 'status' => Payment::STATUS_SUCCEEDED,
                 'paid_at' => now(),
@@ -184,8 +195,14 @@ class PaymentController extends Controller
             $ticket = $payment->ticket()->lockForUpdate()->first();
             if ($ticket) {
                 $this->paymentService->setAmountOnTicket($ticket, $payment->amount_vnd, $payment->id);
+                $ticketForMail = $ticket->fresh();
             }
         });
+
+        $payment->refresh();
+        if ($ticketForMail) {
+            $this->ticketNotificationService->sendTicketBookedMail($ticketForMail, $payment);
+        }
 
         return $this->respondWithPayment($payment->fresh());
     }
@@ -204,6 +221,13 @@ class PaymentController extends Controller
         if ($response = $this->guardTicketOwner($request, $ticket)) {
             return $response;
         }
+        if (TicketHoldService::isExpired($ticket)) {
+            TicketHoldService::expireTicket($ticket);
+            return response()->json([
+                'status' => false,
+                'message' => 'Phiên giữ ghế đã hết hạn. Vui lòng đặt lại chuyến.',
+            ], 410);
+        }
         $method = $this->normalizeMethod($validated['method'] ?? null);
 
         $existing = $ticket->payments()
@@ -219,7 +243,8 @@ class PaymentController extends Controller
         $fare = $this->paymentService->computeFare($ticket);
         $amount = (int) ($fare['totalAmount'] ?? config('payments.default_fare_vnd', 1200));
 
-        $payment = DB::transaction(function () use ($ticket, $amount, $validated, $method) {
+        $ticketForMail = null;
+        $payment = DB::transaction(function () use ($ticket, $amount, $validated, $method, &$ticketForMail) {
             $payment = Payment::create([
                 'ticket_id' => $ticket->id,
                 'method' => $method,
@@ -231,9 +256,14 @@ class PaymentController extends Controller
             ]);
 
             $this->paymentService->setAmountOnTicket($ticket, $payment->amount_vnd, $payment->id);
+            $ticketForMail = $ticket->fresh();
 
             return $payment->fresh();
         });
+
+        if ($ticketForMail) {
+            $this->ticketNotificationService->sendTicketBookedMail($ticketForMail, $payment);
+        }
 
         return $this->respondWithPayment($payment, 201);
     }

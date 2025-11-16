@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\ChuyenDi;
 use App\Models\Ghe;
+use App\Services\TicketHoldService;
 
 class TripSeatSynchronizer
 {
     public static function sync(ChuyenDi $trip): void
     {
         $trip->loadMissing('nhaVanHanh');
+        TicketHoldService::releaseExpiredForTrip($trip);
         $total = max(0, (int) ($trip->tong_ghe ?? 0));
         if ($total === 0) {
             return;
@@ -72,4 +74,3 @@ class TripSeatSynchronizer
         return sprintf('%s%d', $letter, $number);
     }
 }
-

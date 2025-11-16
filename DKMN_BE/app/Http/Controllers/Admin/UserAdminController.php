@@ -3,10 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DanhGia;
+use App\Models\DonHang;
+use App\Models\HuyVe;
 use App\Models\NguoiDung;
+use App\Models\NhatKyHoatDong;
+use App\Models\PhanHoi;
+use App\Models\ThongBao;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -153,8 +160,21 @@ class UserAdminController extends Controller
         }
 
         try {
-            $nguoiDung->delete();
+            DB::transaction(function () use ($nguoiDung) {
+                $userId = $nguoiDung->id;
+
+                DonHang::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
+                ThongBao::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
+                NhatKyHoatDong::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
+                PhanHoi::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
+                PhanHoi::where('nguoi_phu_trach', $userId)->update(['nguoi_phu_trach' => null]);
+                HuyVe::where('nguoi_xu_ly', $userId)->update(['nguoi_xu_ly' => null]);
+                DanhGia::where('nguoi_dung_id', $userId)->delete();
+
+                $nguoiDung->delete();
+            });
         } catch (\Throwable $exception) {
+            report($exception);
             return response()->json([
                 'status' => false,
                 'message' => 'Khong the xoa nguoi dung do dang duoc su dung o khu vuc khac.',

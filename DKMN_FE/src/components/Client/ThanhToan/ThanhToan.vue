@@ -211,6 +211,20 @@
                   <div v-if="status.detail" class="small text-muted mt-2">
                     {{ status.detail }}
                   </div>
+                  <div
+                    v-if="holdDeadline"
+                    class="alert hold-countdown mt-3"
+                    :class="isHoldExpired ? 'alert-danger' : 'alert-warning'"
+                  >
+                    <i class="bx bx-time-five me-2"></i>
+                    <span v-if="!isHoldExpired">
+                      Vui lòng thanh toán trong
+                      <strong>{{ holdCountdownText }}</strong>
+                    </span>
+                    <span v-else>
+                      Phiên giữ ghế đã hết thời gian. Hãy chọn lại chuyến để tiếp tục.
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -370,6 +384,7 @@ const TRIP_SEATS_ENDPOINT = (id) => `/dkmn/chuyen-di/${id}/ghe`;
 const LEGACY_TICKET_KEY = "dkmn:lastTicket";
 const TICKET_STORE_KEY = "dkmn:tickets";
 const USER_INFO_KEY = "userInfo";
+const TICKET_HOLD_MINUTES = 10;
     export default {
       name: "ThanhToan",
       data() {
@@ -398,32 +413,43 @@ const USER_INFO_KEY = "userInfo";
             progress: 0,
             isProcessing: false,
           },
-          qrModal: {
-            visible: false,
-            qrData: null,
-            paymentId: null,
-            amount: 0,
-            currency: "VND",
-            providerRef: null,
-            statusText: "Đang chờ thanh toán",
-            statusClass: "bg-warning text-dark",
-            isChecking: false,
-            isPreparing: false,
-          },
-          laterModal: { visible: false },
-        };
-      },
-      mounted() {
-        this.loadFromQuery();
-        this.syncSeatIdentifiers();
-      },
+        qrModal: {
+          visible: false,
+          qrData: null,
+          paymentId: null,
+          amount: 0,
+          currency: "VND",
+          providerRef: null,
+          statusText: "Đang chờ thanh toán",
+          statusClass: "bg-warning text-dark",
+          isChecking: false,
+          isPreparing: false,
+        },
+        laterModal: { visible: false },
+        holdDeadline: null,
+        holdRemainingSeconds: 0,
+        holdTimer: null,
+      };
+    },
+    mounted() {
+      this.loadFromQuery();
+      this.syncSeatIdentifiers();
+    },
+    beforeUnmount() {
+      this.clearHoldTimer();
+    },
       methods: {
         // ✅ Lấy thông tin từ query router
-        saveTicketToLocal(paymentId) {
+        saveTicketToLocal(paymentId, amountOverride) {
+          const normalizedAmount = (() => {
+            const amount =
+              Number(amountOverride ?? this.qrModal.amount ?? this.total) || 0;
+            return amount > 0 ? amount : Number(this.total) || 0;
+          })();
           const ticket = {
             paymentId: paymentId || ("PM_" + Math.random().toString(36).slice(2)),
             gateway: this.selectedGateway,
-            total: this.total,
+            total: normalizedAmount,
             createdAt: Date.now(),
             from: this.fromCity,
             to: this.toCity,
@@ -439,6 +465,64 @@ const USER_INFO_KEY = "userInfo";
               "TRIP_" + Math.random().toString(36).slice(2), // dY"1 thA?m dA?ng nA?y
           };
           this.persistTicketForOwner(ticket);
+        },
+
+        startHoldCountdown(createdAt) {
+          this.clearHoldTimer();
+          const baseMs = createdAt ? new Date(createdAt).getTime() : Date.now();
+          if (Number.isNaN(baseMs)) {
+            this.holdDeadline = null;
+            this.holdRemainingSeconds = 0;
+            return;
+          }
+          this.holdDeadline =
+            baseMs + TICKET_HOLD_MINUTES * 60 * 1000;
+          this.updateHoldRemaining();
+          this.holdTimer = setInterval(() => {
+            this.updateHoldRemaining();
+          }, 1000);
+        },
+
+        updateHoldRemaining() {
+          if (!this.holdDeadline) return;
+          const remaining =
+            this.holdDeadline - Date.now();
+          const seconds = Math.max(0, Math.floor(remaining / 1000));
+          this.holdRemainingSeconds = seconds;
+          if (seconds <= 0) {
+            this.clearHoldTimer();
+            this.handleHoldExpired();
+          }
+        },
+
+        clearHoldTimer() {
+          if (this.holdTimer) {
+            clearInterval(this.holdTimer);
+            this.holdTimer = null;
+          }
+        },
+
+        handleHoldExpired() {
+          if (!this.holdDeadline) return;
+          this.setStatus(
+            "expired",
+            "Hết thời gian giữ ghế",
+            "Vui lòng quay lại để chọn chuyến và đặt lại.",
+            0,
+            false
+          );
+          this.qrModal.visible = false;
+        },
+
+        ensureHoldActive() {
+          if (!this.isHoldExpired) {
+            return true;
+          }
+          const message =
+            "Phiên giữ ghế đã hết thời gian. Vui lòng quay lại để chọn chuyến mới.";
+          this.setStatus("expired", "Hết thời gian giữ ghế", message, 0, false);
+          this.$toast?.error?.(message);
+          return false;
         },
         
 
@@ -616,7 +700,8 @@ const USER_INFO_KEY = "userInfo";
           this.userInfo?.ho_ten ||
           this.userInfo?.name ||
           this.$route.query.customerName ||
-          "Khách lẻ";
+          this.$route.query.customer_name ||
+          "";
         const phone =
           this.userInfo?.so_dien_thoai ||
           this.$route.query.customerPhone ||
@@ -692,6 +777,10 @@ const USER_INFO_KEY = "userInfo";
             return;
           }
 
+          this.clearHoldTimer();
+          this.holdDeadline = null;
+          this.holdRemainingSeconds = 0;
+
           this.isBooking = true;
           this.setStatus(
             "creating",
@@ -709,6 +798,9 @@ const USER_INFO_KEY = "userInfo";
             this.bookingId = bookingData?.donHang?.id || bookingData?.id || null;
             this.ticketId =
               bookingData?.ticket?.id || bookingData?.ticketId || null;
+            const ticketCreatedAt =
+              bookingData?.ticket?.created_at || bookingData?.ticket?.createdAt;
+            this.startHoldCountdown(ticketCreatedAt);
           } catch (error) {
             const message =
               error.response?.data?.message || "Không thể lưu đơn hàng.";
@@ -763,6 +855,9 @@ const USER_INFO_KEY = "userInfo";
           if (!this.ticketId) {
             throw new Error("Không tìm thấy vé để xác nhận");
           }
+          if (!this.ensureHoldActive()) {
+            return;
+          }
 
           try {
             await api.post(PAYMENT_ONBOARD_ENDPOINT, {
@@ -787,7 +882,7 @@ const USER_INFO_KEY = "userInfo";
           );
           this.qrModal.statusText = "Thanh toán thành công";
           this.qrModal.statusClass = "bg-success";
-          this.saveTicketToLocal(this.qrModal.paymentId);
+          this.saveTicketToLocal(this.qrModal.paymentId, this.qrModal.amount);
           this.closeQrModal();
           this.$toast?.success?.("Thanh toán thành công!");
           this.$router.push("/client-ve-da-dat");
@@ -796,6 +891,11 @@ const USER_INFO_KEY = "userInfo";
           this.resetQrModal();
           this.qrModal.visible = true;
           this.qrModal.isPreparing = true;
+          if (!this.ensureHoldActive()) {
+            this.qrModal.visible = false;
+            this.qrModal.isPreparing = false;
+            return;
+          }
           this.setStatus(
             "pending",
             "Đang chờ thanh toán",
@@ -841,6 +941,9 @@ const USER_INFO_KEY = "userInfo";
         },
 
         async handleOnboardPayment() {
+          if (!this.ensureHoldActive()) {
+            return;
+          }
           this.setStatus(
             "pending",
             "Thanh toán khi lên xe",
@@ -864,7 +967,7 @@ const USER_INFO_KEY = "userInfo";
               false
             );
             this.laterModal.visible = true;
-            this.saveTicketToLocal(this.qrModal.paymentId);
+            this.saveTicketToLocal(this.qrModal.paymentId, this.total);
             this.$router.push("/client-ve-da-dat");
           } catch (error) {
             const message =
@@ -897,22 +1000,34 @@ const USER_INFO_KEY = "userInfo";
         },
       },
 
-      computed: {
+    computed: {
         canPay() {
           return (
             !!this.selectedGateway &&
             this.total > 0 &&
             !this.status.isProcessing &&
-            !this.isBooking
+            !this.isBooking &&
+            !this.isHoldExpired
           );
         },
         statusBadgeClass() {
           const c = this.status.code;
           if (c === "success") return "badge bg-success";
-          if (c === "failed") return "badge bg-danger";
+          if (c === "failed" || c === "expired") return "badge bg-danger";
           if (c === "pending" || c === "creating")
             return "badge bg-warning text-dark";
           return "badge bg-secondary";
+        },
+        holdCountdownText() {
+          const total = this.holdRemainingSeconds || 0;
+          const minutes = Math.floor(total / 60)
+            .toString()
+            .padStart(2, "0");
+          const seconds = (total % 60).toString().padStart(2, "0");
+          return `${minutes}:${seconds}`;
+        },
+        isHoldExpired() {
+          return !!this.holdDeadline && this.holdRemainingSeconds <= 0;
         },
     qrGatewayLabel() {
       if (this.selectedGateway === "momo") {
@@ -984,6 +1099,11 @@ const USER_INFO_KEY = "userInfo";
       background: #f8f9fa;
       border-radius: 8px;
       border: 2px dashed #dee2e6;
+    }
+
+    .hold-countdown {
+      border-radius: 12px;
+      font-size: 0.95rem;
     }
 
     /* 💳 CSS cho thẻ MoMo */

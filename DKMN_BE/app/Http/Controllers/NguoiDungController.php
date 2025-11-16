@@ -107,12 +107,88 @@ class NguoiDungController extends Controller
             'token' => $token,
             'redirect_url' => $redirectUrl,
             'redirectUrl' => $redirectUrl,
-            'data' => [
-                'id' => $nguoiDung->id,
-                'ho_ten' => $nguoiDung->ho_ten,
-                'email' => $nguoiDung->email,
-                'vai_tro' => $nguoiDung->vai_tro,
-            ],
+            'data' => $this->serializeUser($nguoiDung),
+        ]);
+    }
+
+    public function thongTin(Request $request)
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Yêu cầu đăng nhập.',
+            ], 401);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $this->serializeUser($user),
+        ]);
+    }
+
+    public function capNhatThongTin(Request $request)
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Yêu cầu đăng nhập.',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'ho_ten' => 'required|string|max:100',
+            'so_dien_thoai' => 'nullable|string|max:20',
+        ]);
+
+        $user->forceFill([
+            'ho_ten' => $data['ho_ten'],
+            'so_dien_thoai' => $data['so_dien_thoai'] ?? null,
+            'ngay_cap_nhat' => now(),
+        ])->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Đã cập nhật thông tin tài khoản.',
+            'data' => $this->serializeUser($user),
+        ]);
+    }
+
+    public function doiMatKhau(Request $request)
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Yêu cầu đăng nhập.',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'currentPassword' => 'required|string|min:4',
+            'newPassword' => 'required|string|min:6|different:currentPassword',
+            'confirmPassword' => 'required|string|same:newPassword',
+        ], [
+            'confirmPassword.same' => 'Xác nhận mật khẩu không khớp.',
+        ]);
+
+        if (!$this->passwordMatches($user, $data['currentPassword'])) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mật khẩu hiện tại không chính xác.',
+            ], 422);
+        }
+
+        $user->forceFill([
+            'mat_khau' => Hash::make($data['newPassword']),
+            'ngay_cap_nhat' => now(),
+        ])->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Đã cập nhật mật khẩu.',
         ]);
     }
 
@@ -149,5 +225,16 @@ class NguoiDungController extends Controller
     private function isBcryptHash(string $hash): bool
     {
         return strlen($hash) === 60 && Str::startsWith($hash, ['$2y$', '$2a$', '$2b$']);
+    }
+
+    private function serializeUser(NguoiDung $user): array
+    {
+        return [
+            'id' => $user->id,
+            'ho_ten' => $user->ho_ten,
+            'email' => $user->email,
+            'so_dien_thoai' => $user->so_dien_thoai,
+            'vai_tro' => $user->vai_tro,
+        ];
     }
 }

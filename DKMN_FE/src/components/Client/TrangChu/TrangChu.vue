@@ -471,49 +471,53 @@
           <!-- Filters Sidebar -->
           <div class="col-lg-3">
             <div class="filters-card">
-              <h5 class="mb-3">Bộ lọc</h5>
+              <div class="filters-card__header">
+                <div>
+                  <span class="filters-card__eyebrow">Tùy chọn chi tiết</span>
+                  <h5 class="mb-0">Bộ lọc</h5>
+                </div>
+                <span class="filters-card__icon">
+                  <i class="bx bx-slider-alt"></i>
+                </span>
+              </div>
 
               <!-- Time Filter -->
               <div class="filter-group mb-4">
-                <h6>Giờ khởi hành</h6>
-                <div class="form-check">
+                <p class="filter-group__title">Giờ khởi hành</p>
+                <label class="filter-option">
                   <input
-                    class="form-check-input"
+                    class="filter-checkbox"
                     type="checkbox"
                     id="morning"
                     v-model="filters.time.morning"
                   />
-                  <label class="form-check-label" for="morning"
-                    >Sáng (6h-12h)</label
-                  >
-                </div>
-                <div class="form-check">
+                  <span>Sáng (6h-12h)</span>
+                </label>
+                <label class="filter-option">
                   <input
-                    class="form-check-input"
+                    class="filter-checkbox"
                     type="checkbox"
                     id="afternoon"
                     v-model="filters.time.afternoon"
                   />
-                  <label class="form-check-label" for="afternoon"
-                    >Chiều (12h-18h)</label
-                  >
-                </div>
-                <div class="form-check">
+                  <span>Chiều (12h-18h)</span>
+                </label>
+                <label class="filter-option">
                   <input
-                    class="form-check-input"
+                    class="filter-checkbox"
                     type="checkbox"
                     id="evening"
                     v-model="filters.time.evening"
                   />
-                  <label class="form-check-label" for="evening"
-                    >Tối (18h-24h)</label
-                  >
-                </div>
+                  <span>Tối (18h-24h)</span>
+                </label>
               </div>
+
+              <div class="filter-divider"></div>
 
               <!-- Price Filter -->
               <div class="filter-group mb-4">
-                <h6>Giá vé</h6>
+                <p class="filter-group__title">Giá vé</p>
                 <div class="price-range">
                   <input
                     type="range"
@@ -523,105 +527,46 @@
                     :step="priceLimits.step"
                     v-model.number="filters.price.max"
                   />
-                  <div class="d-flex justify-content-between">
+                  <div class="price-range__labels">
                     <span>{{ formatPrice(priceLimits.min) }}</span>
                     <span>{{ formatPrice(filters.price.max) }}</span>
                   </div>
                 </div>
               </div>
 
+              <div class="filter-divider"></div>
+
               <!-- Other Filters -->
               <div class="filter-group mb-4">
-                <h6>Khác</h6>
-                <div class="form-check">
+                <p class="filter-group__title">Khác</p>
+                <label class="filter-option">
                   <input
-                    class="form-check-input"
+                    class="filter-checkbox"
                     type="checkbox"
                     id="available"
                     v-model="filters.available"
                   />
-                  <label class="form-check-label" for="available"
-                    >Còn ghế</label
-                  >
-                </div>
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="freeCancel"
-                    v-model="filters.freeCancel"
-                  />
-                  <label class="form-check-label" for="freeCancel"
-                    >Hủy miễn phí</label
-                  >
-                </div>
-              </div>
-
-              <!-- Vehicle Type Filter (NEW) -->
-              <div class="filter-group mb-4">
-                <h6>Loại phương tiện</h6>
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="filter-bus"
-                    :value="'bus'"
-                    v-model="filters.vehicleTypes"
-                  />
-                  <label class="form-check-label" for="filter-bus"
-                    >Xe khách</label
-                  >
-                </div>
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="filter-train"
-                    :value="'train'"
-                    v-model="filters.vehicleTypes"
-                  />
-                  <label class="form-check-label" for="filter-train"
-                    >Tàu hỏa</label
-                  >
-                </div>
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="filter-plane"
-                    :value="'plane'"
-                    v-model="filters.vehicleTypes"
-                  />
-                  <label class="form-check-label" for="filter-plane"
-                    >Máy bay</label
-                  >
-                </div>
+                  <span>Còn ghế</span>
+                </label>
               </div>
 
               <!-- Company Filter (NEW - Checkbox list) -->
               <div class="filter-group mb-4" v-if="availableCompanies.length > 0">
-                <h6>Nhà vận hành</h6>
+                <p class="filter-group__title">Nhà vận hành</p>
                 <div class="company-filter-list" style="max-height: 200px; overflow-y: auto;">
-                  <div 
+                  <label 
                     v-for="company in availableCompanies" 
                     :key="'filter-company-' + company"
-                    class="form-check"
+                    class="filter-option filter-option--compact"
                   >
                     <input
-                      class="form-check-input"
+                      class="filter-checkbox"
                       type="checkbox"
-                      :id="'filter-company-' + company"
                       :value="company"
                       v-model="filters.companies"
                     />
-                    <label 
-                      class="form-check-label" 
-                      :for="'filter-company-' + company"
-                      style="font-size: 0.9rem;"
-                    >
-                      {{ company }}
-                    </label>
-                  </div>
+                    <span>{{ company }}</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -698,89 +643,94 @@
                 :key="trip.id"
                 class="trip-card mb-3"
               >
-                <div class="row g-0">
-                  <div class="col-md-8">
-                    <div class="trip-info p-3">
-                      <div
-                        class="d-flex justify-content-between align-items-start mb-2"
+                <div class="trip-card__header">
+                  <div>
+                    <h6 class="mb-1 text-dark">{{ trip.company }}</h6>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="vehicle-badge">{{ trip.vehicleType }}</span>
+                      <small class="text-muted">
+                        {{ trip.fromCity }} → {{ trip.toCity }}
+                      </small>
+                    </div>
+                  </div>
+                  <div class="trip-card__rating">
+                    <i class="bx bxs-star text-warning"></i>
+                    <span>{{ trip.rating }}</span>
+                  </div>
+                </div>
+
+                <div class="trip-card__body">
+                  <div class="trip-schedule">
+                    <div class="schedule-point">
+                      <span class="time">{{ trip.departureTime || "--:--" }}</span>
+                      <small class="text-muted" v-if="trip.departureLabel">
+                        {{ trip.departureLabel }}
+                      </small>
+                      <span class="station">{{ trip.fromStation }}</span>
+                      <small
+                        class="text-muted"
+                        v-if="trip.pickupStationName"
                       >
-                        <div>
-                          <h6 class="mb-1">{{ trip.company }}</h6>
-                          <small class="text-muted">{{
-                            trip.vehicleType
-                          }}</small>
-                        </div>
-                        <div class="rating">
-                          <i class="bx bxs-star text-warning"></i>
-                          <span>{{ trip.rating }}</span>
-                        </div>
+                        Điểm đón: {{ trip.pickupStationName }}
+                      </small>
+                    </div>
+
+                    <div class="schedule-divider">
+                      <span class="duration">{{ trip.duration || "—" }}</span>
+                      <div class="divider-line">
+                        <span class="dot"></span>
+                        <span class="line"></span>
+                        <span class="dot"></span>
                       </div>
+                    </div>
 
-                      <div class="trip-details">
-                        <div class="d-flex align-items-center">
-                            <div class="time-info">
-                            <div class="departure-time">
-                              {{ trip.departureTime }}
-                            </div>
-                            <div
-                              class="station text-muted small"
-                              v-if="trip.departureLabel"
-                            >
-                              {{ trip.departureLabel }}
-                            </div>
-                            <div class="station">{{ trip.fromStation }}</div>
-                            <div class="station text-muted small" v-if="trip.pickupStationName">
-                              Điểm đón: {{ trip.pickupStationName }}
-                            </div>
-                          </div>
-
-                          <div class="trip-route">
-                            <div class="duration">{{ trip.duration }}</div>
-                            <div class="route-line"></div>
-                          </div>
-
-                          <div class="time-info text-end">
-                            <div class="arrival-time">
-                              {{ trip.arrivalTime }}
-                            </div>
-                            <div class="station">{{ trip.toStation }}</div>
-                            <div class="station text-muted small" v-if="trip.dropoffStationName">
-                              Điểm trả: {{ trip.dropoffStationName }}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="trip-features mt-2">
-                        <span
-                          v-if="trip.freeCancel"
-                          class="badge bg-success me-2"
-                          >Hủy miễn phí</span
-                        >
-                        <span
-                          v-if="trip.availableSeats > 0"
-                          class="badge bg-info me-2"
-                          >{{ trip.availableSeats }} ghế trống</span
-                        >
-                        <span class="badge bg-secondary">{{
-                          trip.seatType
-                        }}</span>
-                      </div>
+                    <div class="schedule-point text-end">
+                      <span class="time">{{ trip.arrivalTime || "--:--" }}</span>
+                      <small
+                        class="text-muted"
+                        v-if="trip.departureLabel"
+                      >
+                        {{ trip.departureLabel }}
+                      </small>
+                      <span class="station">{{ trip.toStation }}</span>
+                      <small
+                        class="text-muted"
+                        v-if="trip.dropoffStationName"
+                      >
+                        Điểm trả: {{ trip.dropoffStationName }}
+                      </small>
                     </div>
                   </div>
 
-                  <div class="col-md-4">
-                      <div class="trip-price p-3 text-center">
-                        <div class="price">{{ formatPrice(trip.displayPrice || trip.price) }}</div>
-                        <small class="text-muted">/ người</small>
-                        <button
-                          @click="selectTrip(trip)"
-                          class="btn btn-primary w-100 mt-2"
-                          :disabled="isLoadingSeats"
-                        >
-                          Chọn chỗ
-                        </button>
+                  <div class="trip-card__meta">
+                    <div class="meta-badges">
+                      <span class="meta-badge">{{ trip.seatType }}</span>
+                      <span
+                        v-if="trip.availableSeats > 0"
+                        class="meta-badge available"
+                      >
+                        {{ trip.availableSeats }} ghế trống
+                      </span>
+                      <span
+                        v-if="trip.freeCancel"
+                        class="meta-badge success"
+                        >Hủy miễn phí</span
+                      >
+                    </div>
+
+                    <div class="trip-card__price">
+                      <div class="price">
+                        {{ formatPrice(trip.displayPrice || trip.price) }}
                       </div>
+                      <small class="text-muted d-block mb-2">/ người</small>
+                      <button
+                        @click="selectTrip(trip)"
+                        class="btn-select"
+                        :disabled="isLoadingSeats"
+                      >
+                        Chọn chỗ
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -863,8 +813,6 @@ export default {
           max: PRICE_FILTER_DEFAULTS.max,
         },
         available: false,
-        freeCancel: false,
-        vehicleTypes: [],
         companies: [],
       },
       priceLimits: { ...PRICE_FILTER_DEFAULTS },
@@ -943,16 +891,6 @@ export default {
 
       if (this.filters.available) {
         filtered = filtered.filter((trip) => trip.availableSeats > 0);
-      }
-
-      if (this.filters.freeCancel) {
-        filtered = filtered.filter((trip) => trip.freeCancel);
-      }
-
-      if (this.filters.vehicleTypes.length > 0) {
-        filtered = filtered.filter((trip) =>
-          this.filters.vehicleTypes.includes(trip.vehicleTypeKey)
-        );
       }
 
       if (this.filters.companies.length > 0) {
@@ -1207,8 +1145,10 @@ export default {
     getTripDepartureHour(trip) {
       const candidates = [
         trip?.departureTime,
+        trip?.raw?.departureTime,
         trip?.raw?.departure_time,
         trip?.departureDateTime,
+        trip?.raw?.departureDateTime,
         trip?.raw?.gio_khoi_hanh,
       ];
       for (const value of candidates) {
@@ -1482,13 +1422,19 @@ export default {
       };
 
       const departureTime = this.extractTime(
-        raw.gio_khoi_hanh ||
+        raw.departureTime ||
+          raw.gio_khoi_hanh ||
+          raw.departureDateTime ||
           raw.departure_time ||
           raw.depart_at ||
           raw.departTime
       );
       const arrivalTime = this.extractTime(
-        raw.gio_den || raw.arrival_time || raw.arrive_at || raw.arrivalTime
+        raw.arrivalTime ||
+          raw.gio_den ||
+          raw.arrivalDateTime ||
+          raw.arrival_time ||
+          raw.arrive_at
       );
 
       const departureDateText = this.extractDate(
@@ -1496,6 +1442,7 @@ export default {
           raw.departure_date ||
           raw.depart_date ||
           raw.departureDate ||
+          raw.departureDateTime ||
           raw.ngay_di ||
           raw.gio_khoi_hanh
       );
@@ -2188,10 +2135,13 @@ export default {
 /* Hero area */
 .hero {
   position: relative;
-  min-height: 88vh;
-  padding: clamp(3rem, 8vw, 6.5rem) 0 4rem;
+  min-height: 100vh;
+  padding: clamp(4rem, 9vw, 7rem) clamp(1rem, 4vw, 3rem) 4rem;
   overflow: hidden;
   color: #fff;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 
 .hero__overlay {
@@ -2260,6 +2210,9 @@ export default {
 .hero__content {
   position: relative;
   z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: min(1280px, 100%);
 }
 
 .hero__glass {
@@ -2269,6 +2222,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 35px 90px rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(18px);
+  width: 100%;
 }
 
 .hero__title {
@@ -2360,65 +2314,340 @@ export default {
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
 }
 
-.filter-group h6 {
+.filters-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.filters-card__eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.filters-card__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #c7d2fe, #a5b4fc);
+  color: #312e81;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.25);
+}
+
+.filter-group__title {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #475569;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+}
+
+.filter-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.4), transparent);
+  margin: 0.5rem 0 1.25rem;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.12);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.filter-option span {
+  font-size: 0.92rem;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.filter-option .filter-checkbox:checked + span {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.filter-option:hover {
+  background: rgba(99, 102, 241, 0.15);
+  transform: translateX(3px);
+}
+
+.filter-option--compact {
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.filter-option__label {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  color: #1f2937;
+  width: 100%;
+  cursor: pointer;
+}
+
+.filter-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 2px solid #94a3b8;
+  background: #fff;
+  transition: border 0.2s ease, background 0.2s ease;
+  position: relative;
+}
+
+.filter-checkbox:checked {
+  border-color: #4f46e5;
+  background: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+}
+
+.filter-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -60%) rotate(45deg);
+}
+
+.price-range {
+  padding: 0.5rem 0.5rem 0.25rem;
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 16px;
+}
+
+.price-range .form-range {
+  accent-color: #2563eb;
+}
+
+.price-range .form-range::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+  border: none;
+}
+
+.price-range .form-range::-webkit-slider-runnable-track {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.price-range .form-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  border: none;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+}
+
+.price-range .form-range::-moz-range-track {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.price-range__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 600;
 }
 
 .trip-card {
-  border-radius: 24px;
-  padding: 1.5rem;
-  background: #fff;
-  border: 1px solid transparent;
+  border-radius: 26px;
+  padding: 1.75rem;
+  background: linear-gradient(135deg, #ffffff, #eef2ff);
+  border: 1px solid rgba(99, 102, 241, 0.1);
   box-shadow: 0 25px 55px rgba(15, 23, 42, 0.08);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.25s ease;
 }
 
 .trip-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(99, 102, 241, 0.35);
-  box-shadow: 0 35px 65px rgba(79, 70, 229, 0.15);
+  transform: translateY(-6px);
+  border-color: rgba(79, 70, 229, 0.4);
+  box-shadow: 0 35px 70px rgba(79, 70, 229, 0.2);
 }
 
-.trip-route {
+.trip-card__header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.vehicle-badge {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
   font-weight: 600;
+  border-radius: 999px;
+  padding: 0.15rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+.trip-card__rating {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #f59e0b;
+  font-size: 1rem;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+}
+
+.trip-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.trip-schedule {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.schedule-point {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  color: #475569;
+}
+
+.schedule-point .time {
+  font-size: 1.75rem;
+  font-weight: 700;
   color: #0f172a;
 }
 
-.trip-info {
-  display: grid;
-  gap: 0.5rem;
+.schedule-point .station {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.schedule-divider {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
   color: #475569;
-  font-size: 0.95rem;
+  font-weight: 600;
 }
 
-.trip-price {
-  text-align: right;
-  font-weight: 700;
-  font-size: 1.35rem;
-  color: #2563eb;
+.divider-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.trip-features {
+.divider-line .line {
+  width: 70px;
+  height: 2px;
+  background: linear-gradient(90deg, #a5b4fc, #312e81);
+  border-radius: 999px;
+}
+
+.divider-line .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4338ca;
+  box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.15);
+}
+
+.trip-card__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.meta-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
 }
 
-.trip-features span {
+.meta-badge {
   font-size: 0.8rem;
+  font-weight: 600;
   color: #475569;
-  background: #f1f5f9;
+  background: rgba(148, 163, 184, 0.2);
+  padding: 0.35rem 0.9rem;
   border-radius: 999px;
-  padding: 0.25rem 0.8rem;
+}
+
+.meta-badge.available {
+  background: rgba(14, 165, 233, 0.18);
+  color: #0369a1;
+}
+
+.meta-badge.success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #15803d;
+}
+
+.trip-card__price {
+  min-width: 220px;
+  text-align: right;
+  background: rgba(59, 130, 246, 0.08);
+  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.trip-card__price .price {
+  font-size: 1.6rem;
+}
+
+.btn-select {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(120deg, #2563eb, #5b21b6);
+  color: #fff;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-select:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 35px rgba(79, 70, 229, 0.35);
 }
 
 .seat-modal-backdrop {
@@ -2729,9 +2958,22 @@ export default {
     border-radius: 18px;
   }
 
-  .trip-price {
+  .trip-schedule {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-point {
+    text-align: left !important;
+  }
+
+  .trip-card__meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trip-card__price {
+    width: 100%;
     text-align: left;
-    margin-top: 0.75rem;
   }
 
   .deck-column {

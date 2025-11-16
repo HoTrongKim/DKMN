@@ -6,10 +6,176 @@
     <link rel="icon" type="image/png" href="./src/assets/image/image.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DKMN</title>
+    <style>
+      #dkmn-tawk-greeting {
+        position: fixed;
+        bottom: 110px;
+        right: 24px;
+        width: 320px;
+        max-width: calc(100vw - 48px);
+        background: #ffffff;
+        color: #0f172a;
+        border-radius: 16px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+        padding: 16px 20px 20px;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 2147483000;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      #dkmn-tawk-greeting.show {
+        display: flex;
+        animation: dkmnBounceIn 0.4s ease;
+      }
+      #dkmn-tawk-greeting strong {
+        font-size: 16px;
+      }
+      #dkmn-tawk-greeting p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      #dkmn-tawk-greeting button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      @keyframes dkmnBounceIn {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, 60px, 0) scale(0.95);
+        }
+        100% {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+      }
+      @media (max-width: 575.98px) {
+        #dkmn-tawk-greeting {
+          right: 12px;
+          left: 12px;
+          width: auto;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+      var Tawk_API = Tawk_API || {},
+        Tawk_LoadStart = new Date();
+      (function () {
+        var s1 = document.createElement('script'),
+          s0 = document.getElementsByTagName('script')[0]
+        s1.async = true
+        s1.src = 'https://embed.tawk.to/687f8211b0a7b7191452dc4f/1j0p185ia'
+        s1.charset = 'UTF-8'
+        s1.setAttribute('crossorigin', '*')
+        s0.parentNode.insertBefore(s1, s0)
+      })()
+    </script>
+    <!--End of Tawk.to Script-->
+    <script>
+      ;(function () {
+        const MESSAGE_TEXT =
+          'Xin chào bạn, chào mừng bạn đến với DKMN! Đó là niềm vui của tôi được giúp bạn. Nhân viên của chúng tôi sẽ sớm hoạt động lại và trả lời tin nhắn của bạn. Và sẽ giải quyết vấn đề này của bạn.'
+        let hasShownAutoReply = false
+        let pendingTimer = null
+
+        function createGreetingBubble() {
+          let bubble = document.getElementById('dkmn-tawk-greeting')
+          if (bubble) return bubble
+
+          bubble = document.createElement('div')
+          bubble.id = 'dkmn-tawk-greeting'
+          bubble.innerHTML = `
+            <strong>DKMN Support</strong>
+            <p>${MESSAGE_TEXT}</p>
+            <button type="button" aria-label="Đóng thông báo">&times;</button>
+          `
+
+          bubble.querySelector('button').addEventListener('click', () => hideGreeting())
+          document.body.appendChild(bubble)
+          return bubble
+        }
+
+        function showGreeting() {
+          const bubble = createGreetingBubble()
+          bubble.classList.add('show')
+          if (bubble._autoHideTimer) {
+            clearTimeout(bubble._autoHideTimer)
+          }
+          bubble._autoHideTimer = setTimeout(() => hideGreeting(), 12000)
+        }
+
+        function hideGreeting() {
+          const bubble = document.getElementById('dkmn-tawk-greeting')
+          if (!bubble) return
+          bubble.classList.remove('show')
+          if (bubble._autoHideTimer) {
+            clearTimeout(bubble._autoHideTimer)
+          }
+        }
+
+        function triggerAutoReply(delay = 600) {
+          if (hasShownAutoReply) return
+          hasShownAutoReply = true
+          if (pendingTimer) {
+            clearTimeout(pendingTimer)
+          }
+          pendingTimer = setTimeout(() => {
+            if (!document.hidden) {
+              showGreeting()
+            }
+            pendingTimer = null
+          }, delay)
+        }
+
+        function wrapTawkHandler(eventName, handler) {
+          const api = (window.Tawk_API = window.Tawk_API || {})
+          const previous = typeof api[eventName] === 'function' ? api[eventName] : null
+          api[eventName] = function (...args) {
+            if (previous) {
+              try {
+                previous.apply(this, args)
+              } catch (error) {
+                console.warn(`Tawk handler error for ${eventName}`, error)
+              }
+            }
+            try {
+              handler.apply(this, args)
+            } catch (error) {
+              console.warn(`Custom handler error for ${eventName}`, error)
+            }
+          }
+        }
+
+        wrapTawkHandler('onLoad', function () {
+          hasShownAutoReply = false
+        })
+
+        wrapTawkHandler('onChatStarted', function () {
+          triggerAutoReply()
+        })
+
+        wrapTawkHandler('onMessageSubmit', function () {
+          triggerAutoReply()
+        })
+
+        wrapTawkHandler('onChatMaximized', function () {
+          hideGreeting()
+        })
+      })()
+    </script>
   </body>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 

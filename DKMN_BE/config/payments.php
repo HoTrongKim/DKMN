@@ -9,6 +9,7 @@ return [
     'default_provider' => env('PAYMENT_QR_PROVIDER', 'vietqr'),
     'display_min_vnd' => (int) env('TRIP_PRICE_MIN_VND', 1000),
     'display_max_vnd' => (int) env('TRIP_PRICE_MAX_VND', 2000),
+    'ticket_hold_minutes' => (int) env('TICKET_HOLD_MINUTES', 10),
     'providers' => [
         'vietqr' => [
             'label' => 'VietQR',

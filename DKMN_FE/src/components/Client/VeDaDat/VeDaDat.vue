@@ -1,14 +1,17 @@
 <template>
-  <div class="container py-4">
+  <div class="ticket-page container py-4">
     <div class="row justify-content-center">
       <div class="col-lg-8">
-        <div class="card shadow-sm">
-          <div class="card-header bg-white d-flex align-items-center justify-content-between">
-            <h5 class="mb-0">Vé đã đặt</h5>
-            <span class="badge bg-success" v-if="ticket">Thành công</span>
+        <div class="card shadow-sm ticket-card">
+          <div class="card-header d-flex align-items-center justify-content-between ticket-card__header">
+            <div>
+              <p class="ticket-card__eyebrow mb-1">Thông tin vé</p>
+              <h5 class="mb-0">Vé đã đặt</h5>
+            </div>
+            <span class="badge bg-success ticket-status" v-if="currentTicket">Thành công</span>
           </div>
 
-          <div class="card-body">
+          <div class="card-body ticket-card__body">
             <div v-if="isLoading" class="text-center py-4">
               <div class="spinner-border text-primary mb-3" role="status"></div>
               <div>Đang tải vé của bạn...</div>
@@ -18,79 +21,77 @@
               {{ serverError }}
             </div>
 
-            <div v-else-if="!ticket" class="text-center py-4">
+            <div v-else-if="!currentTicket" class="text-center py-4">
               <div class="mb-2">Chưa có vé nào được lưu.</div>
               <router-link class="btn btn-primary" to="/TrangChu">Đặt vé ngay</router-link>
             </div>
 
             <div v-else>
-              <ul class="list-group list-group-flush mb-3">
-                <li class="list-group-item" v-if="ticket.from || ticket.to">
-                  <div class="d-flex justify-content-between">
-                    <span>Hành trình</span>
-                    <span class="text-muted">{{ ticket.from || '-' }} → {{ ticket.to || '-' }}</span>
+              <div class="mb-4" v-if="hasMultipleTickets">
+                <label class="form-label fw-semibold">Chọn vé</label>
+                <select class="form-select" v-model.number="activeTicketIndex">
+                  <option v-for="(item, index) in tickets" :key="index" :value="index">
+                    {{ item.from || '-' }} → {{ item.to || '-' }} · {{ formatTime(item.createdAt) }}
+                  </option>
+                </select>
+              </div>
+              <ul class="list-group list-group-flush ticket-info-list mb-4">
+                <li class="list-group-item ticket-info-item" v-if="currentTicket.from || currentTicket.to">
+                  <span class="ticket-info-label">Hành trình</span>
+                  <span class="ticket-info-value text-muted">{{ currentTicket.from || '-' }} → {{ currentTicket.to || '-' }}</span>
+                </li>
+                <li class="list-group-item ticket-info-item" v-if="currentTicket.date">
+                  <span class="ticket-info-label">Ngày đi</span>
+                  <span class="ticket-info-value text-muted">{{ currentTicket.date }}</span>
+                </li>
+                <li class="list-group-item ticket-info-item" v-if="currentTicket.company">
+                  <span class="ticket-info-label">Nhà vận hành</span>
+                  <span class="ticket-info-value text-muted">{{ currentTicket.company }}</span>
+                </li>
+                <li class="list-group-item ticket-info-item ticket-info-item--stacked" v-if="currentTicket.pickupStation || currentTicket.dropoffStation">
+                  <div class="ticket-info-row">
+                    <span class="ticket-info-label">Điểm đón</span>
+                    <span class="ticket-info-value text-muted">{{ currentTicket.pickupStation || '-' }}</span>
+                  </div>
+                  <div class="ticket-info-row">
+                    <span class="ticket-info-label">Điểm trả</span>
+                    <span class="ticket-info-value text-muted">{{ currentTicket.dropoffStation || '-' }}</span>
                   </div>
                 </li>
-                <li class="list-group-item" v-if="ticket.date">
-                  <div class="d-flex justify-content-between">
-                    <span>Ngày đi</span>
-                    <span class="text-muted">{{ ticket.date }}</span>
-                  </div>
+                <li class="list-group-item ticket-info-item" v-if="currentTicket.passengers">
+                  <span class="ticket-info-label">Số hành khách</span>
+                  <span class="ticket-info-value text-muted">{{ currentTicket.passengers }}</span>
                 </li>
-                <li class="list-group-item" v-if="ticket.company">
-                  <div class="d-flex justify-content-between">
-                    <span>Nhà vận hành</span>
-                    <span class="text-muted">{{ ticket.company }}</span>
-                  </div>
+                <li class="list-group-item ticket-info-item">
+                  <span class="ticket-info-label">Mã giao dịch</span>
+                  <span class="ticket-info-value">{{ currentTicket.paymentId }}</span>
                 </li>
-                <li class="list-group-item" v-if="ticket.pickupStation || ticket.dropoffStation">
-                  <div class="d-flex justify-content-between">
-                    <span>Điểm đón</span>
-                    <span class="text-muted">{{ ticket.pickupStation || '-' }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between mt-1">
-                    <span>Điểm trả</span>
-                    <span class="text-muted">{{ ticket.dropoffStation || '-' }}</span>
-                  </div>
+                <li class="list-group-item ticket-info-item">
+                  <span class="ticket-info-label">Cổng thanh toán</span>
+                  <span class="ticket-info-value text-uppercase">{{ currentTicket.gateway }}</span>
                 </li>
-                <li class="list-group-item" v-if="ticket.passengers">
-                  <div class="d-flex justify-content-between">
-                    <span>Số hành khách</span>
-                    <span class="text-muted">{{ ticket.passengers }}</span>
-                  </div>
+                <li class="list-group-item ticket-info-item" v-if="currentTicket.tripId">
+                  <span class="ticket-info-label">Mã chuyến</span>
+                  <span class="ticket-info-value">{{ currentTicket.tripId }}</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between">
-                  <span>Mã giao dịch</span>
-                  <strong>{{ ticket.paymentId }}</strong>
+                <li class="list-group-item ticket-info-item" v-if="(currentTicket.seats || []).length">
+                  <span class="ticket-info-label">Ghế</span>
+                  <span class="ticket-info-value text-muted">{{ currentTicket.seats.join(', ') }}</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between">
-                  <span>Cổng thanh toán</span>
-                  <strong class="text-uppercase">{{ ticket.gateway }}</strong>
+                <li class="list-group-item ticket-info-item ticket-info-item--emphasis">
+                  <span class="ticket-info-label">Thành tiền</span>
+                  <span class="ticket-info-value">{{ formatCurrency(currentTicket.total) }}</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between" v-if="ticket.tripId">
-                  <span>Mã chuyến</span>
-                  <strong>{{ ticket.tripId }}</strong>
-                </li>
-                <li class="list-group-item" v-if="(ticket.seats || []).length">
-                  <div class="d-flex justify-content-between">
-                    <span>Ghế</span>
-                    <span class="text-muted">{{ ticket.seats.join(', ') }}</span>
-                  </div>
-                </li>
-                <li class="list-group-item d-flex justify-content-between">
-                  <span>Thành tiền</span>
-                  <strong>{{ formatCurrency(ticket.total) }}</strong>
-                </li>
-                <li class="list-group-item d-flex justify-content-between">
-                  <span>Ngày giờ</span>
-                  <strong>{{ formatTime(ticket.createdAt) }}</strong>
+                <li class="list-group-item ticket-info-item">
+                  <span class="ticket-info-label">Ngày giờ</span>
+                  <span class="ticket-info-value">{{ formatTime(currentTicket.createdAt) }}</span>
                 </li>
               </ul>
 
-              <div class="d-flex gap-2">
+              <div class="ticket-actions d-flex flex-wrap gap-2">
                 <router-link to="/TrangChu" class="btn btn-outline-secondary">Về trang chủ</router-link>
-                <button class="btn btn-danger" @click="clearTicket">Xóa vé đã lưu</button>
-                <button class="btn btn-primary" :disabled="!canRate" v-if="ticket?.tripId" @click="goRate">
+                <button class="btn btn-danger" @click="clearTicket()">Xóa vé này</button>
+                <button class="btn btn-primary" :disabled="!canRate" v-if="currentTicket?.tripId" @click="goRate">
                   Đánh giá
                 </button>
               </div>
@@ -123,7 +124,8 @@ export default {
   name: 'VeDaDat',
   data() {
     return {
-      ticket: null,
+      tickets: [],
+      activeTicketIndex: 0,
       ratingsIndex: {},
       notice: { visible: false, text: '' },
       isLoading: false,
@@ -131,14 +133,21 @@ export default {
     }
   },
   computed: {
+    currentTicket() {
+      if (!this.tickets.length) return null
+      return this.tickets[this.activeTicketIndex] || this.tickets[0] || null
+    },
     canRate() {
-      if (!this.ticket || !this.ticket.tripId) return false
-      const alreadyRated = !!this.ratingsIndex[String(this.ticket.tripId)]
+      if (!this.currentTicket || !this.currentTicket.tripId) return false
+      const alreadyRated = !!this.ratingsIndex[String(this.currentTicket.tripId)]
       if (alreadyRated) return false
-      const status = String(this.ticket.tripStatus || '').toLowerCase()
+      const status = String(this.currentTicket.tripStatus || '').toLowerCase()
       if (!status) return true
       const allowed = ['completed', 'hoan_tat', 'da_di', 'finished', 'done', 'success']
       return allowed.includes(status)
+    },
+    hasMultipleTickets() {
+      return this.tickets.length > 1
     },
   },
   methods: {
@@ -153,9 +162,16 @@ export default {
         return ''
       }
     },
-    clearTicket() {
-      this.clearStoredTicket()
-      this.ticket = null
+    clearTicket(index = this.activeTicketIndex) {
+      const currentList = [...this.tickets]
+      if (index >= 0 && index < currentList.length) {
+        currentList.splice(index, 1)
+        this.tickets = currentList
+        if (this.activeTicketIndex >= this.tickets.length) {
+          this.activeTicketIndex = Math.max(0, this.tickets.length - 1)
+        }
+        this.updateTicketStore(currentList)
+      }
     },
     async loadRatingsIndex() {
       try {
@@ -242,21 +258,30 @@ export default {
         console.warn('cannot persist ticket store', error)
       }
     },
-    loadTicketFromStore() {
+    loadTicketsFromStore() {
       const ownerKey = this.getTicketOwnerKey()
-      if (!ownerKey) return null
+      if (!ownerKey) return []
       const store = this.readTicketStore()
-      return store[ownerKey] || null
+      const existing = store[ownerKey]
+      if (Array.isArray(existing)) return existing
+      if (existing) return [existing]
+      return []
     },
     saveTicketForOwner(ticket) {
       if (!ticket) return
       const ownerKey = this.getTicketOwnerKey()
       if (!ownerKey) return
       const store = this.readTicketStore()
-      store[ownerKey] = ticket
+      const normalizedTicket = this.normalizeTicket(ticket)
+      const existing = Array.isArray(store[ownerKey]) ? store[ownerKey] : []
+      const alreadyExists = existing.some((item) => JSON.stringify(item) === JSON.stringify(normalizedTicket))
+      if (!alreadyExists) {
+        existing.unshift(normalizedTicket)
+      }
+      store[ownerKey] = existing.slice(0, 10)
       this.writeTicketStore(store)
       try {
-        localStorage.setItem(LEGACY_TICKET_KEY, JSON.stringify(ticket))
+        localStorage.setItem(LEGACY_TICKET_KEY, JSON.stringify(store[ownerKey][0] || null))
       } catch (error) {
         console.warn('cannot update legacy ticket cache', error)
       }
@@ -278,9 +303,11 @@ export default {
     loadLegacyTicket() {
       try {
         const raw = localStorage.getItem(LEGACY_TICKET_KEY)
-        return raw ? JSON.parse(raw) : null
+        const parsed = raw ? JSON.parse(raw) : null
+        if (!parsed) return []
+        return Array.isArray(parsed) ? parsed : [parsed]
       } catch (error) {
-        return null
+        return []
       }
     },
     ticketFromQuery() {
@@ -316,13 +343,15 @@ export default {
     try {
       const queryTicket = this.ticketFromQuery()
       if (queryTicket) {
-        this.ticket = queryTicket
         this.saveTicketForOwner(queryTicket)
+        this.tickets = this.loadTicketsFromStore()
       } else {
         const hasOwner = !!this.getTicketOwnerKey()
-        const storedTicket = hasOwner ? this.loadTicketFromStore() : null
-        const legacyTicket = hasOwner ? null : this.loadLegacyTicket()
-        this.ticket = storedTicket || legacyTicket || null
+        if (hasOwner) {
+          this.tickets = this.loadTicketsFromStore()
+        } else {
+          this.tickets = this.loadLegacyTicket()
+        }
       }
     } catch (error) {
       this.serverError = 'Không thể tải vé đã đặt. Vui lòng thử lại.'
@@ -334,10 +363,156 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
+.ticket-page {
+  min-height: calc(100vh - 100px);
+  background: radial-gradient(circle at 10% -20%, #e0f2fe, transparent 40%), #f4f6fb;
+}
+
+.ticket-card {
+  border: none;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
+}
+
+.ticket-card::after {
+  content: '';
+  position: absolute;
+  top: -45px;
+  right: -45px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.ticket-card__header {
+  border-bottom: none;
+  padding: 1.75rem 2rem;
+  background: linear-gradient(120deg, #0ea5e9, #2563eb);
+  color: #fff;
+}
+
+.ticket-card__header h5 {
+  color: inherit;
+  font-weight: 700;
+}
+
+.ticket-card__eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+
+.ticket-card__body {
+  padding: 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+}
+
+.ticket-status {
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(15, 118, 110, 0.2);
+}
+
+.ticket-info-list {
+  border-radius: 18px;
+  border: 1px solid #edf0f6;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.ticket-info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-color: #edf0f6;
+  background: transparent;
+}
+
+.ticket-info-item--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ticket-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ticket-info-row + .ticket-info-row {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e4e7ec;
+}
+
+.ticket-info-label {
+  font-weight: 600;
+  color: #475467;
+}
+
+.ticket-info-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ticket-info-value.text-muted {
+  color: #98a2b3;
+}
+
+.ticket-info-item--emphasis {
+  background: #f5f8ff;
+}
+
+.ticket-info-item--emphasis .ticket-info-value {
+  font-size: 1.2rem;
+  color: #0b57d0;
+}
+
+.ticket-actions .btn {
+  min-width: 140px;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);
+}
+
+.ticket-actions .btn:disabled {
+  opacity: 0.75;
+  box-shadow: none;
+}
+
+@media (max-width: 575.98px) {
+  .ticket-card__header,
+  .ticket-card__body {
+    padding: 1.5rem;
+  }
+
+  .ticket-info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ticket-info-value {
+    font-size: 1rem;
+  }
+
+  .ticket-actions .btn {
+    width: 100%;
+  }
+}
+
 .alert {
   animation: fadeIn 0.3s ease;
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;

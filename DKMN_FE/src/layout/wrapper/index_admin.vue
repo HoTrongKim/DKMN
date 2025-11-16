@@ -1,7 +1,7 @@
 <!-- src/layouts/AdminLayout.vue -->
 <template>
   <div class="layout" :data-collapsed="isCollapsed">
-    <TopAdmin @toggle-sidebar="toggleSidebar" />
+    <TopAdmin @toggle-sidebar="toggleSidebar" @logout="handleLogout" />
     
     <div class="content-wrapper">
       <div class="sidebar">
@@ -27,7 +27,16 @@ export default {
   name: "AdminLayout",
   components: { MenuAdmin, TopAdmin, Bot },
   data() { return { isCollapsed: false }; },
-  methods: { toggleSidebar(){ this.isCollapsed = !this.isCollapsed } }
+  methods: {
+    toggleSidebar(){ this.isCollapsed = !this.isCollapsed },
+    handleLogout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('key_client');
+      window.dispatchEvent(new CustomEvent('dkmn:auth-changed', { detail: { isLoggedIn: false } }));
+      this.$router.push('/view/dang-nhap').catch(() => {});
+    }
+  }
 }
 </script>
 

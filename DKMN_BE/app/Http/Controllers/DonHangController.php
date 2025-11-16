@@ -124,7 +124,16 @@ class DonHangController extends Controller
             ]);
 
             $seatNumbers = $seats->pluck('so_ghe')->implode(',');
+            $seatCount = $seats->count();
             $baseFare = (int) round($seats->sum('gia'));
+
+            if ($baseFare <= 0) {
+                $baseFare = (int) round(($trip->gia_co_ban ?? 0) * max(1, $seatCount));
+            }
+
+            if ($baseFare <= 0) {
+                $baseFare = (int) round($data['total'] ?? 0);
+            }
 
             $ticket = Ticket::create([
                 'don_hang_id' => $order->id,
@@ -133,6 +142,10 @@ class DonHangController extends Controller
                 'base_fare_vnd' => $baseFare,
                 'total_amount_vnd' => $baseFare,
             ]);
+
+            $order->forceFill([
+                'tong_tien' => $baseFare,
+            ])->save();
 
             return [
                 'donHang' => $order,
@@ -229,9 +242,9 @@ class DonHangController extends Controller
             'nguoi_dung_id' => $userId,
             'chuyen_di_id' => $tripId,
             'ma_don' => $this->generateOrderCode(),
-            'ten_khach' => $data['customerName'] ?: 'Khách lẻ',
-            'sdt_khach' => $data['customerPhone'] ?: '',
-            'email_khach' => $data['customerEmail'] ?: null,
+            'ten_khach' => $this->resolveCustomerName($data, $request),
+            'sdt_khach' => $this->resolveCustomerPhone($data, $request),
+            'email_khach' => $this->resolveCustomerEmail($data, $request),
             'tong_tien' => $data['total'],
             'trang_thai' => 'cho_xu_ly',
             'trang_thai_chuyen' => 'cho_khoi_hanh',
@@ -254,6 +267,42 @@ class DonHangController extends Controller
         }
 
         return $payload;
+    }
+
+    private function resolveCustomerName(array $data, Request $request): string
+    {
+        $fromPayload = trim((string) ($data['customerName'] ?? ''));
+        if ($fromPayload !== '') {
+            return $fromPayload;
+        }
+
+        $user = $request->user('sanctum') ?? $request->user();
+
+        return $user?->ho_ten ?: $user?->name ?: 'Quý khách';
+    }
+
+    private function resolveCustomerPhone(array $data, Request $request): ?string
+    {
+        $fromPayload = trim((string) ($data['customerPhone'] ?? ''));
+        if ($fromPayload !== '') {
+            return $fromPayload;
+        }
+
+        $user = $request->user('sanctum') ?? $request->user();
+
+        return $user?->so_dien_thoai ?: $user?->phone;
+    }
+
+    private function resolveCustomerEmail(array $data, Request $request): ?string
+    {
+        $fromPayload = trim((string) ($data['customerEmail'] ?? ''));
+        if ($fromPayload !== '') {
+            return $fromPayload;
+        }
+
+        $user = $request->user('sanctum') ?? $request->user();
+
+        return $user?->email ?: null;
     }
 
     private function buildTripContext(ChuyenDi $trip, array $payload, int $seatCount): array

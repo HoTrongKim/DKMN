@@ -53,12 +53,15 @@ Route::prefix('dkmn')->group(function () {
 });
 
 Route::prefix('dkmn')->middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [NguoiDungController::class, 'thongTin']);
+    Route::put('/me', [NguoiDungController::class, 'capNhatThongTin']);
     Route::post('/don-hang', [DonHangController::class, 'store']);
     Route::post('/thanh-toan', [DkmnThanhToanController::class, 'store']);
 
     Route::post('/payments/qr/init', [PaymentController::class, 'initQr']);
     Route::get('/payments/{payment}/status', [PaymentController::class, 'status']);
     Route::post('/payments/onboard/confirm', [PaymentController::class, 'confirmOnboard']);
+    Route::post('/me/change-password', [NguoiDungController::class, 'doiMatKhau']);
 });
 
 Route::prefix('dkmn')->middleware(['auth:sanctum', 'role:quan_tri'])->group(function () {

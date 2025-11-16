@@ -44,6 +44,11 @@ const routes = [
     meta: { layout: 'client' }
   },
   {
+    path: '/client-change-password',
+    component: () => import('../components/Client/Profile/ChangePassword.vue'),
+    meta: { layout: 'client' }
+  },
+  {
     path: '/client-danh-gia',
     component: () => import('../components/Client/DanhGia/DanhGia.vue'),
     meta: { layout: 'client' }
@@ -95,6 +100,16 @@ const routes = [
     path: "/view/baocao",
     component: () =>
       import("../components/Admin/QuanLiThongKe/BaoCaoThongKe.vue"),
+    meta: { layout: "admin", requiresAdmin: true },
+  },
+  {
+    path: "/admin/profile",
+    component: () => import("../components/Admin/Profile/AdminProfile.vue"),
+    meta: { layout: "admin", requiresAdmin: true },
+  },
+  {
+    path: "/admin/account-security",
+    component: () => import("../components/Admin/Profile/AdminSecurity.vue"),
     meta: { layout: "admin", requiresAdmin: true },
   },
 

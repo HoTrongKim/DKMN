@@ -35,6 +35,7 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="#" @click.prevent="$router.push('/client-profile')"><i class="bx bx-user me-2"></i>Thông tin cá nhân</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="$router.push('/client-change-password')"><i class="bx bx-lock-alt me-2"></i>Đổi mật khẩu</a></li>
               <li><a class="dropdown-item" href="#" @click.prevent="$router.push('/client-ve-da-dat')"><i class="bx bx-receipt me-2"></i>Vé đã đặt</a></li>
            
               <li><hr class="dropdown-divider"></li>
