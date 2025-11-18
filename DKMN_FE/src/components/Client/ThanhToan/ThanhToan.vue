@@ -99,9 +99,9 @@
                               height="70"
                             />
                           </div>
-                          <h6 class="fw-semibold text-dark mb-0">Thanh toán sau</h6>
+                          <h6 class="fw-semibold text-dark mb-0">Thanh toán trên xe</h6>
                           <small class="text-muted"
-                            >Trả tiền sau khi hoàn tất chuyến đi</small
+                            >Trả trực tiếp cho nhà xe khi lên xe</small
                           >
                         </label>
                       </div>
@@ -309,6 +309,24 @@
                     thanh toán
                   </li>
                 </ol>
+                <div v-if="selectedGateway === 'other-bank'" class="bank-box mt-3">
+                  <div class="bank-row">
+                    <span class="label">Ngân hàng:</span>
+                    <strong>{{ bankInfo.bankName }}</strong>
+                  </div>
+                  <div class="bank-row">
+                    <span class="label">Số tài khoản:</span>
+                    <strong>{{ bankInfo.accountNumber }}</strong>
+                  </div>
+                  <div class="bank-row">
+                    <span class="label">Chủ TK:</span>
+                    <strong>{{ bankInfo.accountName }}</strong>
+                  </div>
+                  <div class="bank-row">
+                    <span class="label">Nội dung:</span>
+                    <strong>{{ qrModal.paymentId || "Thanh toan ve xe DKMN" }}</strong>
+                  </div>
+                </div>
               </div>
 
               <div class="qr-modal-footer">
@@ -380,6 +398,7 @@ const ORDER_ENDPOINT = "/dkmn/don-hang";
 const PAYMENT_ENDPOINT = "/dkmn/thanh-toan";
 const PAYMENT_QR_INIT_ENDPOINT = "/dkmn/payments/qr/init";
 const PAYMENT_ONBOARD_ENDPOINT = "/dkmn/payments/onboard/confirm";
+const PAYMENT_STATUS_ENDPOINT = "/dkmn/payments/status";
 const TRIP_SEATS_ENDPOINT = (id) => `/dkmn/chuyen-di/${id}/ghe`;
 const LEGACY_TICKET_KEY = "dkmn:lastTicket";
 const TICKET_STORE_KEY = "dkmn:tickets";
@@ -398,14 +417,20 @@ const TICKET_HOLD_MINUTES = 10;
           dropoffStation: "",
           passengers: 0,
           selectedSeats: [],
-          total: 0,
-          selectedGateway: "momo",
-          seatIds: [],
-          seatLookup: {},
-          seatMapLoaded: false,
-          bookingId: null,
-          ticketId: null,
-          isBooking: false,
+      total: 0,
+      selectedGateway: "momo",
+      seatIds: [],
+      seatLookup: {},
+      seatMapLoaded: false,
+      bankInfo: {
+        bankCode: "BVB", // Timo by Ban Viet Bank
+        bankName: "Timo (Ban Viet)",
+        accountNumber: "0793587033",
+        accountName: "NGUYEN VAN M",
+      },
+      bookingId: null,
+      ticketId: null,
+      isBooking: false,
           status: {
             code: "idle",
             label: "Chưa thanh toán",
@@ -880,17 +905,20 @@ const TICKET_HOLD_MINUTES = 10;
           if (!this.ensureHoldActive()) {
             return;
           }
-
+          // Chỉ hoàn tất khi payment đã được xác nhận thành công từ server
           try {
-            await api.post(PAYMENT_ONBOARD_ENDPOINT, {
-              ticketId: this.ticketId,
-              operatorId: "CLIENT_AUTO",
-              note: `Auto confirm via ${this.selectedGateway || "qr"}`,
-              method: "QR",
-              provider: this.normalizeGatewayCode(this.selectedGateway),
-            });
+            const { data } = await api.get(`${PAYMENT_STATUS_ENDPOINT}/${this.qrModal.paymentId}`);
+            const payment = data?.data || data;
+            if (payment?.status !== "SUCCEEDED") {
+              throw new Error("Thanh toán chưa hoàn tất. Vui lòng thử lại sau vài giây.");
+            }
           } catch (error) {
-            console.warn("Auto confirm payment failed", error);
+            const message =
+              error.response?.data?.message ||
+              error.message ||
+              "Không thể xác nhận thanh toán. Vui lòng thử lại.";
+            this.$toast?.error?.(message);
+            return;
           }
 
           await this.recordPayment(this.selectedGateway, "thanh_cong");
@@ -968,24 +996,20 @@ const TICKET_HOLD_MINUTES = 10;
           }
           this.setStatus(
             "pending",
-            "Thanh toán khi lên xe",
-            "Đang ghi nhận thanh toán...",
+            "Chờ thanh toán trên xe",
+            "Bạn sẽ thanh toán trực tiếp cho nhà xe khi lên xe.",
             60,
             true
           );
 
           try {
-            await api.post(PAYMENT_ONBOARD_ENDPOINT, {
-              ticketId: this.ticketId,
-              operatorId: "CLIENT_APP",
-              note: "Thanh toán khi lên xe",
-            });
-            await this.recordPayment("tra_sau", "thanh_cong");
+            // Ghi nhận trạng thái chờ thanh toán trên xe; không auto xác nhận thành công
+            await this.recordPayment("tra_sau", "cho_thanh_toan");
             this.setStatus(
-              "success",
-              "Thanh toán sau",
-              "Khách đã thanh toán khi lên xe",
-              100,
+              "pending",
+              "Chờ thanh toán trên xe",
+              "Vui lòng thanh toán cho nhà xe khi lên xe.",
+              80,
               false
             );
             this.laterModal.visible = true;
@@ -1072,7 +1096,9 @@ const TICKET_HOLD_MINUTES = 10;
 
       const label = "Thanh toan ve xe DKMN";
       const encoded = encodeURIComponent(label);
-      return `https://img.vietqr.io/image/VCB-1037240068-compact.png?amount=${amount}&addInfo=${encoded}`;
+      const bankCode = this.bankInfo?.bankCode || "BVB";
+      const account = this.bankInfo?.accountNumber || "0793587033";
+      return `https://img.vietqr.io/image/${bankCode}-${account}-compact.png?amount=${amount}&addInfo=${encoded}`;
     },
       },
     };
@@ -1126,6 +1152,23 @@ const TICKET_HOLD_MINUTES = 10;
     .hold-countdown {
       border-radius: 12px;
       font-size: 0.95rem;
+    }
+
+    .bank-box {
+      border: 1px dashed #cdd4e1;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fafc;
+    }
+    .bank-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.95rem;
+      padding: 4px 0;
+    }
+    .bank-row .label {
+      color: #6b7280;
     }
 
     /* 💳 CSS cho thẻ MoMo */
@@ -1243,20 +1286,20 @@ const TICKET_HOLD_MINUTES = 10;
     }
 
     .later-card:hover {
-      border-color: #0056d2;
-      box-shadow: 0 0 10px rgba(0, 86, 210, 0.15);
+      border-color: #16a34a;
+      box-shadow: 0 0 10px rgba(22, 163, 74, 0.15);
       transform: scale(1.02);
     }
 
     .later-card.active {
-      border-color: #0056d2;
-      background: rgba(0, 86, 210, 0.05);
-      box-shadow: 0 0 14px rgba(0, 86, 210, 0.25);
+      border-color: #16a34a;
+      background: rgba(22, 163, 74, 0.05);
+      box-shadow: 0 0 14px rgba(22, 163, 74, 0.25);
       transform: scale(1.03);
     }
 
     .later-card.active h6 {
-      color: #0056d2;
+      color: #16a34a;
     }
 
     .later-card img {

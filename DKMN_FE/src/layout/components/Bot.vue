@@ -1,5 +1,5 @@
 <template>
-  <footer id="contact" class="bot-home mt-5">
+  <footer id="contact" class="bot-home ">
     <div class="bot-home__container">
       <span>© 2025 DKMN. All rights reserved.</span>
       <div class="bot-home__links">
@@ -15,10 +15,13 @@ export default {};
 </script>
 <style scoped>
 .bot-home {
-  background: linear-gradient(120deg, #111a2d, #1f2961 55%, #312e81);
-  color: #f3f6ff;
+  background: radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.2), transparent 40%),
+    radial-gradient(circle at 82% 18%, rgba(14, 165, 233, 0.16), transparent 36%),
+    linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
+  color: #e2e8f0;
   padding: 2.5rem 1.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  border-top: 1px solid rgba(96, 165, 250, 0.25);
+  box-shadow: 0 -10px 30px rgba(5, 9, 20, 0.35);
 }
 
 .bot-home__container {
@@ -39,15 +42,15 @@ export default {};
 }
 
 .bot-home__links a {
-  color: #c7d2fe;
+  color: #cbd5e1;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.92rem;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .bot-home__links a:hover {
-  color: #fef3c7;
+  color: #fff;
   transform: translateY(-1px);
 }
 

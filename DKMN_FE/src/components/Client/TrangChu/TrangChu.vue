@@ -1,5 +1,6 @@
 <template>
-  <div class="container-fluid p-0">
+  <div class="container-fluid">
+    <GioiThieu />
     <!-- Hero Section with Search -->
     <section class="hero position-relative">
       <!-- Decorative background -->
@@ -379,7 +380,51 @@
   </div>
 </div>
 
-<!-- Layout cho tàu hỏa / máy bay (dùng dữ liệu thực tế) -->
+<!-- Layout cho tàu hỏa: chia khoang, hiển thị lối đi -->
+<div v-else-if="seatModal.trip?.vehicleTypeKey === 'train'" class="train-seat-container">
+  <div class="train-map mb-3">
+    <div class="train-map__line">
+      <span class="dot"></span>
+      <span class="segment"></span>
+      <span class="dot"></span>
+    </div>
+    <div class="train-map__label">Sơ đồ toa · Lối đi giữa</div>
+  </div>
+  <div v-if="!trainCabins.length" class="text-center text-muted py-4">
+    Chưa có dữ liệu ghế cho chuyến này.
+  </div>
+  <div v-else class="train-cabin-grid">
+    <div class="cabin-card" v-for="cabin in trainCabins" :key="cabin.cabinKey">
+      <div class="cabin-card__header">
+        Khoang {{ cabin.cabinKey }}
+        <small class="text-muted ms-2">{{ cabin.rows.length * 2 }} chỗ</small>
+      </div>
+      <div class="cabin-card__body">
+        <div class="cabin-row" v-for="(row, idx) in cabin.rows" :key="cabin.cabinKey + '-r' + idx">
+          <div
+            v-for="seat in row"
+            :key="seat.id"
+            class="seat-btn"
+            :class="{
+              'seat-empty': seat.available && !seatModal.seatsSelected.includes(seat.id),
+              'seat-selected': seatModal.seatsSelected.includes(seat.id),
+              'seat-unavailable': !seat.available,
+              'seat-booked': seat.booked,
+              'seat-aisle': seat.isAisle,
+              'seat-placeholder': seat.isPlaceholder
+            }"
+            @click="toggleSeat(seat)"
+            :title="seat.label"
+          >
+            {{ seat.label }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Layout máy bay / mặc định -->
 <div v-else class="generic-seat-container">
   <div v-if="!(seatModal.layout?.length)" class="text-center text-muted py-4">
     Chưa có dữ liệu ghế cho chuyến này.
@@ -739,48 +784,16 @@
         </div>
       </div>
     </section>
-
-    <!-- Portal Notifications -->
-    <section class="notice-section" aria-label="Thông báo">
-      <div class="notice-header d-flex justify-content-between align-items-center">
-        <div>
-          <p class="notice-eyebrow mb-1">Thông báo</p>
-          <h5 class="mb-0">Tin mới cho bạn</h5>
-        </div>
-        <div class="text-muted small" v-if="!isLoadingNotices && portalNotices.length">
-          {{ portalNotices.length }} thông báo
-        </div>
-      </div>
-
-      <div class="notice-card">
-        <div v-if="isLoadingNotices" class="text-center text-muted py-3">
-          Đang tải thông báo...
-        </div>
-        <div v-else-if="noticesError" class="alert alert-warning mb-0 py-2">
-          {{ noticesError }}
-        </div>
-        <div v-else-if="!portalNotices.length" class="text-center text-muted py-3">
-          Chưa có thông báo mới.
-        </div>
-        <div v-else class="notice-list">
-          <div class="notice-item" v-for="item in portalNotices" :key="item.id">
-            <div class="notice-item__title">{{ item.title }}</div>
-            <div class="notice-item__body text-muted">{{ item.message }}</div>
-            <div class="notice-item__meta small text-secondary">
-              {{ formatNoticeTime(item.createdAt) }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <FeaturesSection />
+    <div id="features">
+      <FeaturesSection />
+    </div>
   </div>
 </template>
 
 <script>
 import api from "../../../services/api";
 import FeaturesSection from "./FeaturesSection.vue";
+import GioiThieu from "./GioiThieu.vue";
 
 const DEFAULT_CITY_FALLBACKS = [
   { id: 1, name: "Hà Nội" },
@@ -808,6 +821,7 @@ const PORTAL_NOTICES_ENDPOINT =
 export default {
   name: "TrangChu",
   components: {
+    GioiThieu,
     FeaturesSection,
   },
   data() {
@@ -901,6 +915,11 @@ export default {
         return this.passengerCount >= 6;
       }
       return this.passengerCount >= 1;
+    },
+    trainCabins() {
+      if (this.seatModal.trip?.vehicleTypeKey !== "train") return [];
+      const seats = this.seatModal?.seats || [];
+      return this.groupTrainCabins(seats);
     },
     filteredTrips() {
       let filtered = [...this.trips];
@@ -1936,38 +1955,7 @@ export default {
       return rows;
     },
     buildTrainLayout(seats = []) {
-      // Gom ghế theo khoang (dựa trên tiền tố chữ cái của mã ghế) để hiển thị gần thực tế hơn
-      const cabinsMap = seats.reduce((acc, seat, index) => {
-        const label =
-          seat.label || seat.ma_ghe || seat.so_ghe || seat.id || `T${index + 1}`;
-        const match = /^([A-Za-z]+)(\d+)/.exec(String(label).trim());
-        const cabinKey = match ? match[1].toUpperCase() : "CABIN";
-        const seatNumber = match ? Number(match[2]) || index + 1 : index + 1;
-
-        if (!acc[cabinKey]) acc[cabinKey] = [];
-        acc[cabinKey].push({
-          ...seat,
-          cabinKey,
-          seatNumber,
-        });
-        return acc;
-      }, {});
-
-      const cabins = Object.entries(cabinsMap).sort(([a], [b]) =>
-        a.localeCompare(b)
-      );
-
-      const cabinLayouts = cabins.map(([cabinKey, list]) => {
-        const sorted = [...list].sort(
-          (a, b) => (a.seatNumber || 0) - (b.seatNumber || 0)
-        );
-        const rows = [];
-        for (let i = 0; i < sorted.length; i += 2) {
-          const chunk = sorted.slice(i, i + 2);
-          rows.push(this.fillSeatRow(chunk, 2, "train"));
-        }
-        return { cabinKey, rows };
-      });
+      const cabinLayouts = this.groupTrainCabins(seats);
 
       const rows = [];
       for (let i = 0; i < cabinLayouts.length; i += 2) {
@@ -1995,6 +1983,39 @@ export default {
         }
       }
       return rows;
+    },
+    groupTrainCabins(seats = []) {
+      const cabinsMap = seats.reduce((acc, seat, index) => {
+        const label =
+          seat.label || seat.ma_ghe || seat.so_ghe || seat.id || `T${index + 1}`;
+        const match = /^([A-Za-z]+)(\d+)/.exec(String(label).trim());
+        const cabinKey = match ? match[1].toUpperCase() : "CABIN";
+        const seatNumber = match ? Number(match[2]) || index + 1 : index + 1;
+
+        if (!acc[cabinKey]) acc[cabinKey] = [];
+        acc[cabinKey].push({
+          ...seat,
+          cabinKey,
+          seatNumber,
+        });
+        return acc;
+      }, {});
+
+      const cabins = Object.entries(cabinsMap).sort(([a], [b]) =>
+        a.localeCompare(b)
+      );
+
+      return cabins.map(([cabinKey, list]) => {
+        const sorted = [...list].sort(
+          (a, b) => (a.seatNumber || 0) - (b.seatNumber || 0)
+        );
+        const rows = [];
+        for (let i = 0; i < sorted.length; i += 2) {
+          const chunk = sorted.slice(i, i + 2);
+          rows.push(this.fillSeatRow(chunk, 2, "train"));
+        }
+        return { cabinKey, rows };
+      });
     },
     fillSeatRow(seats = [], required = 3, deckKey = "") {
       const filled = [];
@@ -2252,7 +2273,7 @@ export default {
 }
 
 .container-fluid {
-  background: linear-gradient(180deg, #0f172a 0%, #111a2e 15%, #f5f7fb 55%);
+  background: linear-gradient(180deg, #0b1224 0%, #0f172a 48%, #0f172a 70%, #f5f7fb 100%);
   min-height: 100vh;
 }
 
@@ -2271,19 +2292,19 @@ export default {
 .hero__overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 10% 20%, rgba(165, 180, 252, 0.4), transparent 50%),
-    radial-gradient(circle at 80% 0%, rgba(96, 165, 250, 0.35), transparent 45%),
-    linear-gradient(135deg, #312e81, #1e1b4b);
+  background: radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.32), transparent 52%),
+    radial-gradient(circle at 80% 8%, rgba(14, 165, 233, 0.24), transparent 46%),
+    linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
   opacity: 0.92;
 }
 
 .hero__grid {
   position: absolute;
   inset: 10% 5%;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 80px 80px;
-  opacity: 0.35;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 96px 96px;
+  opacity: 0.3;
   z-index: 1;
 }
 
@@ -2301,20 +2322,20 @@ export default {
 .blob-1 {
   top: -120px;
   left: -40px;
-  background: radial-gradient(circle, rgba(129, 140, 248, 0.7), rgba(59, 130, 246, 0.3));
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.7), rgba(37, 99, 235, 0.3));
 }
 
 .blob-2 {
   bottom: -160px;
   right: -80px;
-  background: radial-gradient(circle, rgba(248, 113, 113, 0.6), rgba(249, 115, 22, 0.3));
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.42), rgba(59, 130, 246, 0.22));
   animation-delay: 4s;
 }
 
 .blob-3 {
   top: 20%;
   right: 30%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.6), rgba(45, 212, 191, 0.25));
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.5), rgba(45, 212, 191, 0.2));
   animation-delay: 8s;
 }
 
@@ -2367,27 +2388,28 @@ export default {
 }
 
 .notice-section {
-  background: #f7fbff;
-  border: 1px solid #dbeafe;
+  background: linear-gradient(140deg, rgba(11, 18, 36, 0.92), rgba(15, 23, 42, 0.88));
+  border: 1px solid rgba(96, 165, 250, 0.25);
   border-radius: 18px;
   padding: 16px;
   margin: 20px auto 10px;
   max-width: 1100px;
+  box-shadow: 0 30px 70px rgba(5, 9, 20, 0.35);
 }
 .notice-header h5 {
   font-weight: 700;
-  color: #0f172a;
+  color: #e2e8f0;
 }
 .notice-eyebrow {
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: #60a5fa;
   font-size: 0.78rem;
 }
 .notice-card {
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(17, 24, 39, 0.95) 100%);
   padding: 12px;
 }
 .notice-list {
@@ -2397,28 +2419,29 @@ export default {
 .notice-item {
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #e6edf7;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 8px 20px rgba(5, 9, 20, 0.3);
 }
 .notice-item__title {
   font-weight: 700;
-  color: #0f172a;
+  color: #e2e8f0;
 }
 .notice-item__body {
   font-size: 0.95rem;
   margin: 4px 0;
+  color: #cbd5e1;
 }
 .notice-item__meta {
-  color: #6b7280;
+  color: #94a3b8;
 }
 
 .search-form {
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(11, 18, 36, 0.82);
   border-radius: 28px;
   padding: clamp(1.25rem, 3vw, 2rem);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 55px rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 22px 60px rgba(5, 9, 20, 0.55);
 }
 
 .search-form .form-label {
@@ -2431,8 +2454,8 @@ export default {
 
 .search-form .form-select,
 .search-form .form-control {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 14px;
   color: #f8fafc;
   min-height: 48px;
@@ -2441,9 +2464,9 @@ export default {
 
 .search-form .form-select:focus,
 .search-form .form-control:focus {
-  border-color: rgba(96, 165, 250, 0.8);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
-  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(59, 130, 246, 0.9);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  background: rgba(11, 18, 36, 0.92);
 }
 
 .search-btn {
@@ -2452,10 +2475,10 @@ export default {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, #60a5fa, #6366f1, #c084fc);
+  background: linear-gradient(135deg, #2563eb, #0ea5e9, #22d3ee);
   border: none;
   padding: 0.85rem 1.25rem;
-  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 15px 35px rgba(34, 211, 238, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -2982,7 +3005,8 @@ export default {
 }
 
 .bus-seat-container,
-.generic-seat-container {
+.generic-seat-container,
+.train-seat-container {
   background: #fff;
   border-radius: 22px;
   padding: clamp(1rem, 3vw, 1.75rem);
@@ -2995,6 +3019,73 @@ export default {
   max-width: 760px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.train-seat-container {
+  background: linear-gradient(180deg, #f5f7fb 0%, #fff 70%);
+}
+.train-map {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.train-map__line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.train-map__line .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+}
+.train-map__line .segment {
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+}
+.train-map__label {
+  font-weight: 600;
+  color: #4b5563;
+}
+.train-cabin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.cabin-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+.cabin-card__header {
+  padding: 10px 12px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #4f46e5, #6366f1);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cabin-card__body {
+  padding: 10px;
+}
+.cabin-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cabin-row .seat-btn {
+  width: 100%;
+  min-height: 42px;
 }
 
 .two-column-layout {
@@ -3181,3 +3272,4 @@ export default {
   }
 }
 </style>
+ 

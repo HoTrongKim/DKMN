@@ -13,16 +13,24 @@ return [
     'providers' => [
         'vietqr' => [
             'label' => 'VietQR',
-            'account' => env('VIETQR_ACCOUNT', 'VCB-1037240068'),
+            // Timo (Ban Viet) - cập nhật tài khoản QR mặc định
+            'account' => env('VIETQR_ACCOUNT', 'BVB-0793587033'),
         ],
         'momo' => [
             'label' => 'MoMo',
-            'account' => env('VIETQR_ACCOUNT', 'VCB-1037240068'),
+            // Dùng QR VietQR với tài khoản Timo (Ban Viet)
+            'account' => env('VIETQR_ACCOUNT', 'BVB-0793587033'),
         ],
         'zalopay' => [
             'label' => 'ZaloPay',
             'account' => env('ZALOPAY_ACCOUNT', 'ZP-1234567890'),
         ],
+    ],
+    'timo' => [
+        'api_url' => env('TIMO_API_URL', 'https://api-timo.dzmid.io.vn'),
+        'username' => env('TIMO_USERNAME'),
+        'password' => env('TIMO_PASSWORD'),
+        'account' => env('TIMO_ACCOUNT', '0793587033'),
     ],
     'intent_expiration_minutes' => env('PAYMENT_INTENT_EXP_MIN', 15),
     'webhook_secret' => env('WEBHOOK_SECRET', Str::random(32)),

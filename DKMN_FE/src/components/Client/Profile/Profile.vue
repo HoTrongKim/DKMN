@@ -245,8 +245,10 @@ export default {
 /* 🎨 Profile Container */
 .profile-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem 0;
+    background: radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.2), transparent 42%),
+        radial-gradient(circle at 82% 12%, rgba(14, 165, 233, 0.16), transparent 38%),
+        linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
+    padding: 2.5rem 0 3.5rem;
 }
 
 /* 🖼️ Profile Header */
@@ -257,10 +259,10 @@ export default {
 .profile-cover {
     position: relative;
     height: 200px;
-    background: linear-gradient(135deg, #0056d2 0%, #007bff 100%);
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 86, 210, 0.3);
+    box-shadow: 0 20px 40px rgba(34, 211, 238, 0.28);
 }
 
 .cover-overlay {
@@ -320,7 +322,7 @@ export default {
     right: 5px;
     width: 35px;
     height: 35px;
-    background: #0056d2;
+    background: #2563eb;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -328,11 +330,11 @@ export default {
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 86, 210, 0.4);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .avatar-edit-btn:hover {
-    background: #003d99;
+    background: #1e3a8a;
     transform: scale(1.1);
 }
 
@@ -532,16 +534,16 @@ export default {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #0056d2, #007bff);
-    border-color: #0056d2;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    border-color: #2563eb;
     color: white;
-    box-shadow: 0 4px 15px rgba(0, 86, 210, 0.3);
+    box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #003d99, #0056b3);
+    background: linear-gradient(135deg, #0ea5e9, #22d3ee);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 86, 210, 0.4);
+    box-shadow: 0 8px 25px rgba(34, 211, 238, 0.35);
 }
 
 .btn:disabled {
@@ -655,4 +657,3 @@ export default {
     to { transform: rotate(360deg); }
 }
 </style>
-

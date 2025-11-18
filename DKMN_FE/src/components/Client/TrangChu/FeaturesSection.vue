@@ -68,12 +68,14 @@
   </script>
   
   <style scoped>
-  .features-section {
+.features-section {
     position: relative;
-    background: linear-gradient(180deg, #e8efff 0%, #eff2ff 45%, #f7f9ff 100%);
+    background: radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.2), transparent 40%),
+      radial-gradient(circle at 82% 14%, rgba(14, 165, 233, 0.16), transparent 36%),
+      linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
     padding: clamp(4rem, 9vw, 6rem) 0 clamp(5rem, 9vw, 8rem);
     overflow: hidden;
-    color: #0f172a;
+    color: #e2e8f0;
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
@@ -93,20 +95,20 @@
 }
 
 .features-section::before {
-    background: rgba(79, 70, 229, 0.25);
+    background: rgba(37, 99, 235, 0.3);
     top: -150px;
     left: -120px;
 }
 
 .features-section::after {
-    background: rgba(16, 185, 129, 0.23);
+    background: rgba(16, 185, 129, 0.22);
     bottom: -160px;
     right: -80px;
 }
   
   .section-title {
     font-weight: 700;
-    color: #0f172a;
+    color: #e2e8f0;
     font-size: clamp(2rem, 4.5vw, 2.8rem);
     margin-bottom: 0.25rem;
   }
@@ -115,7 +117,7 @@
     text-transform: uppercase;
     letter-spacing: 0.35em;
     font-size: 0.78rem;
-    color: #64748b;
+    color: #60a5fa;
     display: inline-block;
     margin-bottom: 0.75rem;
   }
@@ -123,21 +125,21 @@
   .section-subtitle {
     max-width: 640px;
     margin: 0 auto;
-    color: #475569;
+    color: #cbd5e1;
     font-size: 1rem;
   }
 
   .feature-card {
     border-radius: 28px;
     padding: 2rem;
-    box-shadow: 0 30px 70px rgba(15, 23, 42, 0.15);
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 30px 70px rgba(5, 9, 20, 0.35);
+    border: 1px solid rgba(148, 163, 184, 0.28);
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
     position: relative;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    background: linear-gradient(135deg, #ffffff, #f4f7ff);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    background: linear-gradient(145deg, #0f172a, #111a2e);
     overflow: hidden;
     z-index: 0;
   }
@@ -146,16 +148,17 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: inherit;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     pointer-events: none;
     z-index: -1;
   }
 
   .feature-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 55px 110px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 55px 110px rgba(37, 99, 235, 0.3);
+    border-color: rgba(59, 130, 246, 0.35);
   }
 
   .feature-card__icon {
@@ -167,18 +170,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.15);
+    box-shadow: 0 15px 30px rgba(5, 9, 20, 0.35);
   }
 
   .feature-card__body h4 {
     font-weight: 800;
-    color: #020617;
+    color: #e2e8f0;
     margin-bottom: 0.4rem;
     letter-spacing: 0.01em;
   }
 
   .feature-card__body p {
-    color: #111827;
+    color: #cbd5e1;
     margin: 0;
     line-height: 1.6;
     font-weight: 600;
@@ -186,13 +189,13 @@
 
   .feature-card__badge {
     align-self: flex-start;
-    background: rgba(99, 102, 241, 0.12);
-    color: #4338ca;
-    font-weight: 600;
+    background: rgba(99, 102, 241, 0.16);
+    color: #c7d2fe;
+    font-weight: 700;
     padding: 0.35rem 0.95rem;
     border-radius: 999px;
     font-size: 0.85rem;
-    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.26);
   }
 
   .accent-blue {
@@ -214,17 +217,17 @@
   }
   
   .card-gradient-blue {
-    background: linear-gradient(140deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.08));
-    border-color: rgba(59, 130, 246, 0.25);
+    background: linear-gradient(140deg, rgba(59, 130, 246, 0.16), rgba(15, 23, 42, 0.9));
+    border-color: rgba(59, 130, 246, 0.32);
   }
 
   .card-gradient-purple {
-    background: linear-gradient(140deg, rgba(168, 85, 247, 0.12), rgba(129, 140, 248, 0.08));
-    border-color: rgba(168, 85, 247, 0.25);
+    background: linear-gradient(140deg, rgba(168, 85, 247, 0.16), rgba(15, 23, 42, 0.9));
+    border-color: rgba(168, 85, 247, 0.32);
   }
 
   .card-gradient-green {
-    background: linear-gradient(140deg, rgba(34, 197, 94, 0.12), rgba(59, 130, 246, 0.08));
-    border-color: rgba(34, 197, 94, 0.25);
+    background: linear-gradient(140deg, rgba(34, 197, 94, 0.16), rgba(15, 23, 42, 0.9));
+    border-color: rgba(34, 197, 94, 0.3);
   }
   </style>

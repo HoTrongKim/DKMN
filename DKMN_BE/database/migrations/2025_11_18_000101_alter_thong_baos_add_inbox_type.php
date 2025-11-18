@@ -12,6 +12,10 @@ return new class extends Migration {
             return;
         }
 
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('thong_baos', function (Blueprint $table) {
             // Expand enum to include 'inbox' for user inbox messages
             $table->enum('loai', ['info', 'warning', 'success', 'error', 'trip_update', 'inbox'])
@@ -23,6 +27,10 @@ return new class extends Migration {
     public function down(): void
     {
         if (!Schema::hasTable('thong_baos')) {
+            return;
+        }
+
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
             return;
         }
 

@@ -174,8 +174,6 @@ class DonHangController extends Controller
             $request
         );
 
-        $this->createOrderNotification($booking['donHang'], $trip, $seats, $context);
-
         $booking['context'] = $context;
 
         return response()->json([

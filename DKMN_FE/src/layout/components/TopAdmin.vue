@@ -14,10 +14,7 @@
         <i class="fas fa-search"></i>
         <input type="text" placeholder="Tìm kiếm nhanh..." />
       </div>
-      <div class="topbar-icons">
-        <i class="fas fa-bell"></i>
-        <i class="fas fa-cog"></i>
-      </div>
+
       <div class="avatar" ref="avatarWrapper">
         <img :src="avatarUrl" alt="admin avatar" @click.stop="toggleMenu" />
         <transition name="fade">

@@ -43,7 +43,7 @@ export default {
 <style scoped>
 .layout{
   /* sidebar width controlled here */
-  --sidebar-w: 240px;
+  --sidebar-w: 300px;
   display: flex;
   flex-direction: column;
   background:#f5f7fb;
@@ -57,14 +57,6 @@ export default {
   grid-template-columns: var(--sidebar-w) 1fr;
   flex: 1;
   min-height: 0;
-}
-
-/* Sidebar */
-.sidebar{ 
-  position: sticky; 
-  top: 0; 
-  height: calc(100vh - 64px); /* trừ chiều cao TopAdmin */
-  overflow-y: auto;
 }
 
 /* Main content area */

@@ -12,7 +12,7 @@
           <a href="#about" class="nav-link">Giới thiệu</a>
           <a href="#contact" class="nav-link">Liên hệ</a>
         </div>
-        <div class="notice-bell dropdown">
+        <div class="notice-bell dropdown" v-if="isLoggedIn">
           <button class="notice-trigger" type="button" data-bs-toggle="dropdown" @click="fetchNotices">
             <i class="bx bx-bell"></i>
             <span class="notice-badge">{{ unreadCount }}</span>
@@ -472,9 +472,11 @@ export default {
 
 <style scoped>
 .top-home {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.2), transparent 42%),
+    radial-gradient(circle at 82% 10%, rgba(14, 165, 233, 0.16), transparent 36%),
+    linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
   padding: 1rem 0;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 25px rgba(5, 9, 20, 0.45);
 }
 
 .top-home__container {
@@ -506,8 +508,8 @@ export default {
 .title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  color: #e2e8f0;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .notice-bell {
@@ -521,14 +523,14 @@ export default {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.35);
-  background: rgba(255,255,255,0.12);
-  color: #fff;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
   transition: all 0.2s ease;
 }
 .notice-trigger:hover {
-  border-color: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-color: rgba(96, 165, 250, 0.6);
+  box-shadow: 0 6px 16px rgba(5, 9, 20, 0.35);
 }
 .notice-badge {
   position: absolute;
@@ -537,47 +539,48 @@ export default {
   min-width: 18px;
   height: 18px;
   border-radius: 999px;
-  background: #e63946;
+  background: #e11d48;
   color: #fff;
   font-size: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 4px;
-  border: 2px solid #764ba2;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border: 2px solid #0f172a;
+  box-shadow: 0 2px 6px rgba(5, 9, 20, 0.35);
 }
 .notice-panel {
   width: 320px;
   padding: 0;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.22);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  box-shadow: 0 20px 45px rgba(5, 9, 20, 0.45);
   border-radius: 14px;
   overflow: hidden;
+  background: linear-gradient(145deg, rgba(11, 18, 36, 0.96), rgba(15, 23, 42, 0.94));
 }
 .notice-tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.04);
 }
 .tab-btn {
   border: none;
   background: transparent;
   padding: 10px;
   font-weight: 600;
-  color: #6b7280;
+  color: #cbd5e1;
   transition: all 0.2s ease;
 }
 .tab-btn.active {
-  background: #fff;
-  color: #111827;
+  background: rgba(37, 99, 235, 0.12);
+  color: #e2e8f0;
   box-shadow: inset 0 -3px #1f85ff;
 }
 .notice-body {
   max-height: 360px;
   overflow-y: auto;
   padding: 10px;
-  background: #fff;
+  background: transparent;
 }
 .notice-list {
   display: flex;
@@ -592,20 +595,27 @@ export default {
   gap: 10px 6px;
   padding: 12px 14px;
   padding-right: 38px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(96, 165, 250, 0.22);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.02);
 }
 .notice-card:hover {
-  border-color: #1f85ff;
-  box-shadow: 0 6px 16px rgba(31, 133, 255, 0.12);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 6px 16px rgba(5, 9, 20, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+}
+.notice-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 6px 16px rgba(5, 9, 20, 0.3);
+  background: rgba(59, 130, 246, 0.08);
 }
 .notice-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1f85ff, #764ba2);
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -622,7 +632,7 @@ export default {
 .notice-title {
   font-weight: 700;
   margin-bottom: 2px;
-  color: #111827;
+  color: #e2e8f0;
 }
 .notice-status {
   display: inline-flex;
@@ -647,12 +657,12 @@ export default {
   color: #15803d;
 }
 .notice-meta {
-  color: #6b7280;
+  color: #94a3b8;
   font-size: 0.85rem;
   margin-top: 2px;
 }
 .notice-text {
-  color: #4b5563;
+  color: #cbd5e1;
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -779,7 +789,7 @@ export default {
 }
 
 .nav-link {
-  color: white;
+  color: #e2e8f0;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
@@ -788,8 +798,8 @@ export default {
 }
 
 .nav-link:hover {
-  color: #ffd700;
-  background-color: rgba(255,255,255,0.1);
+  color: #fff;
+  background-color: rgba(37, 99, 235, 0.25);
 }
 
 .auth-buttons {
@@ -810,29 +820,30 @@ export default {
 }
 
 .btn-outline-light {
-  border-color: white;
-  color: white;
+  border-color: rgba(226, 232, 240, 0.8);
+  color: #e2e8f0;
 }
 
 .btn-outline-light:hover {
-  background-color: white;
-  color: #667eea;
+  background-color: #e2e8f0;
+  color: #0f172a;
 }
 
 .btn-primary {
-  border-color: white;
-  color: white;
+  border-color: rgba(226, 232, 240, 0.8);
+  color: #0f172a;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
 }
 
 .btn-primary:hover {
-  background-color: white;
-  color: #667eea;
+  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+  color: #0f172a;
 }
 
 .dropdown-menu {
   border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  border: none;
+  box-shadow: 0 14px 30px rgba(5, 9, 20, 0.35);
+  border: 1px solid rgba(96, 165, 250, 0.2);
 }
 
 .dropdown-item {
@@ -841,11 +852,11 @@ export default {
 }
 
 .dropdown-item:hover {
-  background-color: #f8f9fa;
+  background-color: rgba(37, 99, 235, 0.12);
 }
 
 .dropdown-item i {
-  color: #667eea;
+  color: #60a5fa;
 }
 
 /* Responsive */

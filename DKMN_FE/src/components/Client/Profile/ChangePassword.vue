@@ -129,12 +129,14 @@ export default {
 
 <style scoped>
 .change-password-page {
-  min-height: 60vh;
+  min-height: calc(100vh - 180px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 16px;
-  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.08), transparent 60%);
+  padding: 120px 16px 180px;
+  background: radial-gradient(circle at 20% 18%, rgba(37, 99, 235, 0.18), transparent 42%),
+    radial-gradient(circle at 82% 12%, rgba(14, 165, 233, 0.16), transparent 38%),
+    linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
 }
 .card {
   width: 100%;
