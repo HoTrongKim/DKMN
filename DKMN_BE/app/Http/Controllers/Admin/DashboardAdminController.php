@@ -12,6 +12,7 @@ use App\Models\ThanhToan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class DashboardAdminController extends Controller
@@ -209,6 +210,25 @@ class DashboardAdminController extends Controller
                 'topCompanies' => $topCompanies,
             ],
         ]);
+    }
+
+    protected function hasPaymentsTable(): bool
+    {
+        static $cache = null;
+
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        try {
+            $cache = Schema::hasTable('payments')
+                && Schema::hasColumns('payments', ['status', 'amount_vnd', 'paid_at']);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $cache = false;
+        }
+
+        return $cache;
     }
 
     private function resolvePeriodRange(string $period): array

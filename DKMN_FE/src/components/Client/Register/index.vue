@@ -37,24 +37,42 @@
                                         </div> -->
                                         <div class="col-sm-6">
                                             <label class="form-label">Ngày Sinh</label>
-                                            <input v-model="user.ngay_sinh" type="date" class="form-control" min="1900-01-01" max="2025-12-31">
+                                            <input v-model="user.ngay_sinh" type="date" class="form-control" min="1900-01-01" :max="maxDate">
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label">Mật khẩu</label>
-                                            <div class="input-group" id="show_hide_password">
-                                                <input v-model="user.password" type="password" class="form-control border-end-0">
-                                                <a href="javascript:;" class="input-group-text bg-transparent">
-                                                    <i class="bx bx-hide"></i>
-                                                </a>
+                                            <div class="input-group">
+                                                <input
+                                                    v-model="user.password"
+                                                    :type="showPassword ? 'text' : 'password'"
+                                                    class="form-control border-end-0"
+                                                >
+                                                <button
+                                                    type="button"
+                                                    class="input-group-text bg-transparent"
+                                                    @click="showPassword = !showPassword"
+                                                    :aria-label="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+                                                >
+                                                    <i :class="showPassword ? 'bx bx-show' : 'bx bx-hide'"></i>
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label">Nhập Lại Mật khẩu</label>
-                                            <div class="input-group" id="show_hide_password">
-                                                <input v-model="user.re_password" type="password" class="form-control border-end-0">
-                                                <a href="javascript:;" class="input-group-text bg-transparent">
-                                                    <i class="bx bx-hide"></i>
-                                                </a>
+                                            <div class="input-group">
+                                                <input
+                                                    v-model="user.re_password"
+                                                    :type="showRePassword ? 'text' : 'password'"
+                                                    class="form-control border-end-0"
+                                                >
+                                                <button
+                                                    type="button"
+                                                    class="input-group-text bg-transparent"
+                                                    @click="showRePassword = !showRePassword"
+                                                    :aria-label="showRePassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+                                                >
+                                                    <i :class="showRePassword ? 'bx bx-show' : 'bx bx-hide'"></i>
+                                                </button>
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -100,18 +118,41 @@ export default {
             },
             isLoading: false,
             error: '',
-            message: ''
+            message: '',
+            showPassword: false,
+            showRePassword: false
+        }
+    },
+    computed: {
+        maxDate() {
+            return new Date().toISOString().slice(0, 10)
         }
     },
     methods: {
+        isFutureDate(dateStr) {
+            if (!dateStr) return false;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const d = new Date(dateStr);
+            d.setHours(0, 0, 0, 0);
+            return d > today;
+        },
         async dangKyTaiKhoan() {
             if (this.isLoading) return;
 
             this.error = '';
             this.message = '';
 
-            if (!this.user.ho_va_ten || !this.user.email || !this.user.so_dien_thoai || !this.user.password || !this.user.re_password) {
+            const phone = (this.user.so_dien_thoai || '').trim();
+
+            if (!this.user.ho_va_ten || !this.user.email || !phone || !this.user.password || !this.user.re_password) {
                 this.error = 'Vui lòng nhập đầy đủ thông tin bắt buộc.';
+                this.$toast?.error(this.error);
+                return;
+            }
+
+            if (!/^\d{10}$/.test(phone)) {
+                this.error = 'Số điện thoại phải đủ 10 chữ số.';
                 this.$toast?.error(this.error);
                 return;
             }
@@ -122,13 +163,19 @@ export default {
                 return;
             }
 
+            if (this.isFutureDate(this.user.ngay_sinh)) {
+                this.error = 'Ngày sinh không được vượt quá ngày hiện tại.';
+                this.$toast?.error(this.error);
+                return;
+            }
+
             this.isLoading = true;
             try {
                 const payload = {
                     ho_ten: this.user.ho_va_ten,
                     ho_va_ten: this.user.ho_va_ten,
                     email: this.user.email,
-                    so_dien_thoai: this.user.so_dien_thoai,
+                    so_dien_thoai: phone,
                     ngay_sinh: this.user.ngay_sinh,
                     password: this.user.password,
                     mat_khau: this.user.password

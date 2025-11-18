@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PaymentAdminController;
 use App\Http\Controllers\Admin\TripAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\RatingAdminController;
+use App\Http\Controllers\Admin\NotificationAdminController;
 use App\Http\Controllers\Client\OrderClientController;
 use App\Http\Controllers\Client\RatingClientController;
 use App\Http\Controllers\CauHinhHeThongController;
@@ -38,6 +39,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/nguoi-dung/dang-nhap', [NguoiDungController::class, 'dangNhap']);
 Route::post('/nguoi-dung/dang-ky', [NguoiDungController::class, 'dangKy']);
+Route::post('/dkmn/password/forgot', [NguoiDungController::class, 'quenMatKhau']);
+Route::post('/dkmn/password/verify-otp', [NguoiDungController::class, 'xacThucOtp']);
+Route::post('/dkmn/password/reset', [NguoiDungController::class, 'datLaiMatKhau']);
 
 Route::prefix('dkmn')->group(function () {
     // Lookups for public/client side
@@ -62,6 +66,10 @@ Route::prefix('dkmn')->middleware('auth:sanctum')->group(function () {
     Route::get('/payments/{payment}/status', [PaymentController::class, 'status']);
     Route::post('/payments/onboard/confirm', [PaymentController::class, 'confirmOnboard']);
     Route::post('/me/change-password', [NguoiDungController::class, 'doiMatKhau']);
+    Route::get('/thong-bao', [DkmnThongBaoController::class, 'me']);
+    Route::post('/thong-bao/mark-read', [DkmnThongBaoController::class, 'markAsRead']);
+    Route::get('/inbox', [DkmnThongBaoController::class, 'inbox']);
+    Route::post('/inbox/mark-read', [DkmnThongBaoController::class, 'markInboxAsRead']);
 });
 
 Route::prefix('dkmn')->middleware(['auth:sanctum', 'role:quan_tri'])->group(function () {
@@ -113,6 +121,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:quan_tri'])->group(fun
     Route::get('/ratings', [RatingAdminController::class, 'index']);
     Route::patch('/ratings/{danhGia}', [RatingAdminController::class, 'update']);
     Route::delete('/ratings/{danhGia}', [RatingAdminController::class, 'destroy']);
+
+    Route::get('/notifications', [NotificationAdminController::class, 'index']);
+    Route::post('/notifications', [NotificationAdminController::class, 'store']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

@@ -536,7 +536,24 @@ const TICKET_HOLD_MINUTES = 10;
           const ownerKey = this.getTicketOwnerKey();
           if (!ownerKey) return;
           const store = this.readTicketStore();
-          store[ownerKey] = ticket;
+          const list = Array.isArray(store[ownerKey])
+            ? [...store[ownerKey]]
+            : store[ownerKey]
+            ? [store[ownerKey]]
+            : [];
+
+          const isSame = (a, b) => {
+            if (!a || !b) return false;
+            if (a.paymentId && b.paymentId) return String(a.paymentId) === String(b.paymentId);
+            return JSON.stringify(a) === JSON.stringify(b);
+          };
+
+          const exists = list.some((item) => isSame(item, ticket));
+          if (!exists) {
+            list.unshift(ticket);
+          }
+
+          store[ownerKey] = list.slice(0, 10); // keep latest 10 tickets
           try {
             localStorage.setItem(TICKET_STORE_KEY, JSON.stringify(store));
           } catch (error) {
@@ -801,6 +818,11 @@ const TICKET_HOLD_MINUTES = 10;
             const ticketCreatedAt =
               bookingData?.ticket?.created_at || bookingData?.ticket?.createdAt;
             this.startHoldCountdown(ticketCreatedAt);
+
+            // Thông báo header: cập nhật chuông khi vừa tạo đơn mới
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("dkmn:refresh-notices"));
+            }
           } catch (error) {
             const message =
               error.response?.data?.message || "Không thể lưu đơn hàng.";

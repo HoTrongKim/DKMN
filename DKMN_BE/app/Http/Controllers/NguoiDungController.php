@@ -6,6 +6,10 @@ use App\Models\NguoiDung;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetOtpMail;
 
 class NguoiDungController extends Controller
 {
@@ -29,7 +33,7 @@ class NguoiDungController extends Controller
         $data = $request->validate([
             'ho_ten' => 'required|string|max:100',
             'email' => 'required|string|email|max:100|unique:nguoi_dungs,email',
-            'so_dien_thoai' => 'nullable|string|max:20',
+            'so_dien_thoai' => ['required', 'regex:/^\\d{10}$/'],
             'mat_khau' => 'required|string|min:4',
         ]);
 
@@ -189,6 +193,139 @@ class NguoiDungController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Đã cập nhật mật khẩu.',
+        ]);
+    }
+
+    public function quenMatKhau(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email|max:150',
+        ]);
+        $user = NguoiDung::where('email', $data['email'])->first();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email không tồn tại trên hệ thống.',
+            ], 404);
+        }
+
+        $otp = random_int(100000, 999999);
+        $hashedOtp = Hash::make((string) $otp);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $data['email']],
+            ['token' => $hashedOtp, 'created_at' => now()]
+        );
+
+        try {
+            Mail::to($data['email'])->send(new ResetOtpMail($otp));
+        } catch (\Throwable $e) {
+            // Không lộ lỗi mail ra client; log nếu cần.
+            report($e);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Mã OTP đã được gửi.',
+        ]);
+    }
+
+    public function xacThucOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:150',
+            'otp' => 'required|string|max:10',
+        ]);
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $validated['email'])
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP không hợp lệ hoặc đã hết hạn.',
+            ], 422);
+        }
+
+        $created = $record->created_at ? Carbon::parse($record->created_at) : now()->subHours(2);
+        if ($created->lt(now()->subMinutes(10))) {
+            DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP đã hết hạn. Vui lòng yêu cầu lại.',
+            ], 422);
+        }
+
+        if (!Hash::check($validated['otp'], $record->token)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP không chính xác.',
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP hợp lệ, bạn có thể đặt lại mật khẩu.',
+        ]);
+    }
+
+    public function datLaiMatKhau(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:150',
+            'otp' => 'required|string|max:10',
+            'password' => 'required|string|min:6|confirmed',
+        ], [
+            'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
+        ]);
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $validated['email'])
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP không hợp lệ hoặc đã hết hạn.',
+            ], 422);
+        }
+
+        $created = $record->created_at ? Carbon::parse($record->created_at) : now()->subHours(2);
+        if ($created->lt(now()->subMinutes(60))) {
+            DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP đã hết hạn. Vui lòng yêu cầu lại.',
+            ], 422);
+        }
+
+        if (!Hash::check($validated['otp'], $record->token)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP không chính xác.',
+            ], 422);
+        }
+
+        $user = NguoiDung::where('email', $validated['email'])->first();
+        if (!$user) {
+            DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+            return response()->json([
+                'status' => false,
+                'message' => 'Người dùng không tồn tại.',
+            ], 404);
+        }
+
+        $user->forceFill([
+            'mat_khau' => Hash::make($validated['password']),
+            'ngay_cap_nhat' => now(),
+        ])->save();
+
+        DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
         ]);
     }
 

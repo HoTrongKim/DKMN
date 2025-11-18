@@ -740,6 +740,40 @@
       </div>
     </section>
 
+    <!-- Portal Notifications -->
+    <section class="notice-section" aria-label="Thông báo">
+      <div class="notice-header d-flex justify-content-between align-items-center">
+        <div>
+          <p class="notice-eyebrow mb-1">Thông báo</p>
+          <h5 class="mb-0">Tin mới cho bạn</h5>
+        </div>
+        <div class="text-muted small" v-if="!isLoadingNotices && portalNotices.length">
+          {{ portalNotices.length }} thông báo
+        </div>
+      </div>
+
+      <div class="notice-card">
+        <div v-if="isLoadingNotices" class="text-center text-muted py-3">
+          Đang tải thông báo...
+        </div>
+        <div v-else-if="noticesError" class="alert alert-warning mb-0 py-2">
+          {{ noticesError }}
+        </div>
+        <div v-else-if="!portalNotices.length" class="text-center text-muted py-3">
+          Chưa có thông báo mới.
+        </div>
+        <div v-else class="notice-list">
+          <div class="notice-item" v-for="item in portalNotices" :key="item.id">
+            <div class="notice-item__title">{{ item.title }}</div>
+            <div class="notice-item__body text-muted">{{ item.message }}</div>
+            <div class="notice-item__meta small text-secondary">
+              {{ formatNoticeTime(item.createdAt) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <FeaturesSection />
   </div>
 </template>
@@ -768,6 +802,8 @@ const CITIES_ENDPOINT = `${API_PREFIX}/tinh-thanh/get-data`;
 const STATIONS_ENDPOINT = `${API_PREFIX}/tram/get-data`;
 const OPERATORS_ENDPOINT = `${API_PREFIX}/nha-van-hanh/get-data`;
 const SEATS_ENDPOINT = (id) => `${API_PREFIX}/chuyen-di/${id}/ghe`;
+const PORTAL_NOTICES_ENDPOINT =
+  import.meta.env?.VITE_PORTAL_NOTICES_ENDPOINT || `${API_PREFIX}/portal/thong-bao`;
 
 export default {
   name: "TrangChu",
@@ -827,6 +863,9 @@ export default {
         layout: [],
         seats: [],
       },
+      portalNotices: [],
+      isLoadingNotices: false,
+      noticesError: "",
     };
   },
   computed: {
@@ -1183,6 +1222,7 @@ export default {
       await Promise.all([this.fetchCities(), this.fetchCompanies()]);
       this.fetchStationsFor("from");
       this.fetchStationsFor("to");
+      this.fetchPortalNotices();
     },
     async fetchCities() {
       const applyFallback = () => {
@@ -1305,6 +1345,48 @@ export default {
         }
       } catch (error) {
         console.error("fetchCompanies error", error);
+      }
+    },
+    async fetchPortalNotices() {
+      this.isLoadingNotices = true;
+      this.noticesError = "";
+      try {
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("key_client");
+        const userInfo = localStorage.getItem("userInfo");
+        const endpoint =
+          token && userInfo ? `${API_PREFIX}/thong-bao` : PORTAL_NOTICES_ENDPOINT;
+
+        const { data } = await api.get(endpoint);
+        const list = data?.data || data || [];
+        this.portalNotices = list
+          .map((item, idx) => ({
+            id: item.id || item.ma || idx,
+            title: item.title || item.subject || item.tieu_de || "Thông báo",
+            message: item.message || item.noi_dung || item.content || "",
+            createdAt:
+              item.createdAt ||
+              item.created_at ||
+              item.ngay_tao ||
+              item.ngay_gui ||
+              null,
+          }))
+          .filter((n) => n.message);
+      } catch (error) {
+        console.error("fetchPortalNotices error", error);
+        this.noticesError = "Không thể tải thông báo.";
+      } finally {
+        this.isLoadingNotices = false;
+      }
+    },
+    formatNoticeTime(ts) {
+      if (!ts) return "";
+      try {
+        const d = new Date(ts);
+        if (Number.isNaN(d.getTime())) return ts;
+        return d.toLocaleString("vi-VN");
+      } catch (error) {
+        return ts;
       }
     },
     normalizeKey(value) {
@@ -1854,21 +1936,63 @@ export default {
       return rows;
     },
     buildTrainLayout(seats = []) {
+      // Gom ghế theo khoang (dựa trên tiền tố chữ cái của mã ghế) để hiển thị gần thực tế hơn
+      const cabinsMap = seats.reduce((acc, seat, index) => {
+        const label =
+          seat.label || seat.ma_ghe || seat.so_ghe || seat.id || `T${index + 1}`;
+        const match = /^([A-Za-z]+)(\d+)/.exec(String(label).trim());
+        const cabinKey = match ? match[1].toUpperCase() : "CABIN";
+        const seatNumber = match ? Number(match[2]) || index + 1 : index + 1;
+
+        if (!acc[cabinKey]) acc[cabinKey] = [];
+        acc[cabinKey].push({
+          ...seat,
+          cabinKey,
+          seatNumber,
+        });
+        return acc;
+      }, {});
+
+      const cabins = Object.entries(cabinsMap).sort(([a], [b]) =>
+        a.localeCompare(b)
+      );
+
+      const cabinLayouts = cabins.map(([cabinKey, list]) => {
+        const sorted = [...list].sort(
+          (a, b) => (a.seatNumber || 0) - (b.seatNumber || 0)
+        );
+        const rows = [];
+        for (let i = 0; i < sorted.length; i += 2) {
+          const chunk = sorted.slice(i, i + 2);
+          rows.push(this.fillSeatRow(chunk, 2, "train"));
+        }
+        return { cabinKey, rows };
+      });
+
       const rows = [];
-      const seatsPerSide = 4;
-      const working = [...seats];
-      let cursor = 0;
-      while (cursor < working.length) {
-        const left = working.slice(cursor, cursor + seatsPerSide);
-        cursor += seatsPerSide;
-        const right = working.slice(cursor, cursor + seatsPerSide);
-        cursor += seatsPerSide;
-        const row = [
-          ...this.fillSeatRow(left, seatsPerSide, "train"),
-          this.createAislePlaceholder(rows.length),
-          ...this.fillSeatRow(right, seatsPerSide, "train"),
-        ];
-        rows.push(row);
+      for (let i = 0; i < cabinLayouts.length; i += 2) {
+        const leftCabin = cabinLayouts[i];
+        const rightCabin = cabinLayouts[i + 1];
+        const maxRows = Math.max(
+          leftCabin.rows.length,
+          rightCabin ? rightCabin.rows.length : 0
+        );
+        for (let r = 0; r < maxRows; r++) {
+          const leftRow = leftCabin.rows[r] || this.fillSeatRow([], 2, "train");
+          const rightRow = rightCabin
+            ? rightCabin.rows[r] || this.fillSeatRow([], 2, "train")
+            : [];
+          const aisle = this.createAislePlaceholder(rows.length);
+          rows.push([...leftRow, aisle, ...rightRow]);
+        }
+        // thêm hàng trống phân tách giữa các cụm khoang cho dễ nhìn
+        if (i + 2 < cabinLayouts.length) {
+          rows.push([
+            ...this.fillSeatRow([], 2, "train"),
+            this.createAislePlaceholder(rows.length),
+            ...this.fillSeatRow([], 2, "train"),
+          ]);
+        }
       }
       return rows;
     },
@@ -2240,6 +2364,53 @@ export default {
 .hero__subtitle {
   font-size: 1.1rem;
   color: rgba(255, 255, 255, 0.85);
+}
+
+.notice-section {
+  background: #f7fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 20px auto 10px;
+  max-width: 1100px;
+}
+.notice-header h5 {
+  font-weight: 700;
+  color: #0f172a;
+}
+.notice-eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2563eb;
+  font-size: 0.78rem;
+}
+.notice-card {
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+  padding: 12px;
+}
+.notice-list {
+  display: grid;
+  gap: 10px;
+}
+.notice-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e6edf7;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+.notice-item__title {
+  font-weight: 700;
+  color: #0f172a;
+}
+.notice-item__body {
+  font-size: 0.95rem;
+  margin: 4px 0;
+}
+.notice-item__meta {
+  color: #6b7280;
 }
 
 .search-form {

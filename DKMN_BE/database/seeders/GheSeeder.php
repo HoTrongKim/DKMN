@@ -22,15 +22,14 @@ class GheSeeder extends Seeder
             ->orderBy('chuyen_dis.id')
             ->get();
 
-        $seatRows = [];
-        $availableByTrip = [];
-
         foreach ($trips as $trip) {
             $seatCount = (int) $trip->tong_ghe;
+            $available = 0;
+            $chunk = [];
 
             for ($i = 1; $i <= $seatCount; $i++) {
                 $status = $this->seatStatus($i);
-                $seatRows[] = [
+                $chunk[] = [
                     'chuyen_di_id' => $trip->id,
                     'so_ghe' => $this->seatLabel($trip->loai, $i),
                     'loai_ghe' => $this->seatType($trip->loai),
@@ -40,18 +39,21 @@ class GheSeeder extends Seeder
                 ];
 
                 if ($status === 'trong') {
-                    $availableByTrip[$trip->id] = ($availableByTrip[$trip->id] ?? 0) + 1;
+                    $available++;
+                }
+
+                if (count($chunk) >= 1000) {
+                    DB::table('ghes')->insert($chunk);
+                    $chunk = [];
                 }
             }
-        }
 
-        foreach (array_chunk($seatRows, 1000) as $chunk) {
-            DB::table('ghes')->insert($chunk);
-        }
+            if (!empty($chunk)) {
+                DB::table('ghes')->insert($chunk);
+            }
 
-        foreach ($availableByTrip as $tripId => $available) {
             DB::table('chuyen_dis')
-                ->where('id', $tripId)
+                ->where('id', $trip->id)
                 ->update([
                     'ghe_con' => $available,
                     'ngay_cap_nhat' => now(),

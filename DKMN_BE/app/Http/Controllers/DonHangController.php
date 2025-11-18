@@ -8,6 +8,7 @@ use App\Models\DonHang;
 use App\Models\Ghe;
 use App\Models\NhatKyHoatDong;
 use App\Models\Ticket;
+use App\Models\ThongBao;
 use App\Services\TripSeatSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -172,6 +173,8 @@ class DonHangController extends Controller
             $seats instanceof \Illuminate\Support\Collection ? $seats->count() : count($seats),
             $request
         );
+
+        $this->createOrderNotification($booking['donHang'], $trip, $seats, $context);
 
         $booking['context'] = $context;
 
@@ -376,6 +379,60 @@ class DonHangController extends Controller
                 ),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    private function createOrderNotification(DonHang $order, ChuyenDi $trip, $seats, array $context): void
+    {
+        if (!$order->nguoi_dung_id) {
+            return;
+        }
+
+        try {
+            $from = $context['fromCity']
+                ?? $trip->tramDi?->tinhThanh?->ten
+                ?? $trip->tramDi?->ten
+                ?? 'Điểm đi';
+            $to = $context['toCity']
+                ?? $trip->tramDen?->tinhThanh?->ten
+                ?? $trip->tramDen?->ten
+                ?? 'Điểm đến';
+
+            $departure = optional($trip->gio_khoi_hanh)->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y');
+            $seatLabels = collect(
+                $seats instanceof \Illuminate\Support\Collection ? $seats : (is_array($seats) ? $seats : [])
+            )
+                ->map(fn ($seat) => $seat instanceof Ghe ? $seat->so_ghe : ($seat['so_ghe'] ?? null))
+                ->filter()
+                ->implode(', ');
+
+            $title = 'Đặt vé thành công';
+            $messageParts = [
+                sprintf('Bạn đã đặt vé mã %s cho chuyến %s → %s.', $order->ma_don, $from, $to),
+            ];
+
+            if ($departure) {
+                $messageParts[] = 'Giờ khởi hành: ' . $departure;
+            }
+
+            if ($seatLabels) {
+                $messageParts[] = 'Ghế: ' . $seatLabels;
+            }
+
+            $amount = (int) round((float) $order->tong_tien);
+            if ($amount > 0) {
+                $messageParts[] = 'Tổng tiền: ' . number_format($amount, 0, ',', '.') . ' đ';
+            }
+
+            ThongBao::create([
+                'nguoi_dung_id' => $order->nguoi_dung_id,
+                'tieu_de' => $title,
+                'noi_dung' => implode(' ', $messageParts),
+                'loai' => 'success',
+                'da_doc' => 0,
             ]);
         } catch (\Throwable $exception) {
             report($exception);

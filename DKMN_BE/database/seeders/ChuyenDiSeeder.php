@@ -13,6 +13,15 @@ class ChuyenDiSeeder extends Seeder
     private const MIN_TRIP_PRICE = 1000;
     private const MAX_TRIP_PRICE = 2000;
     private const PRICE_VARIANCE_STEP = 50;
+    private const TRIP_START_DATE = '2025-11-01';
+    private const TRIP_DATE_COUNT = 45; // cover 1/11 -> 15/12
+    private const BUS_TIME_SLOTS = ['05:45', '13:30', '20:15'];
+    private const PLANE_TIME_SLOTS = ['08:00', '15:00', '20:30'];
+    private const TRAIN_TIME_SLOTS = ['06:10', '18:20'];
+    private const INSERT_CHUNK_SIZE = 800; // keep under MySQL placeholder limit
+    private const BUS_SEATS = 44;
+    private const TRAIN_SEATS = 96;
+    private const PLANE_SEATS = 186;
 
     private ?int $demoTripPriceOverride = null;
     private bool $demoTripPriceResolved = false;
@@ -23,185 +32,63 @@ class ChuyenDiSeeder extends Seeder
         DB::table('chuyen_dis')->delete();
         Schema::enableForeignKeyConstraints();
 
-        $operators = $this->buildLookupMap(
+        $operatorLookup = $this->buildLookupMap(
             DB::table('nha_van_hanhs')->get(['id', 'ten'])
         );
 
-        $stations = $this->buildStationLookup(
-            DB::table('trams')->get(['id', 'ten', 'tinh_thanh_id'])
+        $operatorPools = $this->groupOperatorsByType(
+            DB::table('nha_van_hanhs')->get(['id', 'ten', 'loai'])
         );
 
-        $busRoutes = [
-            [
-                'operator' => 'Phuong Trang (Futa)',
-                'from' => 'Bến xe Giáp Bát',
-                'to' => 'Bến xe Miền Đông',
-                'price' => 1200,
-                'seats' => 44,
-                'duration_minutes' => 22 * 60,
-                'price_variance' => 6,
-            ],
-            [
-                'operator' => 'Thanh Buoi',
-                'from' => 'Bến xe Giáp Bát',
-                'to' => 'Bến xe Miền Đông Mới',
-                'price' => 1350,
-                'seats' => 46,
-                'duration_minutes' => 23 * 60,
-                'time_slots' => ['07:30', '11:00', '15:30', '19:45'],
-                'price_variance' => 5,
-            ],
-            [
-                'operator' => 'Mai Linh',
-                'from' => 'Bến xe Miền Đông',
-                'to' => 'Bến xe Đà Lạt',
-                'price' => 1100,
-                'seats' => 40,
-                'duration_minutes' => 9 * 60,
-                'time_slots' => ['06:15', '09:45', '13:10', '21:00'],
-                'price_variance' => 4,
-            ],
-            [
-                'operator' => 'Kumho Samco',
-                'from' => 'Bến xe Miền Đông',
-                'to' => 'Bến xe Quy Nhơn',
-                'price' => 1250,
-                'seats' => 42,
-                'duration_minutes' => 10 * 60,
-                'price_variance' => 5,
-            ],
-            [
-                'operator' => 'Hoang Long',
-                'from' => 'Bến xe Nước Ngầm',
-                'to' => 'Bến xe Vũng Tàu',
-                'price' => 1400,
-                'seats' => 46,
-                'duration_minutes' => 20 * 60,
-                'time_slots' => ['05:30', '09:00', '18:00'],
-                'price_variance' => 6,
-            ],
-            [
-                'operator' => 'Phuong Trang (Futa)',
-                'from' => 'Bến xe Miền Tây',
-                'to' => 'Bến xe Cần Thơ',
-                'price' => 1150,
-                'seats' => 40,
-                'duration_minutes' => 210,
-                'time_slots' => ['05:30', '08:30', '12:00', '15:30', '19:00'],
-                'price_variance' => 3,
-            ],
-        ];
+        $stationCollection = DB::table('trams')->get(['id', 'ten', 'tinh_thanh_id', 'loai']);
+        $stations = $this->buildStationLookup($stationCollection);
+        $stationsByProvince = $this->groupStationsByProvince($stationCollection);
+        $provinces = $this->buildProvinceNameMap();
 
-        $planeRoutes = [
-            [
-                'operator' => 'Vietnam Airlines',
-                'from' => 'Sân bay Nội Bài (HAN)',
-                'to' => 'Sân bay Tân Sơn Nhất (SGN)',
-                'price' => 1900,
-                'seats' => 186,
-                'duration_minutes' => 135,
-                'price_variance' => 8,
-            ],
-            [
-                'operator' => 'Vietjet Air',
-                'from' => 'Sân bay Tân Sơn Nhất (SGN)',
-                'to' => 'Sân bay Nội Bài (HAN)',
-                'price' => 1850,
-                'seats' => 186,
-                'duration_minutes' => 135,
-                'price_variance' => 6,
-            ],
-            [
-                'operator' => 'Bamboo Airways',
-                'from' => 'Sân bay Nội Bài (HAN)',
-                'to' => 'Sân bay Đà Nẵng (DAD)',
-                'price' => 1750,
-                'seats' => 168,
-                'duration_minutes' => 85,
-                'price_variance' => 5,
-            ],
-            [
-                'operator' => 'Vietravel Airlines',
-                'from' => 'Sân bay Đà Nẵng (DAD)',
-                'to' => 'Sân bay Nội Bài (HAN)',
-                'price' => 1720,
-                'seats' => 156,
-                'duration_minutes' => 90,
-                'price_variance' => 4,
-            ],
-            [
-                'operator' => 'Pacific Airlines',
-                'from' => 'Sân bay Tân Sơn Nhất (SGN)',
-                'to' => 'Sân bay Cam Ranh (CXR)',
-                'price' => 1680,
-                'seats' => 170,
-                'duration_minutes' => 75,
-                'price_variance' => 5,
-            ],
-            [
-                'operator' => 'VASCO',
-                'from' => 'Sân bay Cần Thơ (VCA)',
-                'to' => 'Sân bay Tân Sơn Nhất (SGN)',
-                'price' => 1650,
-                'seats' => 120,
-                'duration_minutes' => 55,
-                'time_slots' => ['06:00', '09:15', '14:00', '18:30'],
-                'price_variance' => 3,
-            ],
-        ];
+        $busRoutes = $this->buildRoutes(
+            'ben_xe',
+            $stationsByProvince,
+            $provinces,
+            $operatorPools['xe_khach'] ?? [],
+            240,
+            1200,
+            6,
+            self::BUS_TIME_SLOTS,
+            self::BUS_SEATS
+        );
 
-        $trainRoutes = [
-            [
-                'operator' => 'Duong sat Viet Nam',
-                'from' => 'Ga Hà Nội',
-                'to' => 'Ga Đà Nẵng',
-                'price' => 1300,
-                'seats' => 96,
-                'duration_minutes' => 13 * 60,
-                'price_variance' => 3,
-            ],
-            [
-                'operator' => 'SE1/SE2',
-                'from' => 'Ga Đà Nẵng',
-                'to' => 'Ga Sài Gòn',
-                'price' => 1500,
-                'seats' => 96,
-                'duration_minutes' => 16 * 60,
-                'price_variance' => 4,
-            ],
-            [
-                'operator' => 'SE3/SE4',
-                'from' => 'Ga Sài Gòn',
-                'to' => 'Ga Hà Nội',
-                'price' => 1520,
-                'seats' => 96,
-                'duration_minutes' => 17 * 60,
-                'price_variance' => 4,
-            ],
-            [
-                'operator' => 'Duong sat Viet Nam',
-                'from' => 'Ga Hà Nội',
-                'to' => 'Ga Vinh',
-                'price' => 1100,
-                'seats' => 120,
-                'duration_minutes' => 6 * 60,
-                'time_slots' => ['06:10', '13:40', '18:20'],
-                'price_variance' => 2,
-            ],
-        ];
+        $planeRoutes = $this->buildRoutes(
+            'san_bay',
+            $stationsByProvince,
+            $provinces,
+            $operatorPools['may_bay'] ?? [],
+            90,
+            1700,
+            8,
+            self::PLANE_TIME_SLOTS,
+            self::PLANE_SEATS
+        );
 
-        $busDates = $this->dateRange('2025-11-01', 30);
-        $planeDates = $this->dateRange('2025-11-01', 30);
-        $trainDates = $this->dateRange('2025-11-01', 28);
+        $trainRoutes = $this->buildRoutes(
+            'ga_tau',
+            $stationsByProvince,
+            $provinces,
+            $operatorPools['tau_hoa'] ?? [],
+            180,
+            1300,
+            4,
+            self::TRAIN_TIME_SLOTS,
+            self::TRAIN_SEATS
+        );
+
+        $busDates = $this->dateRange(self::TRIP_START_DATE, self::TRIP_DATE_COUNT);
+        $planeDates = $this->dateRange(self::TRIP_START_DATE, self::TRIP_DATE_COUNT);
+        $trainDates = $this->dateRange(self::TRIP_START_DATE, self::TRIP_DATE_COUNT);
 
         $nextId = 1;
-        $payload = array_merge(
-            $this->generateTrips($busRoutes, $busDates, ['05:45', '08:30', '12:30', '16:45', '21:10'], $operators, $stations, $nextId),
-            $this->generateTrips($planeRoutes, $planeDates, ['06:00', '09:30', '14:15', '19:40'], $operators, $stations, $nextId),
-            $this->generateTrips($trainRoutes, $trainDates, ['06:10', '13:40', '20:30'], $operators, $stations, $nextId)
-        );
-
-        DB::table('chuyen_dis')->insert($payload);
+        $this->chunkInsertTrips($this->generateTrips($busRoutes, $busDates, self::BUS_TIME_SLOTS, $operatorLookup, $stations, $nextId));
+        $this->chunkInsertTrips($this->generateTrips($planeRoutes, $planeDates, self::PLANE_TIME_SLOTS, $operatorLookup, $stations, $nextId));
+        $this->chunkInsertTrips($this->generateTrips($trainRoutes, $trainDates, self::TRAIN_TIME_SLOTS, $operatorLookup, $stations, $nextId));
     }
 
     private function generateTrips(
@@ -267,6 +154,157 @@ class ChuyenDiSeeder extends Seeder
         }
 
         return $records;
+    }
+
+    private function buildRoutes(
+        string $stationType,
+        array $stationsByProvince,
+        array $provinceNames,
+        array $operatorNames,
+        int $baseDurationMinutes,
+        int $basePrice,
+        int $priceVariance,
+        array $timeSlots,
+        int $defaultSeats
+    ): array {
+        if (empty($operatorNames)) {
+            return [];
+        }
+
+        $routes = [];
+        $provinceIds = array_keys($provinceNames);
+        $count = count($provinceIds);
+
+        for ($i = 0; $i < $count; $i++) {
+            $fromId = $provinceIds[$i];
+            $fromStation = $stationsByProvince[$fromId][$stationType][0] ?? null;
+            if (!$fromStation) {
+                continue;
+            }
+
+            for ($j = $i + 1; $j < $count; $j++) {
+                $toId = $provinceIds[$j];
+                $toStation = $stationsByProvince[$toId][$stationType][0] ?? null;
+                if (!$toStation) {
+                    continue;
+                }
+
+                $distanceFactor = 1 + (abs($fromId - $toId) / 10);
+                $routeSeed = $fromId + $toId;
+
+                $routes[] = $this->makeRoute(
+                    $operatorNames,
+                    $fromStation->ten,
+                    $toStation->ten,
+                    $defaultSeats,
+                    $baseDurationMinutes,
+                    $basePrice,
+                    $distanceFactor,
+                    $priceVariance,
+                    $timeSlots,
+                    $routeSeed
+                );
+
+                $routes[] = $this->makeRoute(
+                    $operatorNames,
+                    $toStation->ten,
+                    $fromStation->ten,
+                    $defaultSeats,
+                    $baseDurationMinutes,
+                    $basePrice,
+                    $distanceFactor,
+                    $priceVariance,
+                    $timeSlots,
+                    $routeSeed + 1
+                );
+            }
+        }
+
+        return $routes;
+    }
+
+    private function makeRoute(
+        array $operators,
+        string $from,
+        string $to,
+        int $seats,
+        int $baseDurationMinutes,
+        int $basePrice,
+        float $distanceFactor,
+        int $priceVariance,
+        array $timeSlots,
+        int $seed
+    ): array {
+        return [
+            'operator' => $this->pickOperator($operators, $seed),
+            'from' => $from,
+            'to' => $to,
+            'price' => (int) round($basePrice * $distanceFactor),
+            'seats' => $seats,
+            'duration_minutes' => max($baseDurationMinutes, (int) round($baseDurationMinutes * $distanceFactor)),
+            'time_slots' => $timeSlots,
+            'price_variance' => $priceVariance,
+        ];
+    }
+
+    private function pickOperator(array $operators, int $seed): string
+    {
+        if (empty($operators)) {
+            return '';
+        }
+
+        $index = $seed % count($operators);
+
+        return $operators[$index];
+    }
+
+    private function groupOperatorsByType($items): array
+    {
+        $map = [];
+
+        foreach ($items as $item) {
+            if (!isset($item->loai, $item->ten)) {
+                continue;
+            }
+
+            $map[$item->loai] ??= [];
+            $map[$item->loai][] = $item->ten;
+        }
+
+        return $map;
+    }
+
+    private function groupStationsByProvince($items): array
+    {
+        $map = [];
+
+        foreach ($items as $item) {
+            if (!isset($item->id, $item->tinh_thanh_id, $item->loai, $item->ten)) {
+                continue;
+            }
+
+            $map[$item->tinh_thanh_id][$item->loai][] = $item;
+        }
+
+        return $map;
+    }
+
+    private function buildProvinceNameMap(): array
+    {
+        $map = [];
+
+        foreach (DB::table('tinh_thanhs')->get(['id', 'ten']) as $item) {
+            $map[$item->id] = $item->ten;
+        }
+
+        return $map;
+    }
+
+    private function chunkInsertTrips(array $records): void
+    {
+        foreach (array_chunk($records, self::INSERT_CHUNK_SIZE) as $chunk) {
+            DB::table('chuyen_dis')->insert($chunk);
+        }
     }
 
     private function priceWithVariance(int $basePrice, Carbon $departure, int $varianceSteps): int

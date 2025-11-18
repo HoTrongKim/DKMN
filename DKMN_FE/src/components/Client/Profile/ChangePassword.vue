@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="change-password-page">
     <div class="card shadow">
       <h3>Đổi mật khẩu</h3>
@@ -6,15 +6,58 @@
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
           <label>Mật khẩu hiện tại</label>
-          <input type="password" v-model.trim="form.currentPassword" required />
+          <div class="input-group">
+            <input
+              :type="showCurrent ? 'text' : 'password'"
+              v-model.trim="form.currentPassword"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-visibility"
+              @click="showCurrent = !showCurrent"
+              :aria-label="showCurrent ? 'Ẩn mật khẩu hiện tại' : 'Hiển thị mật khẩu hiện tại'"
+            >
+              <i :class="showCurrent ? 'bx bx-show' : 'bx bx-hide'"></i>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label>Mật khẩu mới</label>
-          <input type="password" v-model.trim="form.newPassword" required minlength="6" />
+          <div class="input-group">
+            <input
+              :type="showNew ? 'text' : 'password'"
+              v-model.trim="form.newPassword"
+              required
+              minlength="6"
+            />
+            <button
+              type="button"
+              class="toggle-visibility"
+              @click="showNew = !showNew"
+              :aria-label="showNew ? 'Ẩn mật khẩu mới' : 'Hiển thị mật khẩu mới'"
+            >
+              <i :class="showNew ? 'bx bx-show' : 'bx bx-hide'"></i>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label>Nhập lại mật khẩu mới</label>
-          <input type="password" v-model.trim="form.confirmPassword" required />
+          <div class="input-group">
+            <input
+              :type="showConfirm ? 'text' : 'password'"
+              v-model.trim="form.confirmPassword"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-visibility"
+              @click="showConfirm = !showConfirm"
+              :aria-label="showConfirm ? 'Ẩn mật khẩu xác nhận' : 'Hiển thị mật khẩu xác nhận'"
+            >
+              <i :class="showConfirm ? 'bx bx-show' : 'bx bx-hide'"></i>
+            </button>
+          </div>
         </div>
         <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
         <div v-if="successMessage" class="alert alert-success">{{ successMessage }}</div>
@@ -39,6 +82,9 @@ export default {
         newPassword: '',
         confirmPassword: '',
       },
+      showCurrent: false,
+      showNew: false,
+      showConfirm: false,
       isSubmitting: false,
       errorMessage: '',
       successMessage: '',
@@ -65,6 +111,9 @@ export default {
         this.form.currentPassword = ''
         this.form.newPassword = ''
         this.form.confirmPassword = ''
+        this.showCurrent = false
+        this.showNew = false
+        this.showConfirm = false
       } catch (error) {
         this.errorMessage =
           error.response?.data?.message ||
@@ -114,7 +163,13 @@ export default {
   margin-bottom: 6px;
   color: #475467;
 }
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .form-group input {
+  flex: 1;
   border: 1px solid #d0d5dd;
   border-radius: 12px;
   padding: 10px 12px;
@@ -125,6 +180,21 @@ export default {
   border-color: #2563eb;
   outline: none;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.toggle-visibility {
+  border: 1px solid #d0d5dd;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 9px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #475467;
+}
+.toggle-visibility:hover {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 .btn {
   border-radius: 12px;

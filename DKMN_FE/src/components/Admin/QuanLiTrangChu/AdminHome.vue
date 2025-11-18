@@ -102,6 +102,113 @@
         </div>
       </div>
 
+      <div class="notification-panel mt-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+          <div>
+            <h5 class="mb-1"><i class="fas fa-bell me-2"></i> Gửi thông báo cho khách</h5>
+            <small class="text-muted">Nhập tiêu đề, nội dung và gửi tới khách hàng (để trống email để gửi tất cả).</small>
+          </div>
+          <button class="btn btn-light btn-sm" @click="loadAdminNotifications" :disabled="notifyLoading">
+            <i class="fas fa-rotate me-1"></i> Làm mới
+          </button>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Tiêu đề</label>
+            <input class="form-control" v-model.trim="notifyForm.title" placeholder="VD: Thông báo lịch khởi hành" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Loại thông báo</label>
+            <select class="form-select" v-model="notifyForm.type">
+              <option value="info">Thông tin</option>
+              <option value="success">Thành công</option>
+              <option value="warning">Cảnh báo</option>
+              <option value="error">Lỗi</option>
+              <option value="inbox">Hộp thư đến</option>
+              <option value="trip_update">Cập nhật chuyến</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Nội dung</label>
+            <textarea
+              class="form-control"
+              rows="3"
+              v-model.trim="notifyForm.message"
+              placeholder="Nhập nội dung muốn gửi cho khách hàng"
+            ></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Khách hàng</label>
+            <div class="customer-select-wrapper">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted">
+                  Giữ Ctrl (hoặc Command) để chọn nhiều khách.
+                </small>
+                <small class="text-muted">{{ selectedCustomerIds.length }} đã chọn</small>
+              </div>
+              <select
+                class="form-select customer-multi"
+                multiple
+                size="6"
+                v-model="selectedCustomerIds"
+              >
+                <option
+                  v-for="option in customerOptions"
+                  :key="option.id"
+                  :value="option.id"
+                >
+                  {{ option.label }}
+                </option>
+                <option v-if="!customerOptions.length" disabled>Đang tải danh sách khách...</option>
+              </select>
+            </div>
+            <div class="mt-2">
+              <label class="form-label fw-semibold">Email khách hàng (tùy chọn)</label>
+              <input
+                class="form-control"
+                v-model="notifyForm.emails"
+                placeholder="Nhập thêm email, ngăn cách nhiều email bằng dấu phẩy"
+              />
+              <small class="text-muted">Để trống để gửi cho tất cả khách hàng đang hoạt động.</small>
+            </div>
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-primary" :disabled="notifyLoading" @click="sendNotification">
+              <i class="fas fa-paper-plane me-1"></i>
+              {{ notifyLoading ? 'Đang gửi...' : 'Gửi thông báo' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <div v-if="notifyMessage" class="alert alert-success py-2 px-3 mb-2">{{ notifyMessage }}</div>
+          <div v-else-if="notifyError" class="alert alert-danger py-2 px-3 mb-2">{{ notifyError }}</div>
+        </div>
+
+        <div class="recent-notices mt-2">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="mb-0">Thông báo gần đây</h6>
+            <small class="text-muted">Hiển thị 8 thông báo mới nhất</small>
+          </div>
+          <ul class="list-group list-group-flush">
+            <li v-for="notice in adminNotices" :key="notice.id" class="list-group-item recent-notice-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="fw-semibold">{{ notice.title }}</div>
+                  <div class="text-muted small">{{ notice.message }}</div>
+                </div>
+                <span class="badge bg-primary-subtle text-primary text-uppercase">{{ mapNoticeType(notice.type) }}</span>
+              </div>
+              <div class="small text-muted mt-1">{{ formatDate(notice.createdAt) }}</div>
+            </li>
+            <li v-if="!adminNotices.length" class="list-group-item text-muted small">
+              Chưa có thông báo được gửi.
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <div v-if="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
       <div v-if="loading" class="loading-overlay">
         <div class="spinner-border text-primary" role="status"></div>
@@ -136,6 +243,18 @@ const topRoutes = ref([])
 const loading = ref(false)
 const errorMessage = ref('')
 const lastUpdated = ref(null)
+const adminNotices = ref([])
+const notifyForm = ref({
+  title: '',
+  message: '',
+  type: 'info',
+  emails: '',
+})
+const notifyLoading = ref(false)
+const notifyError = ref('')
+const notifyMessage = ref('')
+const customerOptions = ref([])
+const selectedCustomerIds = ref([])
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
@@ -167,6 +286,17 @@ const mapStatus = (status) => {
     da_huy: 'Đã huỷ',
   }
   return dict[status] || 'Không rõ'
+}
+const mapNoticeType = (type) => {
+  const dict = {
+    info: 'Thông tin',
+    success: 'Thành công',
+    warning: 'Cảnh báo',
+    error: 'Lỗi',
+    inbox: 'Hộp thư đến',
+    trip_update: 'Chuyến đi',
+  }
+  return dict[type] || 'Thông báo'
 }
 
 const loadDashboard = async () => {
@@ -203,7 +333,95 @@ const loadDashboard = async () => {
   }
 }
 
-onMounted(loadDashboard)
+const parseEmails = (value) =>
+  (value || '')
+    .split(/[,;\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+const mapAdminNotice = (item) => ({
+  id: item.id,
+  title: item.title || item.tieu_de || 'Thông báo',
+  message: item.message || item.noi_dung || '',
+  type: item.type || item.loai || 'info',
+  createdAt: item.createdAt || item.created_at || item.ngay_tao || null,
+})
+
+const loadAdminNotifications = async () => {
+  notifyError.value = ''
+  try {
+    const { data } = await api.get('/admin/notifications', { params: { limit: 8 } })
+    adminNotices.value = (data?.data || []).map(mapAdminNotice)
+  } catch (error) {
+    notifyError.value =
+      error.response?.data?.message || 'Không thể tải danh sách thông báo. Vui lòng thử lại.'
+  }
+}
+
+const loadCustomerOptions = async () => {
+  try {
+    const { data } = await api.get('/admin/users', {
+      params: { role: 'customer', status: 'active', perPage: 200 },
+    })
+    const list = Array.isArray(data?.data) ? data.data : []
+    customerOptions.value = list
+      .filter((item) => item?.email)
+      .map((item) => ({
+        id: item.id,
+        label: `${item.ho_ten || item.name || 'Khách'} • ${item.email}`,
+      }))
+  } catch (error) {
+    console.warn('Cannot load customer list', error)
+  }
+}
+
+const sendNotification = async () => {
+  notifyError.value = ''
+  notifyMessage.value = ''
+
+  if (!notifyForm.value.title.trim() || !notifyForm.value.message.trim()) {
+    notifyError.value = 'Vui lòng nhập tiêu đề và nội dung thông báo.'
+    return
+  }
+
+  notifyLoading.value = true
+  try {
+    const payload = {
+      title: notifyForm.value.title.trim(),
+      message: notifyForm.value.message.trim(),
+      type: notifyForm.value.type || 'info',
+    }
+
+    if (selectedCustomerIds.value.length) {
+      payload.recipientIds = selectedCustomerIds.value
+    }
+
+    const emails = parseEmails(notifyForm.value.emails)
+    if (emails.length) {
+      payload.recipientEmails = emails
+    }
+
+    const { data } = await api.post('/admin/notifications', payload)
+    notifyMessage.value =
+      data?.message || `Đã gửi thông báo tới ${data?.data?.recipients || 'khách hàng'}`
+    notifyForm.value.message = ''
+    notifyForm.value.title = ''
+    notifyForm.value.emails = ''
+    selectedCustomerIds.value = []
+    await loadAdminNotifications()
+  } catch (error) {
+    notifyError.value =
+      error.response?.data?.message || 'Không gửi được thông báo. Vui lòng thử lại.'
+  } finally {
+    notifyLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadDashboard()
+  loadAdminNotifications()
+  loadCustomerOptions()
+})
 </script>
 
 <style scoped>
@@ -446,6 +664,71 @@ onMounted(loadDashboard)
   padding-bottom: 6px;
 }
 .top-routes li:last-child {
+  border-bottom: none;
+}
+
+.notification-panel {
+  position: relative;
+  background: linear-gradient(180deg, #fbfdff 0%, #f6f8fb 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
+}
+.notification-panel .form-control,
+.notification-panel .form-select {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+.notification-panel .form-control:focus,
+.notification-panel .form-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.customer-select-wrapper {
+  border: 1px dashed #d6d9e0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+.customer-multi {
+  font-size: 0.95rem;
+  min-height: 120px;
+}
+.notification-panel .form-label {
+  color: #374151;
+}
+.notification-panel small.text-muted {
+  color: #6b7280 !important;
+}
+.notification-panel .btn-primary {
+  min-width: 160px;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+}
+.notification-panel .btn-light {
+  border-radius: 10px;
+}
+.recent-notices .list-group-item {
+  border: none;
+  border-bottom: 1px dashed #e5e9f2;
+}
+.recent-notice-item {
+  background: transparent;
+}
+.recent-notice-item .badge {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.recent-notice-item .text-muted {
+  line-height: 1.4;
+}
+.recent-notice-item:last-child {
   border-bottom: none;
 }
 

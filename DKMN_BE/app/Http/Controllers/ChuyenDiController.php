@@ -9,6 +9,7 @@ use App\Models\Tram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 
 class ChuyenDiController extends Controller
@@ -105,26 +106,7 @@ class ChuyenDiController extends Controller
                 $query->whereHas('nhaVanHanh', fn ($q) => $q->where('loai', $vehicleTypeDb));
             })
             ->when($companyId, fn ($query) => $query->where('nha_van_hanh_id', $companyId))
-            ->whereBetween('gio_khoi_hanh', [$departureStart, $departureEnd]);
-
-        if ($hasProvinceColumns) {
-            $this->applyProvinceAwareFilter($baseQuery, $fromCity->id, true);
-            $this->applyProvinceAwareFilter($baseQuery, $toCity->id, false);
-        } else {
-            $baseQuery
-                ->whereHas('tramDi', fn ($q) => $this->applyStationFilter(
-                    $q,
-                    $fromCity->id,
-                    $this->stationFallbacks($fromCity->id)
-                ))
-                ->whereHas('tramDen', fn ($q) => $this->applyStationFilter(
-                    $q,
-                    $toCity->id,
-                    $this->stationFallbacks($toCity->id)
-                ));
-        }
-
-        $baseQuery
+            ->whereBetween('gio_khoi_hanh', [$departureStart, $departureEnd])
             ->when($companyKeyword, function ($query) use ($companyKeyword) {
                 $query->whereHas('nhaVanHanh', function ($q) use ($companyKeyword) {
                     $q->where('ten', 'like', "%{$companyKeyword}%");
@@ -145,23 +127,68 @@ class ChuyenDiController extends Controller
             })
             ->orderBy('gio_khoi_hanh');
 
-        $stationFilteredQuery = clone $baseQuery;
+        $buildLocationQuery = function (bool $useProvinceColumns) use ($baseQuery, $fromCity, $toCity) {
+            $query = clone $baseQuery;
 
-        if ($pickupStation?->id) {
-            $stationFilteredQuery->where('tram_di_id', $pickupStation->id);
-        }
+            if ($useProvinceColumns) {
+                $this->applyProvinceAwareFilter($query, $fromCity->id, true);
+                $this->applyProvinceAwareFilter($query, $toCity->id, false);
+            } else {
+                $query
+                    ->whereHas('tramDi', fn ($q) => $this->applyStationFilter(
+                        $q,
+                        $fromCity->id,
+                        $this->stationFallbacks($fromCity->id)
+                    ))
+                    ->whereHas('tramDen', fn ($q) => $this->applyStationFilter(
+                        $q,
+                        $toCity->id,
+                        $this->stationFallbacks($toCity->id)
+                    ));
+            }
 
-        if ($dropoffStation?->id) {
-            $stationFilteredQuery->where('tram_den_id', $dropoffStation->id);
-        }
+            return $query;
+        };
 
-        $trips = $stationFilteredQuery->get();
-        $stationFiltersApplied = (bool) ($pickupStation?->id || $dropoffStation?->id);
-        $stationFiltersFallbackUsed = false;
+        $executeQuery = function (bool $useProvinceColumns) use ($buildLocationQuery, $pickupStation, $dropoffStation) {
+            $locationQuery = $buildLocationQuery($useProvinceColumns);
+            $stationFilteredQuery = clone $locationQuery;
 
-        if ($stationFiltersApplied && $trips->isEmpty()) {
-            $stationFiltersFallbackUsed = true;
-            $trips = (clone $baseQuery)->get();
+            if ($pickupStation?->id) {
+                $stationFilteredQuery->where('tram_di_id', $pickupStation->id);
+            }
+
+            if ($dropoffStation?->id) {
+                $stationFilteredQuery->where('tram_den_id', $dropoffStation->id);
+            }
+
+            $trips = $stationFilteredQuery->get();
+            $stationFiltersApplied = (bool) ($pickupStation?->id || $dropoffStation?->id);
+            $stationFiltersFallbackUsed = false;
+
+            if ($stationFiltersApplied && $trips->isEmpty()) {
+                $stationFiltersFallbackUsed = true;
+                $trips = (clone $locationQuery)->get();
+            }
+
+            return [$trips, $stationFiltersFallbackUsed];
+        };
+
+        try {
+            [$trips, $stationFiltersFallbackUsed] = $executeQuery($hasProvinceColumns);
+        } catch (QueryException $exception) {
+            $message = $exception->getMessage();
+            $missingProvinceColumns =
+                str_contains($message, 'noi_di_tinh_thanh_id') ||
+                str_contains($message, 'noi_den_tinh_thanh_id');
+
+            if ($hasProvinceColumns && $missingProvinceColumns) {
+                // Fallback gracefully when DB schema has not added province columns yet.
+                self::$tripProvinceColumns = false;
+                [$trips, $stationFiltersFallbackUsed] = $executeQuery(false);
+            } else {
+                throw $exception;
+            }
         }
 
         return TripResource::collection($trips)->additional([

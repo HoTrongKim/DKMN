@@ -386,6 +386,8 @@ class TripAdminController extends Controller
         $fromProvinceName = $trip->noiDiTinhThanh->ten ?? $from?->tinhThanh?->ten;
         $toProvinceName = $trip->noiDenTinhThanh->ten ?? $to?->tinhThanh?->ten;
 
+        $derivedStatus = $this->deriveStatus($trip);
+
         return [
             'id' => $trip->id,
             'type' => $this->mapOperatorType($operator?->loai),
@@ -419,11 +421,38 @@ class TripAdminController extends Controller
             ],
             'totalSeats' => (int) $trip->tong_ghe,
             'availableSeats' => (int) $trip->ghe_con,
-            'status' => $this->mapTripStatusCode($trip->trang_thai),
-            'statusLabel' => $this->mapTripStatus($trip->trang_thai),
+            'status' => $derivedStatus['code'],
+            'statusLabel' => $derivedStatus['label'],
             'rawStatus' => $trip->trang_thai,
             'createdAt' => $trip->ngay_tao?->toIso8601String(),
             'updatedAt' => $trip->ngay_cap_nhat?->toIso8601String(),
+        ];
+    }
+
+    private function deriveStatus(ChuyenDi $trip): array
+    {
+        $rawNormalized = $this->normalizeStatus($trip->trang_thai);
+
+        if ($rawNormalized === 'HUY') {
+            return [
+                'code' => 'CANCELLED',
+                'label' => 'Đã hủy',
+            ];
+        }
+
+        $arrival = $trip->gio_den;
+        if ($arrival && $arrival->isPast()) {
+            return [
+                'code' => 'COMPLETED',
+                'label' => 'Đã hoàn thành',
+            ];
+        }
+
+        $code = $this->mapTripStatusCode($trip->trang_thai);
+
+        return [
+            'code' => $code,
+            'label' => $this->mapTripStatus($trip->trang_thai),
         ];
     }
 
@@ -433,6 +462,7 @@ class TripAdminController extends Controller
             'CON_VE' => 'AVAILABLE',
             'HET_VE' => 'SOLD_OUT',
             'HUY' => 'CANCELLED',
+            'COMPLETED' => 'COMPLETED',
             default => 'UNKNOWN',
         };
     }
@@ -443,6 +473,7 @@ class TripAdminController extends Controller
             'CON_VE' => 'Còn vé',
             'HET_VE' => 'Hết vé',
             'HUY' => 'Đã hủy',
+            'COMPLETED' => 'Đã hoàn thành',
             default => 'Không xác định',
         };
     }

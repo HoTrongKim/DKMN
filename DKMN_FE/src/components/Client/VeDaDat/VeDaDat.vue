@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="ticket-page container py-4">
     <div class="row justify-content-center">
       <div class="col-lg-8">
@@ -90,7 +90,7 @@
 
               <div class="ticket-actions d-flex flex-wrap gap-2">
                 <router-link to="/TrangChu" class="btn btn-outline-secondary">Về trang chủ</router-link>
-                <button class="btn btn-danger" @click="clearTicket()">Xóa vé này</button>
+                <button class="btn btn-danger" @click="confirmCancel()">Hủy vé này</button>
                 <button class="btn btn-primary" :disabled="!canRate" v-if="currentTicket?.tripId" @click="goRate">
                   Đánh giá
                 </button>
@@ -206,7 +206,7 @@ export default {
       }
     },
     goRate() {
-      if (!this.ticket?.tripId) return
+      if (!this.currentTicket?.tripId) return
       if (!this.canRate) {
         this.notice.text = 'Chuyến đi chưa đủ điều kiện để đánh giá.'
         this.notice.visible = true
@@ -215,12 +215,18 @@ export default {
       this.$router.push({
         path: '/client-danh-gia',
         query: {
-          tripId: String(this.ticket.tripId || ''),
-          from: this.ticket.from || '',
-          to: this.ticket.to || '',
-          date: this.ticket.date || '',
+          tripId: String(this.currentTicket.tripId || ''),
+          from: this.currentTicket.from || '',
+          to: this.currentTicket.to || '',
+          date: this.currentTicket.date || '',
         },
       })
+    },
+    confirmCancel() {
+      if (!this.currentTicket) return
+      const ok = window.confirm('Bạn có chắc là muốn hủy chuyến đi này không?')
+      if (!ok) return
+      this.clearTicket()
     },
     getCurrentUserInfo() {
       try {

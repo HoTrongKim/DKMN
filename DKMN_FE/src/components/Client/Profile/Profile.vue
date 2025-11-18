@@ -70,7 +70,7 @@
                                                 type="date" 
                                                 class="form-control" 
                                                 min="1900-01-01" 
-                                                max="2025-12-31"
+                                                :max="maxDate"
                                             >
                                         </div>
                                     </div>
@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import api from '../../../services/api'
 
 export default {
     data() {
@@ -137,44 +137,69 @@ export default {
             original: {},
             loading: false,
             error: '',
-            message: '',
-            DEV_FALLBACK: true
+            message: ''
+        }
+    },
+    computed: {
+        maxDate() {
+            return new Date().toISOString().slice(0, 10)
         }
     },
     mounted() {
-        this.loadFromLocalStorage()
+        this.fetchProfile()
     },
     methods: {
+        mapServerUser(user = {}) {
+            return {
+                ho_va_ten: user.ho_ten || user.ho_va_ten || user.name || '',
+                email: user.email || '',
+                so_dien_thoai: user.so_dien_thoai || user.phone || '',
+                ngay_sinh: user.ngay_sinh || '',
+                avatar: user.avatar || ''
+            }
+        },
         loadFromLocalStorage() {
             try {
                 const raw = localStorage.getItem('userInfo');
                 if (raw) {
                     const info = JSON.parse(raw);
-                    // Map các tên trường phổ biến từ đăng nhập/đăng ký
-                    this.profile.ho_va_ten = info.ho_va_ten || info.name || ''
-                    this.profile.email = info.email || ''
-                    this.profile.so_dien_thoai = info.so_dien_thoai || info.phone || ''
-                    this.profile.ngay_sinh = info.ngay_sinh || ''
-                    this.profile.avatar = info.avatar || ''
-                    this.original = { ...this.profile }
+                    const mapped = this.mapServerUser(info)
+                    this.profile = { ...mapped }
+                    this.original = { ...mapped }
                 }
             } catch (e) {
                 // noop
             }
         },
-        formatDate(dateString) {
-            if (!dateString) return ''
-            const date = new Date(dateString)
-            return date.toLocaleDateString('vi-VN')
-        },
-        editAvatar() {
-            // Placeholder for avatar editing functionality
-            alert('Tính năng chỉnh sửa avatar sẽ được phát triển!')
+        async fetchProfile() {
+            this.loading = true
+            this.error = ''
+            this.message = ''
+            try {
+                const resp = await api.get('/dkmn/me')
+                const user = resp.data?.data || {}
+                const mapped = this.mapServerUser(user)
+                this.profile = { ...mapped }
+                this.original = { ...mapped }
+                localStorage.setItem('userInfo', JSON.stringify(mapped))
+            } catch (e) {
+                this.loadFromLocalStorage()
+            } finally {
+                this.loading = false
+            }
         },
         resetForm() {
             this.profile = { ...this.original }
             this.error = ''
             this.message = ''
+        },
+        isFutureDate(dateStr) {
+            if (!dateStr) return false
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const d = new Date(dateStr)
+            d.setHours(0, 0, 0, 0)
+            return d > today
         },
         async capNhatHoSo() {
             this.error = ''
@@ -185,56 +210,29 @@ export default {
                 return
             }
 
+            if (this.isFutureDate(this.profile.ngay_sinh)) {
+                this.error = 'Ngày sinh không được vượt quá ngày hiện tại.'
+                return
+            }
+
             this.loading = true
             try {
-                const token = localStorage.getItem('token') || ''
+                const resp = await api.put('/dkmn/me', {
+                    ho_ten: this.profile.ho_va_ten,
+                    so_dien_thoai: this.profile.so_dien_thoai,
+                    ngay_sinh: this.profile.ngay_sinh || null
+                })
 
-                // Ví dụ endpoint cập nhật hồ sơ (điều chỉnh theo backend của bạn)
-                const resp = await axios.put(
-                    'http://localhost:8000/api/auth/profile',
-                    {
-                        ho_va_ten: this.profile.ho_va_ten,
-                        email: this.profile.email,
-                        so_dien_thoai: this.profile.so_dien_thoai,
-                        ngay_sinh: this.profile.ngay_sinh
-                    },
-                    {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        timeout: 5000
-                    }
-                )
-
-                if (resp.data) {
-                    // Đồng bộ localStorage theo response (nếu backend trả user)
-                    const updated = resp.data.user || {
-                        ho_va_ten: this.profile.ho_va_ten,
-                        name: this.profile.ho_va_ten,
-                        email: this.profile.email,
-                        so_dien_thoai: this.profile.so_dien_thoai,
-                        ngay_sinh: this.profile.ngay_sinh
-                    }
-                    localStorage.setItem('userInfo', JSON.stringify(updated))
-                    this.original = { ...this.profile }
-                    this.message = resp.data.message || 'Cập nhật hồ sơ thành công!'
-                } else {
-                    this.error = 'Không nhận được phản hồi từ máy chủ.'
-                }
+                const updated = this.mapServerUser(resp.data?.data || this.profile)
+                this.profile = { ...updated }
+                this.original = { ...updated }
+                localStorage.setItem('userInfo', JSON.stringify(updated))
+                this.message = resp.data?.message || 'Cập nhật hồ sơ thành công.'
             } catch (err) {
-                // Dev fallback: nếu không có backend, vẫn lưu localStorage để tiếp tục phát triển UI
-                if (this.DEV_FALLBACK) {
-                    localStorage.setItem('userInfo', JSON.stringify({
-                        ho_va_ten: this.profile.ho_va_ten,
-                        name: this.profile.ho_va_ten,
-                        email: this.profile.email,
-                        so_dien_thoai: this.profile.so_dien_thoai,
-                        ngay_sinh: this.profile.ngay_sinh
-                    }))
-                    this.original = { ...this.profile }
-                    this.message = 'Đã lưu tạm vào trình duyệt (dev fallback).'
-                } else {
-                    this.error = (err && err.response && err.response.data && err.response.data.message)
-                        || 'Có lỗi xảy ra khi cập nhật hồ sơ.'
-                }
+                this.error =
+                    err?.response?.data?.message ||
+                    (err?.response?.data?.errors && Object.values(err.response.data.errors)[0]?.[0]) ||
+                    'Có lỗi xảy ra khi cập nhật hồ sơ.'
             } finally {
                 this.loading = false
             }
@@ -657,5 +655,4 @@ export default {
     to { transform: rotate(360deg); }
 }
 </style>
-
 

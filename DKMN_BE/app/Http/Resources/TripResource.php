@@ -11,8 +11,6 @@ class TripResource extends JsonResource
     {
         $vehicleTypeKey = $this->vehicleTypeKey();
         $rawPrice = max(0, (int) $this->gia_co_ban);
-        [$displayMin, $displayMax] = PriceNormalizer::displayRange();
-        $normalizedPrice = PriceNormalizer::clamp($rawPrice, $displayMin, $displayMax);
         $fromCityName = $this->noiDiTinhThanh->ten ?? data_get($this->tramDi, 'tinhThanh.ten');
         $toCityName = $this->noiDenTinhThanh->ten ?? data_get($this->tramDen, 'tinhThanh.ten');
         $fromCityId = $this->noi_di_tinh_thanh_id ?? data_get($this->tramDi, 'tinh_thanh_id');
@@ -41,7 +39,7 @@ class TripResource extends JsonResource
             'duration' => $this->formatDuration(),
             'price' => (float) $rawPrice,
             'basePrice' => (float) $rawPrice,
-            'displayPrice' => (float) $normalizedPrice,
+            'displayPrice' => (float) $rawPrice,
             'rating' => $this->ratingValue(),
             'availableSeats' => (int) $this->ghe_con,
             'totalSeats' => (int) $this->tong_ghe,

@@ -40,6 +40,7 @@
               <option value="AVAILABLE">Còn vé</option>
               <option value="SOLD_OUT">Hết vé</option>
               <option value="CANCELLED">Hủy</option>
+              <option value="COMPLETED">Đã hoàn thành</option>
             </select>
             <input type="date" class="form-control form-control-sm ms-1" style="width:150px" v-model="filters.fromDate" />
             <input type="date" class="form-control form-control-sm ms-1" style="width:150px" v-model="filters.toDate" />
@@ -233,6 +234,7 @@
                   <option value="AVAILABLE">Còn vé</option>
                   <option value="SOLD_OUT">Hết vé</option>
                   <option value="CANCELLED">Hủy</option>
+                  <option value="COMPLETED" disabled>Đã hoàn thành (tự động)</option>
                 </select>
               </div>
               <div class="col-12" v-if="formError">
@@ -802,31 +804,32 @@ async function fetchTrips(page = 1) {
   }
 }
 
-function mapTripResponse(trip) {
-  const totalSeats = trip.totalSeats ?? trip.seats?.total ?? 0
-  const remainingSeats = trip.availableSeats ?? trip.seats?.remaining ?? 0
-  const departureLocation = trip.departureLocation || trip.fromStation || ''
-  const arrivalLocation = trip.arrivalLocation || trip.toStation || ''
-  const type = trip.type || mapOperatorType(trip.operatorType)
+  function mapTripResponse(trip) {
+    const totalSeats = trip.totalSeats ?? trip.seats?.total ?? 0
+    const remainingSeats = trip.availableSeats ?? trip.seats?.remaining ?? 0
+    const departureLocation = trip.departureLocation || trip.fromStation || ''
+    const arrivalLocation = trip.arrivalLocation || trip.toStation || ''
+    const type = trip.type || mapOperatorType(trip.operatorType)
+    const status = trip.status || trip.rawStatus || 'AVAILABLE'
 
-  return {
-    id: trip.id,
-    type: type || 'bus',
-    route: trip.route || `${departureLocation} - ${arrivalLocation}`.trim(),
+    return {
+      id: trip.id,
+      type: type || 'bus',
+      route: trip.route || `${departureLocation} - ${arrivalLocation}`.trim(),
     departureLocation,
     arrivalLocation,
     carrier: trip.carrier || trip.operator || '',
-    departAt: trip.departAt || trip.departureTime || '',
-    arrivalAt: trip.arrivalAt || trip.arrivalTime || '',
-    basePrice: Number(trip.basePrice ?? 0),
-    totalSeats,
-    availableSeats: remainingSeats,
-    status: trip.status || trip.rawStatus || 'AVAILABLE',
-    operatorId: trip.operatorId ?? null,
-    fromStationId: trip.fromStationId ?? null,
-    toStationId: trip.toStationId ?? null,
-    fromProvinceId: trip.fromProvinceId ?? null,
-    toProvinceId: trip.toProvinceId ?? null,
+      departAt: trip.departAt || trip.departureTime || '',
+      arrivalAt: trip.arrivalAt || trip.arrivalTime || '',
+      basePrice: Number(trip.basePrice ?? 0),
+      totalSeats,
+      availableSeats: remainingSeats,
+      status,
+      operatorId: trip.operatorId ?? null,
+      fromStationId: trip.fromStationId ?? null,
+      toStationId: trip.toStationId ?? null,
+      fromProvinceId: trip.fromProvinceId ?? null,
+      toProvinceId: trip.toProvinceId ?? null,
   }
 }
 
@@ -910,23 +913,26 @@ function typeBadge(type) {
   return 'badge-bus'
 }
 
-function statusText(status) {
-  if (status === 'SOLD_OUT' || status === 'HET_VE') return 'Hết vé'
-  if (status === 'CANCELLED' || status === 'HUY') return 'Đã hủy'
-  return 'Còn vé'
-}
+  function statusText(status) {
+    if (status === 'SOLD_OUT' || status === 'HET_VE') return 'Hết vé'
+    if (status === 'COMPLETED') return 'Đã hoàn thành'
+    if (status === 'CANCELLED' || status === 'HUY') return 'Đã hủy'
+    return 'Còn vé'
+  }
 
-function statusBadge(status) {
-  if (status === 'SOLD_OUT' || status === 'HET_VE') return 'badge-soldout'
-  if (status === 'CANCELLED' || status === 'HUY') return 'badge-cancel'
-  return 'badge-available'
-}
+  function statusBadge(status) {
+    if (status === 'SOLD_OUT' || status === 'HET_VE') return 'badge-soldout'
+    if (status === 'COMPLETED') return 'badge-completed'
+    if (status === 'CANCELLED' || status === 'HUY') return 'badge-cancel'
+    return 'badge-available'
+  }
 
-function statusDot(status) {
-  if (status === 'SOLD_OUT' || status === 'HET_VE') return 'dot-gray'
-  if (status === 'CANCELLED' || status === 'HUY') return 'dot-red'
-  return 'dot-green'
-}
+  function statusDot(status) {
+    if (status === 'SOLD_OUT' || status === 'HET_VE') return 'dot-gray'
+    if (status === 'COMPLETED') return 'dot-gray'
+    if (status === 'CANCELLED' || status === 'HUY') return 'dot-red'
+    return 'dot-green'
+  }
 
 function mapOperatorType(type) {
   if (type === 'tau_hoa') return 'train'
@@ -1099,6 +1105,7 @@ onMounted(async () => {
 .status-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; vertical-align:middle; }
 .dot-green{ background:#3add76; } .dot-gray{ background:#9ca3af; } .dot-red{ background:#ef4444; }
 .badge-available{ background:#e8fbf2; color:#137b52; }
+.badge-completed{ background:#eef2f7; color:#475569; }
 .badge-soldout{ background:#eef2f7; color:#475569; }
 .badge-cancel{ background:#fdebec; color:#b4232e; }
 
@@ -1116,11 +1123,6 @@ onMounted(async () => {
 /* Utility */
 @media (min-width:768px){ .w-md-auto{ width:auto!important; } }
 </style>
-
-
-
-
-
 
 
 

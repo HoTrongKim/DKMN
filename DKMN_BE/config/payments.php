@@ -7,8 +7,8 @@ return [
     'default_fare_vnd' => env('DEFAULT_FARE_VND', 1200),
     'allowed_amount_delta' => (int) env('ALLOWED_AMOUNT_DELTA', 0),
     'default_provider' => env('PAYMENT_QR_PROVIDER', 'vietqr'),
-    'display_min_vnd' => (int) env('TRIP_PRICE_MIN_VND', 1000),
-    'display_max_vnd' => (int) env('TRIP_PRICE_MAX_VND', 2000),
+    'display_min_vnd' => (int) env('TRIP_PRICE_MIN_VND', 0),
+    'display_max_vnd' => (int) env('TRIP_PRICE_MAX_VND', 0),
     'ticket_hold_minutes' => (int) env('TICKET_HOLD_MINUTES', 10),
     'providers' => [
         'vietqr' => [

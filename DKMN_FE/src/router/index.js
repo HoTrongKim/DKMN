@@ -19,6 +19,11 @@ const routes = [
 		meta: { layout: 'client' }
 	},
 	{
+		path: '/client/quen-mat-khau',
+		component: () => import('../components/Client/Login/ForgotPassword.vue'),
+		meta: { layout: 'client' }
+	},
+	{
 		path: '/client-register',
 		component: () => import('../components/Client/Register/index.vue'),
 		meta: { layout: 'client' }

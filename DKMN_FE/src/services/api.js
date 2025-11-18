@@ -20,6 +20,14 @@ const detectBaseUrl = () => {
 
   if (typeof window !== 'undefined') {
     const origin = trimTrailingSlash(window.location.origin || '')
+    const path = window.location.pathname || ''
+
+    // Khi deploy dưới thư mục (VD: http://localhost/DKMN_FE/dist),
+    // tự động trỏ về backend Laravel trong DKMN_BE/public/api
+    if (/dkmn_fe/i.test(path) || /dkmn/i.test(path)) {
+      return origin ? `${origin}/DKMN_BE/public/api` : '/DKMN_BE/public/api'
+    }
+
     return origin ? `${origin}/api` : '/api'
   }
 
