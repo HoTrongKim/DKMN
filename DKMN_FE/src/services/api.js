@@ -7,6 +7,40 @@ const trimTrailingSlash = (value) => {
   return value.replace(/\/+$/, '')
 }
 
+const resolveBackendSubPaths = (path, href) => {
+  const pushUnique = (list, value) => {
+    const trimmed = trimTrailingSlash(value || '')
+    if (trimmed && !list.includes(trimmed)) {
+      list.push(trimmed)
+    }
+  }
+
+  const candidates = []
+  pushUnique(candidates, '/DKMN_BE/public/api')
+
+  const normalizedPath = typeof path === 'string' ? path : ''
+  const segments = normalizedPath.split('/').filter(Boolean)
+
+  segments.forEach((segment, index) => {
+    if (/dkmn/i.test(segment)) {
+      const prefix = `/${segments.slice(0, index + 1).join('/')}`
+      pushUnique(candidates, `${prefix}/DKMN_BE/public/api`)
+    }
+  })
+
+  const normalizedHref = typeof href === 'string' ? href : ''
+  const folderPattern = /(\/dkmn[^/?#]*)/gi
+  let match
+  while ((match = folderPattern.exec(normalizedHref)) !== null) {
+    const folder = match[1] || ''
+    if (folder) {
+      pushUnique(candidates, `${folder}/DKMN_BE/public/api`)
+    }
+  }
+
+  return candidates
+}
+
 const detectBaseUrl = () => {
   const envBaseUrl = trimTrailingSlash(import.meta.env?.VITE_API_BASE_URL)
   if (envBaseUrl) {
@@ -21,11 +55,13 @@ const detectBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const origin = trimTrailingSlash(window.location.origin || '')
     const path = window.location.pathname || ''
+    const backendSubPaths = resolveBackendSubPaths(path, window.location.href)
+    const preferredBackendSubPath = backendSubPaths[0] || '/DKMN_BE/public/api'
 
     // Khi deploy dưới thư mục (VD: http://localhost/DKMN_FE/dist),
     // tự động trỏ về backend Laravel trong DKMN_BE/public/api
     if (/dkmn_fe/i.test(path) || /dkmn/i.test(path)) {
-      return origin ? `${origin}/DKMN_BE/public/api` : '/DKMN_BE/public/api'
+      return origin ? `${origin}${preferredBackendSubPath}` : preferredBackendSubPath
     }
 
     return origin ? `${origin}/api` : '/api'
@@ -34,14 +70,62 @@ const detectBaseUrl = () => {
   return '/api'
 }
 
+const detectLocalFallbackBaseUrls = () => {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  const rawHost = window.location?.hostname || ''
+  const hostnameNormalized = rawHost.trim()
+  const hostnameLower = hostnameNormalized.toLowerCase()
+  const isLocalHost = hostnameLower === 'localhost' || hostnameLower === '127.0.0.1' || hostnameLower === '::1'
+  const backendSubPaths = resolveBackendSubPaths(window.location?.pathname || '', window.location?.href || '')
+
+  if (!isLocalHost) {
+    return []
+  }
+
+  const protocol = window.location?.protocol === 'https:' ? 'https:' : 'http:'
+  const resolvedHost = hostnameLower === '::1' ? '127.0.0.1' : hostnameNormalized || 'localhost'
+  const hostVariants = Array.from(new Set([resolvedHost || 'localhost', '127.0.0.1', 'localhost'])).filter(Boolean)
+
+  const pushUnique = (list, value) => {
+    const trimmed = trimTrailingSlash(value)
+    if (trimmed && !list.includes(trimmed)) {
+      list.push(trimmed)
+    }
+  }
+
+  const fallbacks = []
+
+  hostVariants.forEach((host) => {
+    pushUnique(fallbacks, `${protocol}//${host}:8000/api`)
+  })
+
+  backendSubPaths.forEach((subPath) => {
+    hostVariants.forEach((host) => {
+      pushUnique(fallbacks, `${protocol}//${host}${subPath}`)
+    })
+  })
+
+  return fallbacks
+}
+
+const baseUrl = detectBaseUrl()
+const fallbackBaseUrls = detectLocalFallbackBaseUrls()
+
 const api = axios.create({
-  baseURL: detectBaseUrl(),
+  baseURL: baseUrl,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 })
+
+if (fallbackBaseUrls.length > 0) {
+  api.defaults.dkmnFallbackBaseUrls = fallbackBaseUrls
+}
 
 const handleUnauthorized = () => {
   if (typeof window === 'undefined') {
@@ -100,6 +184,47 @@ api.interceptors.response.use(
         error.response.data.message = 'Chưa được xác thực. Vui lòng đăng nhập lại.'
       }
     }
+
+    const config = error?.config
+    const fallbackListRaw = Array.isArray(api.defaults?.dkmnFallbackBaseUrls)
+      ? api.defaults.dkmnFallbackBaseUrls
+      : api.defaults?.dkmnFallbackBaseUrl
+        ? [api.defaults.dkmnFallbackBaseUrl]
+        : []
+    const fallbackList = fallbackListRaw
+      .map((value) => trimTrailingSlash(value || ''))
+      .filter(Boolean)
+    const currentBase = trimTrailingSlash(api.defaults?.baseURL || '')
+
+    const isNetworkError =
+      !error?.response && (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error')
+
+    const nextFallbackIndex = typeof config?.__dkmnFallbackIndex === 'number'
+      ? config.__dkmnFallbackIndex + 1
+      : 0
+    const nextFallbackBase = fallbackList.find(
+      (value, index) => index === nextFallbackIndex && value && value !== currentBase,
+    )
+
+    const shouldRetryWithFallback =
+      Boolean(config) &&
+      isNetworkError &&
+      !!nextFallbackBase
+
+    if (shouldRetryWithFallback) {
+      config.__dkmnFallbackIndex = nextFallbackIndex
+      config.baseURL = nextFallbackBase
+      api.defaults.baseURL = nextFallbackBase
+      try {
+        console.warn(
+          `[dkmn-api] Primary backend ${currentBase || '(default)'} unavailable. Retrying with ${nextFallbackBase}.`,
+        )
+      } catch (consoleError) {
+        /* ignore logging issues */
+      }
+      return api(config)
+    }
+
     return Promise.reject(error)
   }
 )

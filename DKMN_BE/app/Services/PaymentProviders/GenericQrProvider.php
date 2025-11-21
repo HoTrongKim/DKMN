@@ -51,34 +51,24 @@ class GenericQrProvider implements PaymentProviderInterface
 
     protected function buildQrNote(Payment $payment): string
     {
-        $payment->loadMissing([
-            'ticket.donHang',
-            'ticket.trip.tramDi.tinhThanh',
-            'ticket.trip.tramDen.tinhThanh',
-        ]);
+        $payment->loadMissing(['ticket.donHang']);
 
         $ticket = $payment->ticket;
+        $order = $ticket?->donHang;
 
-        $from = null;
-        $to = null;
-        $seats = '';
+        $noteParts = [];
 
-        if ($ticket) {
-            $order = $ticket->donHang;
-            $trip = $ticket->trip;
-
-            $from = $order->noi_di
-                ?? $trip?->tramDi?->tinhThanh?->ten
-                ?? $trip?->tramDi?->ten;
-            $to = $order->noi_den
-                ?? $trip?->tramDen?->tinhThanh?->ten
-                ?? $trip?->tramDen?->ten;
-
-            $seats = $this->formatSeatList($ticket->seat_numbers);
+        if (!empty($order?->ma_don)) {
+            $noteParts[] = $order->ma_don;
+        } elseif (!empty($payment->provider_ref)) {
+            $noteParts[] = $payment->provider_ref;
+        } else {
+            $noteParts[] = sprintf('PAY-%s', $payment->id ?? Str::random(6));
         }
 
-        $message = 'Đặt vé tại DKMN';
-        return Str::upper(Str::ascii($message));
+        $noteParts[] = 'DKMN';
+
+        return $this->normalizeNote(implode(' ', $noteParts));
     }
 
     protected function formatSeatList(?string $seatNumbers): ?string
@@ -98,4 +88,18 @@ class GenericQrProvider implements PaymentProviderInterface
         return implode('-', $parts);
     }
 
+    protected function normalizeNote(string $note): string
+    {
+        $normalized = Str::upper(Str::ascii($note));
+        $normalized = preg_replace('/[^A-Z0-9\- ]/', ' ', $normalized);
+        $normalized = preg_replace('/\s+/', ' ', trim((string) $normalized));
+
+        $maxLength = 60;
+        if (strlen($normalized) > $maxLength) {
+            $normalized = substr($normalized, 0, $maxLength);
+        }
+
+        return $normalized !== '' ? $normalized : 'DKMN';
+    }
 }
+

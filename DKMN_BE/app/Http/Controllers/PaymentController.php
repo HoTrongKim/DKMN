@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Ticket;
-use App\Models\ThongBao;
 use App\Services\PaymentProviderFactory;
+use App\Services\PaymentSuccessNotifier;
 use App\Services\PaymentService;
 use App\Services\TicketNotificationService;
 use App\Services\TicketHoldService;
@@ -21,7 +21,8 @@ class PaymentController extends Controller
     public function __construct(
         private readonly PaymentProviderFactory $providerFactory,
         private readonly PaymentService $paymentService,
-        private readonly TicketNotificationService $ticketNotificationService
+        private readonly TicketNotificationService $ticketNotificationService,
+        private readonly PaymentSuccessNotifier $paymentSuccessNotifier
     ) {
     }
 
@@ -203,7 +204,7 @@ class PaymentController extends Controller
         $payment->refresh();
         if ($ticketForMail) {
             $this->ticketNotificationService->sendTicketBookedMail($ticketForMail, $payment);
-            $this->notifyOrderSuccess($ticketForMail);
+            $this->paymentSuccessNotifier->send($ticketForMail, $payment);
         }
 
         return $this->respondWithPayment($payment->fresh());
@@ -265,7 +266,7 @@ class PaymentController extends Controller
 
         if ($ticketForMail) {
             $this->ticketNotificationService->sendTicketBookedMail($ticketForMail, $payment);
-            $this->notifyOrderSuccess($ticketForMail);
+            $this->paymentSuccessNotifier->send($ticketForMail, $payment);
         }
 
         return $this->respondWithPayment($payment, 201);
@@ -350,53 +351,5 @@ class PaymentController extends Controller
             'MANUAL' => 'MANUAL',
             default => 'CASH_ONBOARD',
         };
-    }
-
-    private function notifyOrderSuccess(?Ticket $ticket): void
-    {
-        if (!$ticket?->donHang || !$ticket->donHang->nguoi_dung_id) {
-            return;
-        }
-
-        try {
-            $order = $ticket->donHang;
-            $trip = $ticket->trip()->with(['tramDi.tinhThanh', 'tramDen.tinhThanh'])->first();
-
-            $from = $order->noi_di
-                ?? $trip?->tramDi?->tinhThanh?->ten
-                ?? $trip?->tramDi?->ten
-                ?? 'Điểm đi';
-            $to = $order->noi_den
-                ?? $trip?->tramDen?->tinhThanh?->ten
-                ?? $trip?->tramDen?->ten
-                ?? 'Điểm đến';
-
-            $departure = optional($trip?->gio_khoi_hanh)->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y');
-            $seatLabels = $ticket->seat_numbers;
-            $amount = (int) ($ticket->total_amount_vnd ?? $order->tong_tien ?? 0);
-
-            $parts = [
-                sprintf('Thanh toán thành công mã vé %s cho chuyến %s → %s.', $order->ma_don, $from, $to),
-            ];
-            if ($departure) {
-                $parts[] = 'Giờ khởi hành: ' . $departure;
-            }
-            if (!empty($seatLabels)) {
-                $parts[] = 'Ghế: ' . $seatLabels;
-            }
-            if ($amount > 0) {
-                $parts[] = 'Tổng tiền: ' . number_format($amount, 0, ',', '.') . ' đ';
-            }
-
-            ThongBao::create([
-                'nguoi_dung_id' => $order->nguoi_dung_id,
-                'tieu_de' => 'Thanh toán thành công',
-                'noi_dung' => implode(' ', $parts),
-                'loai' => 'success',
-                'da_doc' => 0,
-            ]);
-        } catch (\Throwable $e) {
-            report($e);
-        }
     }
 }

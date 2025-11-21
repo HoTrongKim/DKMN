@@ -31,6 +31,7 @@ use App\Http\Controllers\ThongKeDoanhThuController;
 use App\Http\Controllers\TinhThanhController;
 use App\Http\Controllers\TramController;
 use App\Http\Controllers\HuyVeController;
+use App\Http\Controllers\Payment\VnpayController;
 use Illuminate\Support\Facades\Route;
 
 // =========================================================
@@ -54,6 +55,8 @@ Route::prefix('dkmn')->group(function () {
 
     // Webhook callbacks remain open (handled via signature)
     Route::post('/payments/qr/webhook', [PaymentController::class, 'handleQrWebhook']);
+    Route::match(['get', 'post'], '/payments/vnpay/ipn', [VnpayController::class, 'ipn']);
+    Route::get('/payments/vnpay/return', [VnpayController::class, 'handleReturn']);
 });
 
 Route::prefix('dkmn')->middleware('auth:sanctum')->group(function () {
@@ -63,6 +66,7 @@ Route::prefix('dkmn')->middleware('auth:sanctum')->group(function () {
     Route::post('/thanh-toan', [DkmnThanhToanController::class, 'store']);
 
     Route::post('/payments/qr/init', [PaymentController::class, 'initQr']);
+    Route::post('/payments/vnpay/init', [VnpayController::class, 'init']);
     Route::get('/payments/{payment}/status', [PaymentController::class, 'status']);
     Route::post('/payments/onboard/confirm', [PaymentController::class, 'confirmOnboard']);
     Route::post('/me/change-password', [NguoiDungController::class, 'doiMatKhau']);

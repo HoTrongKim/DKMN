@@ -3266,10 +3266,9 @@ export default {
     padding: 1rem;
   }
 
-  .seat-modal-footer {
+.seat-modal-footer {
     flex-direction: column;
     align-items: flex-start;
   }
 }
 </style>
- 

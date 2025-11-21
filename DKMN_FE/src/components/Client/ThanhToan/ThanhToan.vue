@@ -322,10 +322,10 @@
                     <span class="label">Chủ TK:</span>
                     <strong>{{ bankInfo.accountName }}</strong>
                   </div>
-                  <div class="bank-row">
-                    <span class="label">Nội dung:</span>
-                    <strong>{{ qrModal.paymentId || "Thanh toan ve xe DKMN" }}</strong>
-                  </div>
+                   <div class="bank-row">
+                     <span class="label">Nội dung:</span>
+                     <strong>{{ transferContentLabel }}</strong>
+                   </div>
                 </div>
               </div>
 
@@ -398,7 +398,8 @@ const ORDER_ENDPOINT = "/dkmn/don-hang";
 const PAYMENT_ENDPOINT = "/dkmn/thanh-toan";
 const PAYMENT_QR_INIT_ENDPOINT = "/dkmn/payments/qr/init";
 const PAYMENT_ONBOARD_ENDPOINT = "/dkmn/payments/onboard/confirm";
-const PAYMENT_STATUS_ENDPOINT = "/dkmn/payments/status";
+const PAYMENT_STATUS_ENDPOINT = (paymentId) =>
+  `/dkmn/payments/${paymentId}/status`;
 const TRIP_SEATS_ENDPOINT = (id) => `/dkmn/chuyen-di/${id}/ghe`;
 const LEGACY_TICKET_KEY = "dkmn:lastTicket";
 const TICKET_STORE_KEY = "dkmn:tickets";
@@ -430,6 +431,7 @@ const TICKET_HOLD_MINUTES = 10;
       },
       bookingId: null,
       ticketId: null,
+      orderCode: null,
       isBooking: false,
           status: {
             code: "idle",
@@ -805,6 +807,38 @@ const TICKET_HOLD_MINUTES = 10;
           currency: "VND",
         }).format(v || 0);
       },
+      buildQrLabel() {
+        return this.transferContentLabel;
+      },
+      buildMsbQrUrl(amount) {
+        const normalized = Math.round(Number(amount) || 0);
+        if (normalized <= 0) {
+          return "";
+        }
+        const label = encodeURIComponent(this.buildQrLabel());
+        const bankCode = (this.bankInfo?.bankCode || "BVB").toUpperCase();
+        const account = this.bankInfo?.accountNumber || "0793587033";
+        return `https://img.vietqr.io/image/${bankCode}-${account}-compact.png?amount=${normalized}&addInfo=${label}`;
+      },
+      sanitizeQrPayload(payload, amount) {
+        const fallbackUrl = this.buildMsbQrUrl(amount);
+        if (!fallbackUrl) {
+          return payload || null;
+        }
+
+        const currentUrl = payload?.qrImageUrl || "";
+        const desiredAccount = `${(this.bankInfo?.bankCode || "BVB").toUpperCase()}-${this.bankInfo?.accountNumber || "0793587033"}`;
+        const isLegacyQr = !currentUrl.includes(desiredAccount);
+
+        if (!currentUrl || isLegacyQr) {
+          return {
+            ...(payload || {}),
+            qrImageUrl: fallbackUrl,
+          };
+        }
+
+        return payload;
+      },
       setStatus(code, label, detail, progress, isProcessing) {
         this.status = { code, label, detail, progress, isProcessing };
       },
@@ -822,6 +856,7 @@ const TICKET_HOLD_MINUTES = 10;
           this.clearHoldTimer();
           this.holdDeadline = null;
           this.holdRemainingSeconds = 0;
+          this.orderCode = null;
 
           this.isBooking = true;
           this.setStatus(
@@ -840,6 +875,15 @@ const TICKET_HOLD_MINUTES = 10;
             this.bookingId = bookingData?.donHang?.id || bookingData?.id || null;
             this.ticketId =
               bookingData?.ticket?.id || bookingData?.ticketId || null;
+            this.orderCode =
+              bookingData?.donHang?.ma_don ||
+              bookingData?.donHang?.maDon ||
+              bookingData?.donHang?.code ||
+              bookingData?.ma_don ||
+              bookingData?.maDon ||
+              bookingData?.orderCode ||
+              bookingData?.code ||
+              null;
             const ticketCreatedAt =
               bookingData?.ticket?.created_at || bookingData?.ticket?.createdAt;
             this.startHoldCountdown(ticketCreatedAt);
@@ -907,7 +951,9 @@ const TICKET_HOLD_MINUTES = 10;
           }
           // Chỉ hoàn tất khi payment đã được xác nhận thành công từ server
           try {
-            const { data } = await api.get(`${PAYMENT_STATUS_ENDPOINT}/${this.qrModal.paymentId}`);
+            const { data } = await api.get(
+              PAYMENT_STATUS_ENDPOINT(this.qrModal.paymentId)
+            );
             const payment = data?.data || data;
             if (payment?.status !== "SUCCEEDED") {
               throw new Error("Thanh toán chưa hoàn tất. Vui lòng thử lại sau vài giây.");
@@ -964,11 +1010,14 @@ const TICKET_HOLD_MINUTES = 10;
             const payload = data?.data || data;
 
             this.qrModal.paymentId = payload?.paymentId || this.qrModal.paymentId;
-            this.qrModal.qrData = payload;
             this.qrModal.amount =
               Number(payload?.amount) || this.total || this.qrModal.amount;
             this.qrModal.currency = payload?.currency || "VND";
             this.qrModal.providerRef = payload?.providerRef || null;
+            this.qrModal.qrData = this.sanitizeQrPayload(
+              payload,
+              this.qrModal.amount || this.total
+            );
             this.qrModal.statusText = "Đang chờ thanh toán";
             this.qrModal.statusClass = "bg-warning text-dark";
             this.setStatus(
@@ -1075,7 +1124,16 @@ const TICKET_HOLD_MINUTES = 10;
         isHoldExpired() {
           return !!this.holdDeadline && this.holdRemainingSeconds <= 0;
         },
-    qrGatewayLabel() {
+        transferContentLabel() {
+          if (this.orderCode && String(this.orderCode).trim()) {
+            return String(this.orderCode).trim();
+          }
+          if (this.qrModal.paymentId) {
+            return String(this.qrModal.paymentId);
+          }
+          return "Thanh toan ve xe DKMN";
+        },
+        qrGatewayLabel() {
       if (this.selectedGateway === "momo") {
         return "MoMo";
       }
@@ -1088,17 +1146,7 @@ const TICKET_HOLD_MINUTES = 10;
       if (!this.selectedGateway) {
         return "";
       }
-
-      const amount = Math.round(Number(this.total) || 0);
-      if (amount <= 0) {
-        return "";
-      }
-
-      const label = "Thanh toan ve xe DKMN";
-      const encoded = encodeURIComponent(label);
-      const bankCode = this.bankInfo?.bankCode || "BVB";
-      const account = this.bankInfo?.accountNumber || "0793587033";
-      return `https://img.vietqr.io/image/${bankCode}-${account}-compact.png?amount=${amount}&addInfo=${encoded}`;
+      return this.buildMsbQrUrl(this.total);
     },
       },
     };
