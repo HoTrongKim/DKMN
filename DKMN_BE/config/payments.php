@@ -43,16 +43,4 @@ return [
     ],
     'intent_expiration_minutes' => env('PAYMENT_INTENT_EXP_MIN', 15),
     'webhook_secret' => env('WEBHOOK_SECRET', Str::random(32)),
-    'vnpay' => [
-        'payment_url' => env('VNPAY_PAYMENT_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
-        'tmn_code' => env('VNPAY_TMN_CODE'),
-        'hash_secret' => env('VNPAY_HASH_SECRET'),
-        'return_url' => env('VNPAY_RETURN_URL', rtrim(env('APP_URL', 'http://localhost'), '/') . '/api/dkmn/payments/vnpay/return'),
-        'ipn_url' => env('VNPAY_IPN_URL', rtrim(env('APP_URL', 'http://localhost'), '/') . '/api/dkmn/payments/vnpay/ipn'),
-        'version' => env('VNPAY_VERSION', '2.1.0'),
-        'command' => env('VNPAY_COMMAND', 'pay'),
-        'order_type' => env('VNPAY_ORDER_TYPE', 'other'),
-        'default_locale' => env('VNPAY_LOCALE', 'vn'),
-        'expire_minutes' => (int) env('VNPAY_EXPIRE_MINUTES', 15),
-    ],
 ];

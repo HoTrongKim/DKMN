@@ -57,6 +57,11 @@ class PaymentReconcileService
             ->whereIn('status', [Payment::STATUS_PENDING, Payment::STATUS_MISMATCH])
             ->whereHas('ticket.donHang', fn ($q) => $q->where('ma_don', $code));
 
+        // Fallback: when webhook payload does not include amount, use order code only.
+        if ($amount <= 0) {
+            return $query->latest()->first();
+        }
+
         if ($delta > 0) {
             $min = max(0, $amount - $delta);
             $query->whereBetween('amount_vnd', [$min, $amount + $delta]);

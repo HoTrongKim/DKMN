@@ -28,7 +28,7 @@ class PaymentSeeder extends Seeder
 
         $rows = [];
         $ticketUpdates = [];
-        $qrProviders = ['MOMO', 'VNPAY', 'ZALOPAY'];
+        $qrProviders = ['MOMO', 'ZALOPAY'];
         $cashProviders = ['VCB', 'ACB'];
 
         foreach ($tickets as $index => $ticket) {

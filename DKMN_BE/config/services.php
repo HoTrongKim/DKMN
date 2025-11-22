@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'sepay' => [
+        'webhook_token' => env('SEPAY_WEBHOOK_TOKEN'),
+        'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY'),
+    ],
+
 ];

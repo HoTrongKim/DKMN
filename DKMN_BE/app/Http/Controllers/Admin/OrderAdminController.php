@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DonHang;
+use App\Models\Ghe;
 use App\Models\Payment;
 use App\Models\ThanhToan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -154,6 +156,7 @@ class OrderAdminController extends Controller
     public function destroy(DonHang $donHang)
     {
         DB::transaction(function () use ($donHang) {
+            $this->releaseSeats($donHang);
             $donHang->chiTietDonHang()->delete();
             $donHang->thanhToans()->delete();
             if ($ticket = $donHang->ticket()->first()) {
@@ -276,6 +279,31 @@ class OrderAdminController extends Controller
             'ma_giao_dich' => strtoupper(Str::random(10)),
             'thoi_diem_thanh_toan' => now(),
         ]);
+    }
+
+    private function releaseSeats(DonHang $order): int
+    {
+        $seatIds = $order->chiTietDonHang()->pluck('ghe_id')->filter()->values();
+        if ($seatIds->isEmpty()) {
+            return 0;
+        }
+
+        $update = ['trang_thai' => 'trong'];
+        if (Schema::hasColumn('ghes', 'ngay_cap_nhat')) {
+            $update['ngay_cap_nhat'] = now();
+        }
+
+        Ghe::whereIn('id', $seatIds)->update($update);
+
+        $trip = $order->chuyenDi()->lockForUpdate()->first();
+        if ($trip) {
+            $trip->update([
+                'ghe_con' => max(0, (int) ($trip->ghe_con ?? 0) + $seatIds->count()),
+                'ngay_cap_nhat' => now(),
+            ]);
+        }
+
+        return $seatIds->count();
     }
 
     private function formatDisplayDate($value, string $format = 'd/m/Y H:i'): ?string

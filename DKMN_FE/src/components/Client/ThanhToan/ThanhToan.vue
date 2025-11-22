@@ -424,10 +424,10 @@ const TICKET_HOLD_MINUTES = 10;
       seatLookup: {},
       seatMapLoaded: false,
       bankInfo: {
-        bankCode: "BVB", // Timo by Ban Viet Bank
-        bankName: "Timo (Ban Viet)",
-        accountNumber: "0793587033",
-        accountName: "NGUYEN VAN M",
+        bankCode: "MSB",
+        bankName: "MSB",
+        accountNumber: "968866976549",
+        accountName: "NGUYENTHITUYETNHU DKMN",
       },
       bookingId: null,
       ticketId: null,
@@ -816,8 +816,8 @@ const TICKET_HOLD_MINUTES = 10;
           return "";
         }
         const label = encodeURIComponent(this.buildQrLabel());
-        const bankCode = (this.bankInfo?.bankCode || "BVB").toUpperCase();
-        const account = this.bankInfo?.accountNumber || "0793587033";
+        const bankCode = (this.bankInfo?.bankCode || "MSB").toUpperCase();
+        const account = this.bankInfo?.accountNumber || "7008032005";
         return `https://img.vietqr.io/image/${bankCode}-${account}-compact.png?amount=${normalized}&addInfo=${label}`;
       },
       sanitizeQrPayload(payload, amount) {
@@ -827,7 +827,7 @@ const TICKET_HOLD_MINUTES = 10;
         }
 
         const currentUrl = payload?.qrImageUrl || "";
-        const desiredAccount = `${(this.bankInfo?.bankCode || "BVB").toUpperCase()}-${this.bankInfo?.accountNumber || "0793587033"}`;
+        const desiredAccount = `${(this.bankInfo?.bankCode || "MSB").toUpperCase()}-${this.bankInfo?.accountNumber || "7008032005"}`;
         const isLegacyQr = !currentUrl.includes(desiredAccount);
 
         if (!currentUrl || isLegacyQr) {
@@ -950,20 +950,21 @@ const TICKET_HOLD_MINUTES = 10;
             return;
           }
           // Chỉ hoàn tất khi payment đã được xác nhận thành công từ server
-          try {
-            const { data } = await api.get(
-              PAYMENT_STATUS_ENDPOINT(this.qrModal.paymentId)
-            );
-            const payment = data?.data || data;
-            if (payment?.status !== "SUCCEEDED") {
-              throw new Error("Thanh toán chưa hoàn tất. Vui lòng thử lại sau vài giây.");
-            }
-          } catch (error) {
+          this.qrModal.statusText = "Đang kiểm tra thanh toán...";
+          this.qrModal.statusClass = "bg-info text-dark";
+          const payment = await this.pollPaymentStatus(this.qrModal.paymentId, 15, 3000);
+          if (!payment) {
             const message =
-              error.response?.data?.message ||
-              error.message ||
-              "Không thể xác nhận thanh toán. Vui lòng thử lại.";
-            this.$toast?.error?.(message);
+              "Thanh toán chưa được xác nhận. Vui lòng đợi thêm (IPN có thể đến sau 30-45 giây) rồi bấm Hoàn tất lại.";
+            this.$toast?.warning?.(message) || alert(message);
+            return;
+          }
+          if (payment.status !== "SUCCEEDED") {
+            const message =
+              payment.status === "FAILED"
+                ? "Giao dịch thất bại. Vui lòng thử lại."
+                : "Thanh toán chưa hoàn tất. Vui lòng thử lại sau ít phút.";
+            this.$toast?.error?.(message) || alert(message);
             return;
           }
 
@@ -982,6 +983,26 @@ const TICKET_HOLD_MINUTES = 10;
           this.closeQrModal();
           this.$toast?.success?.("Thanh toán thành công!");
           this.$router.push("/client-ve-da-dat");
+        },
+
+        async pollPaymentStatus(paymentId, maxAttempts = 5, delayMs = 2000) {
+          if (!paymentId) return null;
+          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            try {
+              const { data } = await api.get(PAYMENT_STATUS_ENDPOINT(paymentId));
+              const payment = data?.data || data;
+              if (!payment) continue;
+              if (payment.status === "SUCCEEDED" || payment.status === "FAILED" || payment.status === "MISMATCH") {
+                return payment;
+              }
+            } catch (err) {
+              // Bỏ qua và thử lại
+            }
+            if (attempt < maxAttempts) {
+              await new Promise((r) => setTimeout(r, delayMs));
+            }
+          }
+          return null;
         },
         async prepareQrPayment() {
           this.resetQrModal();
