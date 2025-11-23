@@ -166,12 +166,20 @@ class DonHangController extends Controller
         $seats = $booking['seats'];
         unset($booking['trip'], $booking['context']);
 
+        // Ghi nhận hoạt động và tạo thông báo cho khách
         $this->logBookingAttempt(
             $booking['donHang'],
             $trip,
             $context,
             $seats instanceof \Illuminate\Support\Collection ? $seats->count() : count($seats),
             $request
+        );
+
+        $this->createOrderNotification(
+            $booking['donHang'],
+            $trip,
+            $seats,
+            $context
         );
 
         $booking['context'] = $context;

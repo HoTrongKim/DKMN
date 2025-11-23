@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DonHang;
+use App\Models\DanhGia;
 use App\Models\Ghe;
 use App\Models\Payment;
 use App\Models\ThanhToan;
@@ -156,6 +157,8 @@ class OrderAdminController extends Controller
     public function destroy(DonHang $donHang)
     {
         DB::transaction(function () use ($donHang) {
+            // Xóa các bản ghi phụ thuộc để tránh lỗi khóa ngoại
+            DanhGia::where('don_hang_id', $donHang->id)->delete();
             $this->releaseSeats($donHang);
             $donHang->chiTietDonHang()->delete();
             $donHang->thanhToans()->delete();

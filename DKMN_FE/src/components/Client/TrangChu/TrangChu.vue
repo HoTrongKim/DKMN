@@ -1,177 +1,275 @@
 <template>
-  <div class="container-fluid">
-    <GioiThieu />
-    <!-- Hero Section with Search -->
-    <section class="hero position-relative">
-      <!-- Decorative background -->
-      <span class="blob blob-1"></span>
-      <span class="blob blob-2"></span>
-      <span class="blob blob-3"></span>
-      <span class="hero__grid"></span>
-      <div class="hero__overlay"></div>
+  <div class="container-fluid homepage">
+    <section
+      class="hyper-hero position-relative"
+      @mousemove="handleParallax"
+      @mouseleave="resetParallax"
+    >
+      <div class="hero-motion">
+        <div class="hero-gradient"></div>
+        <div class="hero-gridlines" :style="parallaxTransform(10)"></div>
+        <div class="hero-glow hero-glow--mint" :style="parallaxTransform(22)"></div>
+        <div class="hero-glow hero-glow--cyan" :style="parallaxTransform(28)"></div>
+        <div class="mouse-light" :style="parallaxTransform(32)"></div>
 
-      <!-- Content -->
-      <div class="hero__content">
-        <div class="hero__glass shadow-lg">
-          <div class="text-center mb-4">
-       
-            <h1 class="hero__title">
-              Tìm và đặt vé <span class="text-primary">dễ dàng</span>
-            </h1>
-            <p class="hero__subtitle text-white">
-              Hệ thống đặt vé xe khách, tàu hỏa, máy bay với giá tốt nhất
-            </p>
+        <div class="sky-lane">
+          <div class="plane-streak">
+            <span class="trail"></span>
+            <svg class="plane-icon" viewBox="0 0 64 64" aria-hidden="true">
+              <path
+                d="M9 34l14.5-3.5L44 42c2 1 2 4-1 4l-12-1-6 6c-1 .9-3-.2-3-1.6l1-7.4-8-1c-2-.3-2.5-2.8-.8-3.7L25 34 9 34z"
+                fill="url(#gradPlane)"
+              />
+              <defs>
+                <linearGradient id="gradPlane" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#2af598" />
+                  <stop offset="100%" stop-color="#08aeea" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
+          <div
+            v-for="ticket in featuredTickets"
+            :key="ticket.id"
+            class="floating-ticket"
+            :style="parallaxTransform(6)"
+          >
+            <p class="ticket-mini__eyebrow">{{ ticket.type }}</p>
+            <p class="ticket-mini__route">{{ ticket.from }} -> {{ ticket.to }}</p>
+            <p class="ticket-mini__meta">{{ ticket.time }} | {{ ticket.brand }}</p>
+          </div>
+        </div>
 
-          <!-- 🔍 Search Form -->
-          <div id="search" class="search-form">
-            <div class="row g-3">
-              <!-- Vehicle Type -->
-              <div class="col-md-3">
-                <label class="form-label text-white fw-semibold"
-                  >Loại phương tiện</label
-                >
-                <select v-model="searchForm.vehicleType" class="form-select">
-                  <option value="">Chọn phương tiện</option>
-                  <option value="bus">Xe khách</option>
-                  <option value="train">Tàu hỏa</option>
-                  <option value="plane">Máy bay</option>
-                </select>
-              </div>
+        <div class="ground-track">
+          <div class="vehicle vehicle-bus" aria-label="Xe khach">
+            <div class="vehicle-body">
+              <span class="window"></span>
+              <span class="window"></span>
+              <span class="window"></span>
+              <span class="window"></span>
+            </div>
+            <div class="vehicle-wheels">
+              <span class="wheel"></span>
+              <span class="wheel"></span>
+            </div>
+          </div>
+          <div class="vehicle vehicle-train" aria-label="Tau hoa">
+            <div class="vehicle-body">
+              <span class="window"></span>
+              <span class="window"></span>
+              <span class="window"></span>
+              <span class="window"></span>
+            </div>
+            <div class="vehicle-wheels narrow">
+              <span class="wheel"></span>
+              <span class="wheel"></span>
+              <span class="wheel"></span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <!-- From -->
-              <div class="col-md-3">
-                <label class="form-label text-white fw-semibold">Nơi đi</label>
-                <select v-model="searchForm.from" class="form-select">
-                  <option value="" disabled>Chọn nơi đi</option>
-                  <option v-for="city in cities" :key="city" :value="city">
-                    {{ city }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- To -->
-              <div class="col-md-3">
-                <label class="form-label text-white fw-semibold">Nơi đến</label>
-                <select v-model="searchForm.to" class="form-select">
-                  <option value="" disabled>Chọn nơi đến</option>
-                  <option v-for="city in cities" :key="city" :value="city">
-                    {{ city }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Departure Date -->
-              <div class="col-md-3">
-                <label class="form-label text-white fw-semibold">Ngày đi</label>
-                <input
-                  v-model="searchForm.departureDate"
-                  type="date"
-                  class="form-control"
-                />
+      <div class="container hero-shell">
+        <div class="row g-4 align-items-center">
+          <div class="col-lg-6">
+            <div class="hero-copy">
+              <p class="hero-eyebrow">WordPress x Vue landing</p>
+              <h1 class="hero-headline">
+                Dat ve da phuong tien <span class="text-electric">xanh sang</span> va song dong.
+              </h1>
+              <p class="hero-subtitle">
+                Hieu ung chuyen dong theo chuot, tau ghep ben va may bay luon muot ma cho trai nghiem dat ve hien dai nhat.
+              </p>
+              <div class="hero-badges">
+                <span class="pill">Realtime seats</span>
+                <span class="pill">Hover motion</span>
+                <span class="pill">Multi-modal</span>
               </div>
             </div>
-
-            <div class="row g-3 mt-2">
-              <!-- Pickup/Drop-off Stations (for buses) -->
-              <div
-                class="col-md-3"
-                v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.from"
-              >
-                <label class="form-label text-white fw-semibold">{{ pickupLabel }}</label>
-                <select v-model="searchForm.pickupStation" class="form-select">
-                  <option value="" disabled>Chọn điểm đón</option>
-                  <option
-                    v-for="station in availablePickupStations"
-                    :key="'pickup-' + station"
-                    :value="station"
-                  >
-                    {{ station }}
-                  </option>
-                </select>
-              </div>
-
-              <div
-                class="col-md-3"
-                v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.to"
-              >
-                <label class="form-label text-white fw-semibold">{{ dropoffLabel }}</label>
-                <select v-model="searchForm.dropoffStation" class="form-select">
-                  <option value="" disabled>Chọn điểm trả</option>
-                  <option
-                    v-for="station in availableDropoffStations"
-                    :key="'dropoff-' + station"
-                    :value="station"
-                  >
-                    {{ station }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Passengers -->
-              <div class="col-md-3">
-                <label class="form-label text-white fw-semibold"
-                  >Số hành khách</label
-                >
-                <select v-model="searchForm.passengers" class="form-select">
-                  <option value="1">1 hành khách</option>
-                  <option value="2">2 hành khách</option>
-                  <option value="3">3 hành khách</option>
-                  <option value="4">4 hành khách</option>
-                  <option value="5">5 hành khách</option>
-                  <option value="5+">Khác</option>
-                </select>
-                <div v-if="searchForm.passengers === '5+'" class="mt-2">
-                  <input
-                    v-model.number="customPassengers"
-                    type="number"
-                    min="6"
-                    class="form-control"
-                    placeholder="Nhập số hành khách "
-                  />
+          </div>
+          <div class="col-lg-6">
+            <div class="hero-panel glass">
+              <div class="ticket-preview" role="status" aria-live="polite">
+                <div class="ticket-preview__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" class="icon">
+                    <path
+                      d="M3 14.5l17-5.4c1.6-.5 2.9 1.5 1.6 2.7l-3.4 3.2 2.1 4.8c.4 1-1 1.8-1.8 1L13 16l-4.1 3.8c-.8.7-2.1 0-1.8-1L8.7 14H3.5c-1 0-1.4-1.3-.5-1.8z"
+                      fill="url(#ticketGrad)"
+                    />
+                    <defs>
+                      <linearGradient id="ticketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#2af598" />
+                        <stop offset="100%" stop-color="#00c6ff" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <div class="ticket-preview__body">
+                  <p class="ticket-preview__title">Ve dien tu</p>
+                  <p class="ticket-preview__route">{{ heroTicket.route }}</p>
+                  <p class="ticket-preview__meta">
+                    Khoi hanh: {{ heroTicket.time }} | Hang: {{ heroTicket.brand }}
+                  </p>
                 </div>
               </div>
 
-              <!-- Company/Carrier selection -->
-              <div
-                class="col-md-3"
-                v-if="['bus','train','plane'].includes(searchForm.vehicleType)"
-              >
-                <label class="form-label text-white fw-semibold">{{ companyLabel }}</label>
-                <select v-model="searchForm.company" class="form-select">
-                  <option value="">Tất cả</option>
-                  <option
-                    v-for="name in availableCompanies"
-                    :key="'co-' + name"
-                    :value="name"
-                  >
-                    {{ name }}
-                  </option>
-                </select>
-              </div>
+              <div id="search" class="search-form neon-card">
+                <div class="search-form__header d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <p class="search-eyebrow mb-1">Chon hanh trinh</p>
+                    <h5 class="mb-0 text-white">Dat ve xin xo</h5>
+                  </div>
+                  <span class="pulse-dot"></span>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label text-white fw-semibold">Loai phuong tien</label>
+                    <select v-model="searchForm.vehicleType" class="form-select">
+                      <option value="">Chon phuong tien</option>
+                      <option value="bus">Xe khach</option>
+                      <option value="train">Tau hoa</option>
+                      <option value="plane">May bay</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label text-white fw-semibold">Noi di</label>
+                    <select v-model="searchForm.from" class="form-select">
+                      <option value="" disabled>Chon noi di</option>
+                      <option v-for="city in cities" :key="city" :value="city">
+                        {{ city }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label text-white fw-semibold">Noi den</label>
+                    <select v-model="searchForm.to" class="form-select">
+                      <option value="" disabled>Chon noi den</option>
+                      <option v-for="city in cities" :key="city" :value="city">
+                        {{ city }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label text-white fw-semibold">Ngay di</label>
+                    <input
+                      v-model="searchForm.departureDate"
+                      type="date"
+                      class="form-control"
+                    />
+                  </div>
+                </div>
 
-              <!-- Search Button -->
-              <div class="col-md-6 d-flex align-items-end">
-                <button
-                  @click="searchTrips"
-                  class="btn btn-primary btn-lg w-100 search-btn"
-                  :disabled="!isSearchValid || isLoadingTrips"
-                >
-                  <span v-if="isLoadingTrips" class="spinner-border spinner-border-sm me-2"></span>
-                  <i v-else class="bx bx-search me-2"></i>
-                  {{ isLoadingTrips ? "Đang tìm..." : "Tìm chuyến" }}
-                </button>
+                <div class="row g-3 mt-2">
+                  <div
+                    class="col-md-3"
+                    v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.from"
+                  >
+                    <label class="form-label text-white fw-semibold">{{ pickupLabel }}</label>
+                    <select v-model="searchForm.pickupStation" class="form-select">
+                      <option value="" disabled>Chon diem don</option>
+                      <option
+                        v-for="station in availablePickupStations"
+                        :key="'pickup-' + station"
+                        :value="station"
+                      >
+                        {{ station }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div
+                    class="col-md-3"
+                    v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.to"
+                  >
+                    <label class="form-label text-white fw-semibold">{{ dropoffLabel }}</label>
+                    <select v-model="searchForm.dropoffStation" class="form-select">
+                      <option value="" disabled>Chon diem tra</option>
+                      <option
+                        v-for="station in availableDropoffStations"
+                        :key="'dropoff-' + station"
+                        :value="station"
+                      >
+                        {{ station }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-3">
+                    <label class="form-label text-white fw-semibold">So hanh khach</label>
+                    <select v-model="searchForm.passengers" class="form-select">
+                      <option value="1">1 hanh khach</option>
+                      <option value="2">2 hanh khach</option>
+                      <option value="3">3 hanh khach</option>
+                      <option value="4">4 hanh khach</option>
+                      <option value="5">5 hanh khach</option>
+                      <option value="5+">Khac</option>
+                    </select>
+                    <div v-if="searchForm.passengers === '5+'" class="mt-2">
+                      <input
+                        v-model.number="customPassengers"
+                        type="number"
+                        min="6"
+                        class="form-control"
+                        placeholder="Nhap so hanh khach "
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    class="col-md-3"
+                    v-if="['bus','train','plane'].includes(searchForm.vehicleType)"
+                  >
+                    <label class="form-label text-white fw-semibold">{{ companyLabel }}</label>
+                    <select v-model="searchForm.company" class="form-select">
+                      <option value="">Tat ca</option>
+                      <option
+                        v-for="name in availableCompanies"
+                        :key="'co-' + name"
+                        :value="name"
+                      >
+                        {{ name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-6 d-flex align-items-end">
+                    <button
+                      @click="searchTrips"
+                      class="btn btn-primary btn-lg w-100 search-btn"
+                      :disabled="!isSearchValid || isLoadingTrips"
+                    >
+                      <span v-if="isLoadingTrips" class="spinner-border spinner-border-sm me-2"></span>
+                      <i v-else class="bx bx-search me-2"></i>
+                      {{ isLoadingTrips ? "Dang tim..." : "Tim chuyen" }}
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="searchError" class="alert alert-danger mt-3 mb-0">
+                  {{ searchError }}
+                </div>
               </div>
             </div>
-
-            <div v-if="searchError" class="alert alert-danger mt-3 mb-0">
-              {{ searchError }}
+          </div>
+        </div>
+        <div class="hero-timeline">
+          <div
+            class="hero-timeline__card"
+            v-for="ticket in featuredTickets"
+            :key="'timeline-' + ticket.id"
+          >
+            <div class="dot"></div>
+            <div>
+              <p class="eyebrow">{{ ticket.type }}</p>
+              <p class="route">{{ ticket.from }} -> {{ ticket.to }}</p>
+              <p class="meta">{{ ticket.time }} | {{ ticket.brand }}</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
+    <GioiThieu />
 
     <!-- Seat Selection Modal -->
     <div v-if="seatModal.visible" class="seat-modal-backdrop">
@@ -880,9 +978,27 @@ export default {
       portalNotices: [],
       isLoadingNotices: false,
       noticesError: "",
+      featuredTickets: [
+        { id: 1, type: "May bay", from: "TP.HCM", to: "Ha Noi", time: "07:30", brand: "Express" },
+        { id: 2, type: "Tau hoa", from: "Da Nang", to: "Hue", time: "09:10", brand: "Coastal" },
+        { id: 3, type: "Xe khach", from: "Da Lat", to: "Sai Gon", time: "21:00", brand: "NightRide" },
+      ],
+      parallax: { x: 0.5, y: 0.5 },
     };
   },
   computed: {
+    heroTicket() {
+      const primary = this.featuredTickets?.[0] || {};
+      const from = this.searchForm.from || primary.from || "TP.HCM";
+      const to = this.searchForm.to || primary.to || "Ha Noi";
+      const brand = this.searchForm.company || primary.brand || "Express";
+      const time = primary.time || "07:30";
+      return {
+        route: `${from} -> ${to}`,
+        time,
+        brand,
+      };
+    },
     isLoggedIn() {
       return (
         localStorage.getItem("token") && Object.keys(this.userInfo).length > 0
@@ -1151,6 +1267,25 @@ export default {
     },
   },
   methods: {
+    parallaxTransform(intensity = 10) {
+      const x = ((this.parallax.x || 0.5) - 0.5) * intensity;
+      const y = ((this.parallax.y || 0.5) - 0.5) * intensity;
+      const xPx = x.toFixed(2);
+      const yPx = y.toFixed(2);
+      return { transform: `translate3d(${xPx}px, ${yPx}px, 0)` };
+    },
+    handleParallax(event) {
+      const rect = event.currentTarget?.getBoundingClientRect?.();
+      if (!rect) return;
+      const nx = (event.clientX - rect.left) / rect.width;
+      const ny = (event.clientY - rect.top) / rect.height;
+      this.parallax.x = Math.min(1, Math.max(0, nx));
+      this.parallax.y = Math.min(1, Math.max(0, ny));
+    },
+    resetParallax() {
+      this.parallax.x = 0.5;
+      this.parallax.y = 0.5;
+    },
     setPriceFilterMax(value, lockState = null) {
       this.suppressPriceWatch = true;
       this.filters.price.max = value;
@@ -2259,6 +2394,7 @@ export default {
     },
   },
   mounted() {
+    this.resetParallax();
     this.checkAuthStatus();
     this.bootstrapData();
   },
@@ -2266,27 +2402,454 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:global(:root) {
+  --ink: #041325;
+  --deep: #062136;
+  --mint: #2af598;
+  --aqua: #00c6ff;
+  --lime: #7cfb4c;
+  --glass: rgba(4, 19, 36, 0.72);
+  --glass-strong: rgba(4, 19, 36, 0.9);
+  --text: #e6f8ef;
+  --muted: #a7c0d8;
+}
+
 :global(body) {
-  background: #f5f7fb;
-  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #111827;
+  background: radial-gradient(circle at 18% 20%, rgba(42, 245, 152, 0.12), transparent 28%),
+    radial-gradient(circle at 82% 12%, rgba(0, 198, 255, 0.18), transparent 32%),
+    linear-gradient(160deg, #041325 0%, #0a2237 55%, #041325 100%);
+  font-family: "Space Grotesk", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
 }
 
 .container-fluid {
-  background: linear-gradient(180deg, #0b1224 0%, #0f172a 48%, #0f172a 70%, #f5f7fb 100%);
+  background: linear-gradient(180deg, #041325 0%, #062136 55%, #0b253a 75%, #0b1c2d 100%);
   min-height: 100vh;
 }
 
-/* Hero area */
-.hero {
+.hyper-hero {
   position: relative;
-  min-height: 100vh;
-  padding: clamp(4rem, 9vw, 7rem) clamp(1rem, 4vw, 3rem) 4rem;
+  min-height: 90vh;
   overflow: hidden;
-  color: #fff;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  padding: clamp(3rem, 8vw, 5rem) clamp(1rem, 4vw, 2.75rem) clamp(3rem, 6vw, 4rem);
+  color: var(--text);
+}
+
+.hero-motion {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 30%, rgba(42, 245, 152, 0.22), transparent 40%),
+    radial-gradient(circle at 78% 18%, rgba(0, 198, 255, 0.24), transparent 42%),
+    radial-gradient(circle at 60% 70%, rgba(124, 251, 76, 0.14), transparent 46%),
+    linear-gradient(135deg, #051529 0%, #031020 100%);
+  filter: blur(0);
+}
+
+.hero-gridlines {
+  position: absolute;
+  inset: 10% 8%;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 110px 110px;
+  opacity: 0.25;
+  mask-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.6), transparent 70%);
+}
+
+.hero-glow {
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  filter: blur(65px);
+  opacity: 0.42;
+  animation: heroFloat 24s ease-in-out infinite;
+}
+
+.hero-glow--mint {
+  top: -120px;
+  left: -40px;
+  background: radial-gradient(circle, rgba(42, 245, 152, 0.65), rgba(0, 198, 255, 0.25));
+}
+
+.hero-glow--cyan {
+  bottom: -160px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(0, 198, 255, 0.45), rgba(124, 251, 76, 0.2));
+  animation-delay: 6s;
+}
+
+.mouse-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(124, 251, 76, 0.09), transparent 36%);
+  mix-blend-mode: screen;
+}
+
+.sky-lane {
+  position: absolute;
+  top: 12%;
+  left: 0;
+  right: 0;
+  height: 180px;
+}
+
+.plane-streak {
+  position: absolute;
+  right: -10%;
+  top: 30%;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  animation: planeFly 14s cubic-bezier(0.42, 0, 0.2, 1) infinite;
+}
+
+.plane-streak .trail {
+  width: 220px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(42, 245, 152, 0.8), rgba(0, 198, 255, 0));
+  filter: drop-shadow(0 0 12px rgba(0, 198, 255, 0.35));
+}
+
+.plane-icon {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 10px 30px rgba(0, 198, 255, 0.35));
+}
+
+.floating-ticket {
+  position: absolute;
+  top: 24%;
+  left: 12%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(4, 19, 36, 0.7);
+  border: 1px solid rgba(42, 245, 152, 0.25);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  animation: ticketFloat 10s ease-in-out infinite;
+}
+
+.floating-ticket:nth-child(2) {
+  top: 8%;
+  left: 60%;
+  animation-delay: 2s;
+}
+
+.floating-ticket:nth-child(3) {
+  top: 48%;
+  left: 32%;
+  animation-delay: 4s;
+}
+
+.ticket-mini__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--aqua);
+  margin: 0;
+}
+
+.ticket-mini__route {
+  font-weight: 700;
+  margin: 2px 0;
+}
+
+.ticket-mini__meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.ground-track {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 6%;
+  height: 140px;
+  background: linear-gradient(90deg, rgba(0, 198, 255, 0.16), rgba(42, 245, 152, 0.12));
+  border-top: 1px solid rgba(0, 198, 255, 0.35);
+  border-bottom: 1px solid rgba(42, 245, 152, 0.35);
+  overflow: hidden;
+}
+
+.vehicle {
+  position: absolute;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.35));
+}
+
+.vehicle-bus {
+  left: -30%;
+  animation: busSlide 12s ease-in-out infinite;
+}
+
+.vehicle-train {
+  right: -40%;
+  animation: trainSlide 12s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.vehicle-body {
+  width: 220px;
+  height: 64px;
+  background: linear-gradient(135deg, rgba(42, 245, 152, 0.9), rgba(0, 198, 255, 0.85));
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vehicle .window {
+  flex: 1;
+  height: 18px;
+  border-radius: 8px;
+  background: rgba(4, 19, 36, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.vehicle-wheels {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 12px;
+}
+
+.vehicle-wheels .wheel {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0f172a;
+  box-shadow: inset 0 0 0 3px #0b1624;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+}
+
+.vehicle-wheels.narrow .wheel {
+  width: 18px;
+  height: 18px;
+}
+
+.hero-shell {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-copy {
+  max-width: 560px;
+}
+
+.hero-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--aqua);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.hero-headline {
+  font-size: clamp(2.4rem, 4.8vw, 3.8rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #e9fbf3;
+  margin-bottom: 0.75rem;
+}
+
+.text-electric {
+  color: var(--mint);
+}
+
+.hero-subtitle {
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1.25rem;
+}
+
+.pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(0, 198, 255, 0.14);
+  color: #d6f7ff;
+  border: 1px solid rgba(42, 245, 152, 0.25);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.hero-panel {
+  padding: 18px;
+  background: var(--glass);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+}
+
+.ticket-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(42, 245, 152, 0.2), rgba(0, 198, 255, 0.18));
+  border: 1px solid rgba(42, 245, 152, 0.32);
+}
+
+.ticket-preview__icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(0, 198, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ticket-preview__body {
+  flex: 1;
+}
+
+.ticket-preview__title {
+  margin: 0;
+  font-weight: 700;
+  color: #e9fbf3;
+}
+
+.ticket-preview__route {
+  margin: 4px 0;
+  font-size: 1.05rem;
+}
+
+.ticket-preview__meta {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hero-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.hero-timeline__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(4, 19, 36, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hero-timeline__card .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mint), var(--aqua));
+  margin-top: 6px;
+}
+
+.hero-timeline__card .route {
+  font-weight: 600;
+  margin: 0;
+}
+
+.hero-timeline__card .meta {
+  margin: 2px 0 0 0;
+  color: var(--muted);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--aqua);
+  font-weight: 600;
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+@keyframes heroFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  40% {
+    transform: translate3d(30px, -24px, 0) scale(1.05);
+  }
+  70% {
+    transform: translate3d(-20px, 32px, 0) scale(0.98);
+  }
+}
+
+@keyframes planeFly {
+  0% {
+    transform: translate3d(30%, -20%, 0) rotate(8deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(-20%, 10%, 0) rotate(-3deg);
+  }
+  100% {
+    transform: translate3d(-120%, 40%, 0) rotate(-8deg);
+    opacity: 0.85;
+  }
+}
+
+@keyframes busSlide {
+  0% {
+    transform: translateX(-40%);
+  }
+  50% {
+    transform: translateX(40%);
+  }
+  100% {
+    transform: translateX(-40%);
+  }
+}
+
+@keyframes trainSlide {
+  0% {
+    transform: translateX(40%);
+  }
+  50% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(40%);
+  }
+}
+
+@keyframes ticketFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(8px, -12px, 0);
+  }
 }
 
 .hero__overlay {
@@ -2437,15 +3000,55 @@ export default {
 }
 
 .search-form {
-  background: rgba(11, 18, 36, 0.82);
-  border-radius: 28px;
+  background: var(--glass-strong);
+  border-radius: 24px;
   padding: clamp(1.25rem, 3vw, 2rem);
-  border: 1px solid rgba(96, 165, 250, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 22px 60px rgba(5, 9, 20, 0.55);
+  border: 1px solid rgba(42, 245, 152, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 22px 70px rgba(0, 0, 0, 0.45);
+}
+
+.neon-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.neon-card::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 90deg, rgba(42, 245, 152, 0.24), transparent 50%, rgba(0, 198, 255, 0.22));
+  filter: blur(40px);
+  opacity: 0.7;
+  transform: translate3d(-10%, -10%, 0) rotate(8deg);
+}
+
+.neon-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.search-form__header h5 {
+  letter-spacing: 0.04em;
+}
+
+.search-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  color: var(--aqua);
+}
+
+.pulse-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mint), var(--aqua));
+  box-shadow: 0 0 0 0 rgba(42, 245, 152, 0.6);
+  animation: pulse 1.8s infinite;
 }
 
 .search-form .form-label {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
   font-size: 0.85rem;
   margin-bottom: 0.35rem;
   text-transform: uppercase;
@@ -2454,19 +3057,19 @@ export default {
 
 .search-form .form-select,
 .search-form .form-control {
-  background: rgba(15, 23, 42, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(6, 26, 42, 0.7);
+  border: 1px solid rgba(0, 198, 255, 0.28);
   border-radius: 14px;
-  color: #f8fafc;
+  color: #e9fbf3;
   min-height: 48px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-form .form-select:focus,
 .search-form .form-control:focus {
-  border-color: rgba(59, 130, 246, 0.9);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
-  background: rgba(11, 18, 36, 0.92);
+  border-color: rgba(42, 245, 152, 0.9);
+  box-shadow: 0 0 0 3px rgba(42, 245, 152, 0.22);
+  background: rgba(4, 20, 33, 0.92);
 }
 
 .search-btn {
@@ -2475,22 +3078,34 @@ export default {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, #2563eb, #0ea5e9, #22d3ee);
+  background: linear-gradient(135deg, #2af598, #00c6ff, #5efce8);
   border: none;
   padding: 0.85rem 1.25rem;
-  box-shadow: 0 15px 35px rgba(34, 211, 238, 0.35);
+  box-shadow: 0 15px 35px rgba(42, 245, 152, 0.32);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 20px 45px rgba(99, 102, 241, 0.45);
+  box-shadow: 0 20px 45px rgba(0, 198, 255, 0.45);
 }
 
 .search-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(42, 245, 152, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(42, 245, 152, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(42, 245, 152, 0);
+  }
 }
 
 /* Result cards */
