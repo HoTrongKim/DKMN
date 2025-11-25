@@ -656,6 +656,7 @@ async function onSubmit() {
   const err = validateForm()
   if (err) {
     formError.value = err
+    window.$toast?.warning?.(err)
     return
   }
 
@@ -677,13 +678,17 @@ async function onSubmit() {
   try {
     if (isEdit.value && form.id) {
       await api.put(`/admin/trips/${form.id}`, payload)
+      window.$toast?.success?.('Cập nhật chuyến đi thành công! ✅')
     } else {
       await api.post('/admin/trips', payload)
+      window.$toast?.success?.('Tạo chuyến đi thành công! 🚌')
     }
     closeModal()
     await fetchTrips(isEdit.value ? pagination.currentPage : 1)
   } catch (error) {
-    formError.value = resolveError(error, 'Không thể lưu chuyến đi.')
+    const errorMsg = resolveError(error, 'Không thể lưu chuyến đi.')
+    formError.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     submitting.value = false
   }
@@ -705,9 +710,12 @@ async function onDelete() {
     await api.delete(`/admin/trips/${selectedId.value}`)
     confirming.value = false
     selectedId.value = null
+    window.$toast?.success?.('Đã xóa chuyến đi thành công! 🗑️')
     await fetchTrips(nextPage)
   } catch (error) {
-    deleteError.value = resolveError(error, 'Không thể xóa chuyến đi.')
+    const errorMsg = resolveError(error, 'Không thể xóa chuyến đi.')
+    deleteError.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     deleting.value = false
   }
@@ -950,6 +958,7 @@ async function sendNotify() {
 
   if (!form.id) {
     notify.error = 'Vui lòng lưu chuyến trước khi gửi thông báo.'
+    window.$toast?.warning?.('Vui lòng lưu chuyến trước khi gửi thông báo.')
     return
   }
 
@@ -959,20 +968,24 @@ async function sendNotify() {
 
   if (!selectedChannels.length) {
     notify.error = 'Chọn ít nhất một kênh gửi.'
+    window.$toast?.warning?.('Chọn ít nhất một kênh gửi.')
     return
   }
 
   if (!notify.message.trim()) {
     notify.error = 'Nội dung thông báo không được để trống.'
+    window.$toast?.warning?.('Nội dung thông báo không được để trống.')
     return
   }
 
   if (!notify.recipients.length) {
     notify.error = 'Chọn ít nhất một khách hàng.'
+    window.$toast?.warning?.('Chọn ít nhất một khách hàng.')
     return
   }
 
   notify.loading = true
+  window.$toast?.info?.('Đang gửi thông báo...')
   try {
     await api.post(`/admin/trips/${form.id}/notify`, {
       message: notify.message.trim(),
@@ -980,8 +993,11 @@ async function sendNotify() {
       recipientIds: notify.recipients.map((id) => Number(id)),
     })
     notify.success = 'Đã gửi thông báo.'
+    window.$toast?.success?.('Đã gửi thông báo thành công! 📧')
   } catch (error) {
-    notify.error = resolveError(error, 'Không thể gửi thông báo.')
+    const errorMsg = resolveError(error, 'Không thể gửi thông báo.')
+    notify.error = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     notify.loading = false
   }

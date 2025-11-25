@@ -461,6 +461,7 @@ const TICKET_HOLD_MINUTES = 10;
     mounted() {
       this.loadFromQuery();
       this.syncSeatIdentifiers();
+      this.$toast?.info('Vui lòng chọn phương thức thanh toán 💳');
     },
     beforeUnmount() {
       this.clearHoldTimer();
@@ -531,6 +532,7 @@ const TICKET_HOLD_MINUTES = 10;
 
         handleHoldExpired() {
           if (!this.holdDeadline) return;
+          this.$toast?.warning("Phiên giữ ghế đã hết hạn! Vui lòng đặt lại ⏰");
           this.setStatus(
             "expired",
             "Hết thời gian giữ ghế",
@@ -859,6 +861,7 @@ const TICKET_HOLD_MINUTES = 10;
           this.orderCode = null;
 
           this.isBooking = true;
+          this.$toast?.info('Đang khởi tạo đơn hàng...');
           this.setStatus(
             "creating",
             "Đang khởi tạo",
@@ -981,7 +984,7 @@ const TICKET_HOLD_MINUTES = 10;
           this.qrModal.statusClass = "bg-success";
           this.saveTicketToLocal(this.qrModal.paymentId, this.qrModal.amount);
           this.closeQrModal();
-          this.$toast?.success?.("Thanh toán thành công!");
+          this.$toast?.success("Thanh toán thành công! 🎉 Chúc bạn có chuyến đi vui vẻ!");
           this.$router.push("/client-ve-da-dat");
         },
 
@@ -1082,6 +1085,7 @@ const TICKET_HOLD_MINUTES = 10;
               80,
               false
             );
+            this.$toast?.success("Đặt vé thành công! Vui lòng thanh toán khi lên xe 🚌");
             this.laterModal.visible = true;
             this.saveTicketToLocal(this.qrModal.paymentId, this.total);
             this.$router.push("/client-ve-da-dat");

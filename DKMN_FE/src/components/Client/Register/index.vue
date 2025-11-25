@@ -170,6 +170,8 @@ export default {
             }
 
             this.isLoading = true;
+            this.$toast?.info('Đang xử lý đăng ký...');
+            
             try {
                 const payload = {
                     ho_ten: this.user.ho_va_ten,

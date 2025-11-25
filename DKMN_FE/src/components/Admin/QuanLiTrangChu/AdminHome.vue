@@ -193,14 +193,24 @@
           </div>
           <ul class="list-group list-group-flush">
             <li v-for="notice in adminNotices" :key="notice.id" class="list-group-item recent-notice-item">
-              <div class="d-flex justify-content-between align-items-start">
+              <div class="d-flex justify-content-between align-items-start gap-2">
                 <div class="flex-grow-1">
                   <div class="fw-semibold">{{ notice.title }}</div>
                   <div class="text-muted small">{{ notice.message }}</div>
+                  <div class="small text-muted mt-1">{{ formatDate(notice.createdAt) }}</div>
                 </div>
-                <span class="badge bg-primary-subtle text-primary text-uppercase">{{ mapNoticeType(notice.type) }}</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-primary-subtle text-primary text-uppercase">{{ mapNoticeType(notice.type) }}</span>
+                  <button 
+                    class="btn btn-sm btn-outline-danger btn-delete-notice" 
+                    @click="openDeleteModal(notice)"
+                    :disabled="Boolean(deletingNoticeId)"
+                    title="Xóa thông báo"
+                  >
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
               </div>
-              <div class="small text-muted mt-1">{{ formatDate(notice.createdAt) }}</div>
             </li>
             <li v-if="!adminNotices.length" class="list-group-item text-muted small">
               Chưa có thông báo được gửi.
@@ -213,6 +223,51 @@
       <div v-if="loading" class="loading-overlay">
         <div class="spinner-border text-primary" role="status"></div>
         <span class="ms-2">Đang tải dữ liệu...</span>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="deleteModal.visible" class="modal-backdrop fade show"></div>
+  <div
+    v-if="deleteModal.visible"
+    class="modal d-block confirm-delete-modal"
+    tabindex="-1"
+    @click.self="closeDeleteModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteModalTitle"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0">
+        <div class="modal-header border-0">
+          <div class="d-flex align-items-center gap-2">
+            <div class="delete-icon">
+              <i class="fas fa-trash-alt"></i>
+            </div>
+            <div>
+              <h5 id="deleteModalTitle" class="modal-title mb-0">Xóa thông báo</h5>
+              <small class="text-muted">Bạn có chắc muốn xóa thông báo này?</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close" @click="closeDeleteModal" aria-label="Đóng"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-1 fw-semibold">{{ deleteModal.notice?.title }}</p>
+          <p class="text-muted small mb-2">{{ deleteModal.notice?.message }}</p>
+          <div class="alert alert-warning d-flex align-items-start gap-2 mb-0">
+            <i class="fas fa-info-circle mt-1"></i>
+            <div>
+              <div class="fw-semibold text-dark">Hành động không thể hoàn tác</div>
+              <small>Thông báo sẽ bị xóa khỏi hệ thống và khách hàng không còn thấy nữa.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light" @click="closeDeleteModal">Hủy</button>
+          <button type="button" class="btn btn-danger" :disabled="Boolean(deletingNoticeId)" @click="confirmDelete">
+            {{ deletingNoticeId ? 'Đang xóa...' : 'Xóa' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -255,6 +310,11 @@ const notifyError = ref('')
 const notifyMessage = ref('')
 const customerOptions = ref([])
 const selectedCustomerIds = ref([])
+const deleteModal = ref({
+  visible: false,
+  notice: null,
+})
+const deletingNoticeId = ref(null)
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
@@ -325,9 +385,9 @@ const loadDashboard = async () => {
     topRoutes.value = payload.topRoutes || []
     lastUpdated.value = new Date().toISOString()
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message ||
-      'Không thể tải dữ liệu bảng điều khiển. Vui lòng thử lại.'
+    const errorMsg = error.response?.data?.message || 'Không thể tải dữ liệu bảng điều khiển. Vui lòng thử lại.'
+    errorMessage.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     loading.value = false
   }
@@ -353,8 +413,9 @@ const loadAdminNotifications = async () => {
     const { data } = await api.get('/admin/notifications', { params: { limit: 8 } })
     adminNotices.value = (data?.data || []).map(mapAdminNotice)
   } catch (error) {
-    notifyError.value =
-      error.response?.data?.message || 'Không thể tải danh sách thông báo. Vui lòng thử lại.'
+    const errorMsg = error.response?.data?.message || 'Không thể tải danh sách thông báo. Vui lòng thử lại.'
+    notifyError.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   }
 }
 
@@ -381,10 +442,12 @@ const sendNotification = async () => {
 
   if (!notifyForm.value.title.trim() || !notifyForm.value.message.trim()) {
     notifyError.value = 'Vui lòng nhập tiêu đề và nội dung thông báo.'
+    window.$toast?.warning?.('Vui lòng nhập tiêu đề và nội dung thông báo.')
     return
   }
 
   notifyLoading.value = true
+  window.$toast?.info?.('Đang gửi thông báo...')
   try {
     const payload = {
       title: notifyForm.value.title.trim(),
@@ -402,18 +465,53 @@ const sendNotification = async () => {
     }
 
     const { data } = await api.post('/admin/notifications', payload)
-    notifyMessage.value =
-      data?.message || `Đã gửi thông báo tới ${data?.data?.recipients || 'khách hàng'}`
+    const successMsg = data?.message || `Đã gửi thông báo tới ${data?.data?.recipients || 'khách hàng'}`
+    notifyMessage.value = successMsg
+    window.$toast?.success?.(successMsg + ' 📧')
     notifyForm.value.message = ''
     notifyForm.value.title = ''
     notifyForm.value.emails = ''
     selectedCustomerIds.value = []
     await loadAdminNotifications()
   } catch (error) {
-    notifyError.value =
-      error.response?.data?.message || 'Không gửi được thông báo. Vui lòng thử lại.'
+    const errorMsg = error.response?.data?.message || 'Không gửi được thông báo. Vui lòng thử lại.'
+    notifyError.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     notifyLoading.value = false
+  }
+}
+
+const openDeleteModal = (notice) => {
+  deleteModal.value = {
+    visible: true,
+    notice,
+  }
+}
+
+const closeDeleteModal = () => {
+  deleteModal.value = {
+    visible: false,
+    notice: null,
+  }
+}
+
+const confirmDelete = async () => {
+  const noticeId = deleteModal.value.notice?.id
+  if (!noticeId || deletingNoticeId.value) return
+
+  deletingNoticeId.value = noticeId
+  try {
+    await api.delete(`/admin/notifications/${noticeId}`)
+    window.$toast?.success?.('Đã xóa thông báo thành công! 🗑️')
+    adminNotices.value = adminNotices.value.filter((notice) => notice.id !== noticeId)
+    await loadAdminNotifications()
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Không thể xóa thông báo. Vui lòng thử lại.'
+    window.$toast?.error?.(errorMsg)
+  } finally {
+    deletingNoticeId.value = null
+    closeDeleteModal()
   }
 }
 
@@ -725,6 +823,21 @@ onMounted(() => {
   font-weight: 700;
   letter-spacing: 0.2px;
 }
+.btn-delete-notice {
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.btn-delete-notice:hover:not(:disabled) {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+  transform: scale(1.05);
+}
+.btn-delete-notice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .recent-notice-item .text-muted {
   line-height: 1.4;
 }
@@ -740,6 +853,36 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   gap: 10px;
+}
+
+.confirm-delete-modal .modal-content {
+  border-radius: 18px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+}
+.confirm-delete-modal .delete-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+.confirm-delete-modal .modal-body {
+  padding-top: 0;
+}
+.confirm-delete-modal .alert {
+  border-radius: 12px;
+  background-color: #fff9eb;
+  border: 1px solid rgba(255, 193, 7, 0.35);
+}
+.confirm-delete-modal .btn-light {
+  border-radius: 10px;
+}
+.confirm-delete-modal .btn-danger {
+  border-radius: 10px;
+  min-width: 100px;
 }
 
 @media (max-width: 992px) {

@@ -147,6 +147,7 @@ export default {
     },
     mounted() {
         this.fetchProfile()
+        this.$toast?.info('Đang tải thông tin hồ sơ...')
     },
     methods: {
         mapServerUser(user = {}) {
@@ -192,6 +193,7 @@ export default {
             this.profile = { ...this.original }
             this.error = ''
             this.message = ''
+            this.$toast?.info('Đã đặt lại thông tin về ban đầu')
         },
         isFutureDate(dateStr) {
             if (!dateStr) return false
@@ -207,11 +209,13 @@ export default {
 
             if (!this.profile.ho_va_ten || !this.profile.email) {
                 this.error = 'Vui lòng nhập đầy đủ họ tên và email.'
+                this.$toast?.error(this.error)
                 return
             }
 
             if (this.isFutureDate(this.profile.ngay_sinh)) {
                 this.error = 'Ngày sinh không được vượt quá ngày hiện tại.'
+                this.$toast?.error(this.error)
                 return
             }
 
@@ -228,11 +232,13 @@ export default {
                 this.original = { ...updated }
                 localStorage.setItem('userInfo', JSON.stringify(updated))
                 this.message = resp.data?.message || 'Cập nhật hồ sơ thành công.'
+                this.$toast?.success(this.message + ' ✓')
             } catch (err) {
                 this.error =
                     err?.response?.data?.message ||
                     (err?.response?.data?.errors && Object.values(err.response.data.errors)[0]?.[0]) ||
                     'Có lỗi xảy ra khi cập nhật hồ sơ.'
+                this.$toast?.error(this.error)
             } finally {
                 this.loading = false
             }

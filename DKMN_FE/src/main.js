@@ -6,6 +6,9 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
+// Toast Notification
+import Toaster from '@meforma/vue-toaster'
+
 // Layouts
 import Default from './layout/wrapper/index_admin.vue'
 import Client from './layout/wrapper/index_client.vue'
@@ -20,6 +23,12 @@ import './assets/css/app.css'
 
 const app = createApp(App)
 app.use(router)
+app.use(Toaster, {
+  position: 'top-right',
+  duration: 3000,
+  dismissible: true,
+  queue: false
+})
 app.component('default-layout', Default)
 app.component('client-layout', Client)
 // Ensure admin routes (meta.layout === 'admin') resolve to admin shell

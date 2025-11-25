@@ -171,8 +171,10 @@
     <div v-if="activeNotice" class="notice-modal-backdrop" @click="closeNotice">
       <div class="notice-modal" @click.stop>
         <div class="notice-modal__header">
-          <div class="badge badge-light text-uppercase text-muted">Thông báo</div>
-          <button class="btn btn-link text-muted p-0" @click="closeNotice"><i class="bx bx-x fs-4"></i></button>
+          <span class="notice-chip">THÔNG BÁO</span>
+          <button class="btn btn-link text-muted p-0" @click="closeNotice" aria-label="Đóng">
+            <i class="bx bx-x fs-4"></i>
+          </button>
         </div>
         <div class="notice-modal__body">
           <div class="notice-modal__icon">
@@ -181,14 +183,14 @@
           <div class="notice-modal__content">
             <h5 class="mb-1">{{ activeNotice.title }}</h5>
             <div class="text-muted small mb-2">{{ formatNoticeTime(activeNotice.createdAt) }}</div>
-            <div v-if="activeNoticeDetails.length" class="notice-details mb-2">
+            <div v-if="activeNoticeDetails.length" class="notice-details mb-3">
               <div class="notice-detail" v-for="item in activeNoticeDetails" :key="item.label">
                 <span class="notice-detail-label">{{ item.label }}</span>
                 <span class="notice-detail-value">{{ item.value }}</span>
               </div>
             </div>
-            <p v-else class="mb-2">{{ activeNotice.message }}</p>
-            <div class="d-flex gap-2">
+            <p v-else class="mb-3">{{ activeNotice.message }}</p>
+            <div class="notice-actions">
               <button class="btn btn-outline-secondary btn-sm" @click="closeNotice">Đóng</button>
               <button class="btn btn-primary btn-sm" @click="markAsRead(activeNotice, activeNoticeTab)">Đánh dấu đã đọc</button>
             </div>
@@ -699,45 +701,39 @@ export default {
   backdrop-filter: blur(2px);
 }
 .notice-modal {
-  background: linear-gradient(135deg, #f8fbff, #fff);
-  border-radius: 16px;
-  padding: 22px 22px 18px;
-  width: min(520px, 92vw);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.15);
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  width: min(480px, 92vw);
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 .notice-modal__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-}
-.notice-modal__header .badge {
-  background: #f3f4f6;
-  color: #6b7280;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  margin-bottom: 8px;
 }
 .notice-modal__body {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 .notice-modal__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1f85ff, #764ba2);
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #8b5cf6);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  box-shadow: 0 8px 18px rgba(55, 112, 255, 0.25);
+  box-shadow: 0 10px 22px rgba(55, 112, 255, 0.28);
 }
 .notice-modal__content h5 {
   font-weight: 700;
-  margin-bottom: 4px;
+  margin: 0;
 }
 .notice-details {
   display: flex;
@@ -763,16 +759,31 @@ export default {
 .notice-modal .text-muted.small {
   letter-spacing: 0.2px;
 }
-.notice-modal .btn {
-  min-width: 110px;
-  border-radius: 24px;
+.notice-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
 }
-.notice-modal .btn-primary {
+.notice-actions {
+  display: flex;
+  gap: 8px;
+}
+.notice-actions .btn {
+  min-width: 108px;
+  border-radius: 22px;
+}
+.notice-actions .btn-primary {
   background: linear-gradient(135deg, #1f85ff, #2563eb);
   border: none;
   box-shadow: 0 6px 18px rgba(31, 133, 255, 0.25);
 }
-.notice-modal .btn-outline-secondary {
+.notice-actions .btn-outline-secondary {
   color: #4b5563;
   border-color: #d1d5db;
 }

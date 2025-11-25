@@ -172,8 +172,9 @@ const fetchReviews = async (page = 1) => {
     selectAll.value = false
     selected.value = []
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || 'Không thể tải danh sách đánh giá.'
+    const errorMsg = error.response?.data?.message || 'Không thể tải danh sách đánh giá.'
+    errorMessage.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     loading.value = false
   }
@@ -202,10 +203,13 @@ const updateStatus = async (status) => {
     await Promise.all(
       selected.value.map((id) => api.patch(`/admin/ratings/${id}`, { status }))
     )
+    const msg = status === 'chap_nhan' ? 'Đã duyệt đánh giá! ✅' : 'Đã ẩn đánh giá! 👁️'
+    window.$toast?.success?.(msg)
     await fetchReviews(pagination.value.currentPage)
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || 'Không thể cập nhật trạng thái.'
+    const errorMsg = error.response?.data?.message || 'Không thể cập nhật trạng thái.'
+    errorMessage.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     loading.value = false
   }
@@ -220,10 +224,12 @@ const deleteSelected = async () => {
   loading.value = true
   try {
     await Promise.all(selected.value.map((id) => api.delete(`/admin/ratings/${id}`)))
+    window.$toast?.success?.('Đã xóa đánh giá thành công! 🗑️')
     await fetchReviews(pagination.value.currentPage)
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || 'Không thể xóa đánh giá.'
+    const errorMsg = error.response?.data?.message || 'Không thể xóa đánh giá.'
+    errorMessage.value = errorMsg
+    window.$toast?.error?.(errorMsg)
   } finally {
     loading.value = false
   }

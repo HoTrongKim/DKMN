@@ -5670,3 +5670,41 @@ input::placeholder {
 
 
 }
+
+/* -------------------
+   Support chat widget
+-------------------- */
+#tawkchat-minified-wrapper,
+#tawkchat-maximized-wrapper,
+#tawkchat-container,
+#tawkchat-iframe-container {
+	position: fixed !important;
+	bottom: 16px !important;
+	right: 16px !important;
+	left: auto !important;
+	z-index: 2147483641 !important;
+}
+
+#tawkchat-prompt-wrapper,
+#tawkchat-prompt-container {
+	position: fixed !important;
+	right: 16px !important;
+	bottom: 96px !important;
+	left: auto !important;
+	z-index: 2147483641 !important;
+}
+
+@media (max-width: 575.98px) {
+	#tawkchat-minified-wrapper,
+	#tawkchat-maximized-wrapper,
+	#tawkchat-container,
+	#tawkchat-iframe-container {
+		bottom: 12px !important;
+		right: 12px !important;
+	}
+	#tawkchat-prompt-wrapper,
+	#tawkchat-prompt-container {
+		right: 12px !important;
+		bottom: 82px !important;
+	}
+}

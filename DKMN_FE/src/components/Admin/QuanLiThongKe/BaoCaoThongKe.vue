@@ -176,9 +176,9 @@ const fetchStatistics = async () => {
     await nextTick();
     await renderChart();
   } catch (error) {
-    errorMessage.value =
-      error?.response?.data?.message ||
-      "Không thể tải dữ liệu thống kê.";
+    const errorMsg = error?.response?.data?.message || "Không thể tải dữ liệu thống kê.";
+    errorMessage.value = errorMsg;
+    window.$toast?.error?.(errorMsg);
   } finally {
     loading.value = false;
   }

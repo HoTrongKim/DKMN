@@ -615,8 +615,9 @@ const fetchTransactions = async () => {
     page.value = meta.currentPage ?? page.value
     applyGatewayToggles(list)
   } catch (error) {
-    tableError.value =
-      error?.response?.data?.message || error?.message || 'Không thể tải danh sách giao dịch.'
+    const errorMsg = error?.response?.data?.message || error?.message || 'Không thể tải danh sách giao dịch.'
+    tableError.value = errorMsg
+    window.$toast?.error?.(errorMsg)
     transactions.value = []
     total.value = 0
     lastPage.value = 1
@@ -641,7 +642,9 @@ const loadKpi = async () => {
     kpi.quarterRevenue = quarter?.data?.data?.totalRevenue || 0
     kpi.cancelRate = month?.data?.data?.cancellationRate || 0
   } catch (error) {
-    kpiError.value = error?.response?.data?.message || error?.message || 'Không thể tải thống kê.'
+    const errorMsg = error?.response?.data?.message || error?.message || 'Không thể tải thống kê.'
+    kpiError.value = errorMsg
+    window.$toast?.error?.(errorMsg)
     kpi.todayRevenue = 0
     kpi.monthRevenue = 0
     kpi.quarterRevenue = 0
@@ -653,6 +656,7 @@ const loadKpi = async () => {
 
 const exportReport = async () => {
   exportLoading.value = true
+  window.$toast?.info?.('Đang tạo báo cáo...')
   try {
     const params = {
       ...gatewayTypeMap[filters.gateway],
@@ -688,6 +692,7 @@ const exportReport = async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
+    window.$toast?.success?.('Xuất báo cáo thành công! 📊')
   } catch (error) {
     let message = 'Không thể xuất báo cáo.'
     const blob = error?.response?.data
@@ -704,6 +709,7 @@ const exportReport = async () => {
     } else if (error?.message) {
       message = error.message
     }
+    window.$toast?.error?.(message)
     alert(message)
   } finally {
     exportLoading.value = false

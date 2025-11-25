@@ -378,6 +378,7 @@ const fetchOrders = async (page = 1) => {
     const message = error?.response?.data?.message || error?.message || "Không thể tải danh sách đơn hàng.";
     actionError.value = message;
     actionMessage.value = "";
+    window.$toast?.error?.(message);
     orders.value = [];
     filteredOrders.value = [];
     emptyMessage.value = message;
@@ -481,8 +482,10 @@ const saveForm = async () => {
     resetForm();
     actionMessage.value = "Đã cập nhật đơn hàng.";
     actionError.value = "";
+    window.$toast?.success?.("Cập nhật đơn hàng thành công! ✅");
   } else {
     formError.value = result.message;
+    window.$toast?.error?.(result.message);
   }
 };
 
@@ -502,9 +505,11 @@ const confirmCancel = async () => {
     showCancel.value = false;
     actionMessage.value = "Đơn hàng đã được hủy.";
     actionError.value = "";
+    window.$toast?.success?.("Đơn hàng đã được hủy thành công! ❌");
   } else {
     cancelError.value = result.message;
     actionError.value = result.message;
+    window.$toast?.error?.(result.message);
   }
 };
 
@@ -523,11 +528,13 @@ const confirmDelete = async () => {
     actionMessage.value = "Đã xóa đơn hàng.";
     actionError.value = "";
     showDelete.value = false;
+    window.$toast?.success?.("Đã xóa đơn hàng thành công! 🗑️");
     await fetchOrders(pagination.value.currentPage || 1);
   } catch (error) {
     const message = error?.response?.data?.message || error?.message || "Không thể xóa đơn hàng.";
     deleteError.value = message;
     actionError.value = message;
+    window.$toast?.error?.(message);
   } finally {
     deleteLoading.value = false;
   }
@@ -541,8 +548,10 @@ const markAsCompleted = async () => {
   if (result.success) {
     actionMessage.value = "Đơn hàng đã được đánh dấu hoàn thành.";
     actionError.value = "";
+    window.$toast?.success?.("Đơn hàng đã hoàn thành! ✅");
   } else {
     actionError.value = result.message;
+    window.$toast?.error?.(result.message);
   }
 };
 

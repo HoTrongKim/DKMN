@@ -1,275 +1,272 @@
-<template>
-  <div class="container-fluid homepage">
+﻿<template>
+  <div class="container-fluid">
+    <GioiThieu />
+    <!-- Hero Section with Search -->
     <section
-      class="hyper-hero position-relative"
+      class="hero position-relative"
       @mousemove="handleParallax"
       @mouseleave="resetParallax"
     >
-      <div class="hero-motion">
-        <div class="hero-gradient"></div>
-        <div class="hero-gridlines" :style="parallaxTransform(10)"></div>
-        <div class="hero-glow hero-glow--mint" :style="parallaxTransform(22)"></div>
-        <div class="hero-glow hero-glow--cyan" :style="parallaxTransform(28)"></div>
-        <div class="mouse-light" :style="parallaxTransform(32)"></div>
+      <!-- Decorative background -->
+      <span class="blob blob-1"></span>
+      <span class="blob blob-2"></span>
+      <span class="blob blob-3"></span>
+      <span class="hero__grid"></span>
+      <div class="hero__overlay"></div>
+      <div class="hero__snow"></div>
 
-        <div class="sky-lane">
-          <div class="plane-streak">
-            <span class="trail"></span>
-            <svg class="plane-icon" viewBox="0 0 64 64" aria-hidden="true">
-              <path
-                d="M9 34l14.5-3.5L44 42c2 1 2 4-1 4l-12-1-6 6c-1 .9-3-.2-3-1.6l1-7.4-8-1c-2-.3-2.5-2.8-.8-3.7L25 34 9 34z"
-                fill="url(#gradPlane)"
-              />
-              <defs>
-                <linearGradient id="gradPlane" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#2af598" />
-                  <stop offset="100%" stop-color="#08aeea" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <div
-            v-for="ticket in featuredTickets"
-            :key="ticket.id"
-            class="floating-ticket"
-            :style="parallaxTransform(6)"
-          >
-            <p class="ticket-mini__eyebrow">{{ ticket.type }}</p>
-            <p class="ticket-mini__route">{{ ticket.from }} -> {{ ticket.to }}</p>
-            <p class="ticket-mini__meta">{{ ticket.time }} | {{ ticket.brand }}</p>
-          </div>
-        </div>
-
-        <div class="ground-track">
-          <div class="vehicle vehicle-bus" aria-label="Xe khach">
-            <div class="vehicle-body">
-              <span class="window"></span>
-              <span class="window"></span>
-              <span class="window"></span>
-              <span class="window"></span>
-            </div>
-            <div class="vehicle-wheels">
-              <span class="wheel"></span>
-              <span class="wheel"></span>
-            </div>
-          </div>
-          <div class="vehicle vehicle-train" aria-label="Tau hoa">
-            <div class="vehicle-body">
-              <span class="window"></span>
-              <span class="window"></span>
-              <span class="window"></span>
-              <span class="window"></span>
-            </div>
-            <div class="vehicle-wheels narrow">
-              <span class="wheel"></span>
-              <span class="wheel"></span>
-              <span class="wheel"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="container hero-shell">
-        <div class="row g-4 align-items-center">
-          <div class="col-lg-6">
-            <div class="hero-copy">
-              <p class="hero-eyebrow">WordPress x Vue landing</p>
-              <h1 class="hero-headline">
-                Dat ve da phuong tien <span class="text-electric">xanh sang</span> va song dong.
-              </h1>
-              <p class="hero-subtitle">
-                Hieu ung chuyen dong theo chuot, tau ghep ben va may bay luon muot ma cho trai nghiem dat ve hien dai nhat.
-              </p>
-              <div class="hero-badges">
-                <span class="pill">Realtime seats</span>
-                <span class="pill">Hover motion</span>
-                <span class="pill">Multi-modal</span>
+      <!-- Content -->
+      <div class="hero__content">
+        <div class="hero__cursor-glow" :style="mouseGlowStyle"></div>
+        <div class="hero__glass shadow-lg">
+          <div class="hero__grid-modern">
+            <div class="hero__text-block">
+              <div class="hero__badge">
+                <span class="pulse"></span>
+                Chuyến đi siêu tiện lợi, <span class="hero__title-highlight">đặt vé online</span>
               </div>
-            </div>
-          </div>
-          <div class="col-lg-6">
-            <div class="hero-panel glass">
-              <div class="ticket-preview" role="status" aria-live="polite">
-                <div class="ticket-preview__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" class="icon">
-                    <path
-                      d="M3 14.5l17-5.4c1.6-.5 2.9 1.5 1.6 2.7l-3.4 3.2 2.1 4.8c.4 1-1 1.8-1.8 1L13 16l-4.1 3.8c-.8.7-2.1 0-1.8-1L8.7 14H3.5c-1 0-1.4-1.3-.5-1.8z"
-                      fill="url(#ticketGrad)"
-                    />
-                    <defs>
-                      <linearGradient id="ticketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#2af598" />
-                        <stop offset="100%" stop-color="#00c6ff" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
+              <h1 class="hero__title">
+                Trung tâm đặt vé lớn và <span class="hero__title-highlight"> đứng đầu nước Việt Nam</span>
+                <span class="hero__title-contrast">DKMN</span>
+              </h1>
+              <p class="hero__subtitle text-white">
+                Trải nghiệm đặt vé xe khách, tàu hỏa, máy bay, tàu biển nhanh chóng và tiện lợi cho người dùng.
+              </p>
+              <div class="hero__actions">
+                <button class="hero-btn hero-btn--primary" @click="scrollToSearch">
+                  Đặt vé ngay
+                </button>
+                <button class="hero-btn hero-btn--ghost" @click="scrollToSearch">
+                  Xem lịch chạy
+                </button>
+              </div>
+
+              <div class="hero__ticket-card">
+                <div class="hero__ticket-icon">
+                  <i :class="heroTicketDisplay.iconClass"></i>
                 </div>
-                <div class="ticket-preview__body">
-                  <p class="ticket-preview__title">Ve dien tu</p>
-                  <p class="ticket-preview__route">{{ heroTicket.route }}</p>
-                  <p class="ticket-preview__meta">
-                    Khoi hanh: {{ heroTicket.time }} | Hang: {{ heroTicket.brand }}
+                <div>
+                  <p class="ticket-eyebrow">Vé điện tử</p>
+                  <p class="ticket-route">
+                    {{ heroTicketDisplay.from }} → {{ heroTicketDisplay.to }}
+                  </p>
+                  <p class="ticket-meta">
+                    Khởi hành: {{ heroTicketDisplay.departure || "—" }}
+                  </p>
+                  <p class="ticket-meta">
+                    Bến đón: {{ heroTicketDisplay.pickup || "—" }} · Bến trả: {{ heroTicketDisplay.dropoff || "—" }}
                   </p>
                 </div>
               </div>
 
-              <div id="search" class="search-form neon-card">
-                <div class="search-form__header d-flex justify-content-between align-items-center mb-3">
-                  <div>
-                    <p class="search-eyebrow mb-1">Chon hanh trinh</p>
-                    <h5 class="mb-0 text-white">Dat ve xin xo</h5>
-                  </div>
-                  <span class="pulse-dot"></span>
+              <div class="hero__stats">
+                <div class="hero__stat">
+                  <span class="hero__stat-value">+120</span>
+                  <span class="hero__stat-label">Tuyến xe khách</span>
                 </div>
-                <div class="row g-3">
-                  <div class="col-md-3">
-                    <label class="form-label text-white fw-semibold">Loai phuong tien</label>
-                    <select v-model="searchForm.vehicleType" class="form-select">
-                      <option value="">Chon phuong tien</option>
-                      <option value="bus">Xe khach</option>
-                      <option value="train">Tau hoa</option>
-                      <option value="plane">May bay</option>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label text-white fw-semibold">Noi di</label>
-                    <select v-model="searchForm.from" class="form-select">
-                      <option value="" disabled>Chon noi di</option>
-                      <option v-for="city in cities" :key="city" :value="city">
-                        {{ city }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label text-white fw-semibold">Noi den</label>
-                    <select v-model="searchForm.to" class="form-select">
-                      <option value="" disabled>Chon noi den</option>
-                      <option v-for="city in cities" :key="city" :value="city">
-                        {{ city }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label text-white fw-semibold">Ngay di</label>
-                    <input
-                      v-model="searchForm.departureDate"
-                      type="date"
-                      class="form-control"
-                    />
+                <div class="hero__stat">
+                  <span class="hero__stat-value">48</span>
+                  <span class="hero__stat-label">Chuyến tàu/ngày</span>
+                </div>
+                <div class="hero__stat">
+                  <span class="hero__stat-value">24/7</span>
+                  <span class="hero__stat-label">Hỗ trợ</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero__scene-block">
+              <div class="hero__scene" :style="parallaxLayer(18)">
+                <div class="hero__floating-squares">
+                  <span class="floating-square floating-square--primary"></span>
+                  <span class="floating-square floating-square--secondary"></span>
+                  <span class="floating-square floating-square--tertiary"></span>
+                </div>
+                <div class="hero__rings">
+                  <span class="ring ring--one"></span>
+                  <span class="ring ring--two"></span>
+                </div>
+
+                <div class="hero__flight-path">
+                  <div class="hero__plane">
+                    <i class="bx bxs-plane-take-off"></i>
                   </div>
                 </div>
 
-                <div class="row g-3 mt-2">
-                  <div
-                    class="col-md-3"
-                    v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.from"
-                  >
-                    <label class="form-label text-white fw-semibold">{{ pickupLabel }}</label>
-                    <select v-model="searchForm.pickupStation" class="form-select">
-                      <option value="" disabled>Chon diem don</option>
-                      <option
-                        v-for="station in availablePickupStations"
-                        :key="'pickup-' + station"
-                        :value="station"
-                      >
-                        {{ station }}
-                      </option>
-                    </select>
+                <div class="hero__merge-line">
+                  <div class="hero__vehicle hero__vehicle--bus">
+                    <i class="bx bx-bus"></i>
                   </div>
-
-                  <div
-                    class="col-md-3"
-                    v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.to"
-                  >
-                    <label class="form-label text-white fw-semibold">{{ dropoffLabel }}</label>
-                    <select v-model="searchForm.dropoffStation" class="form-select">
-                      <option value="" disabled>Chon diem tra</option>
-                      <option
-                        v-for="station in availableDropoffStations"
-                        :key="'dropoff-' + station"
-                        :value="station"
-                      >
-                        {{ station }}
-                      </option>
-                    </select>
+                  <div class="hero__vehicle hero__vehicle--train">
+                    <i class="bx bx-train"></i>
                   </div>
+                  <div class="hero__merge-dot"></div>
+                </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label text-white fw-semibold">So hanh khach</label>
-                    <select v-model="searchForm.passengers" class="form-select">
-                      <option value="1">1 hanh khach</option>
-                      <option value="2">2 hanh khach</option>
-                      <option value="3">3 hanh khach</option>
-                      <option value="4">4 hanh khach</option>
-                      <option value="5">5 hanh khach</option>
-                      <option value="5+">Khac</option>
-                    </select>
-                    <div v-if="searchForm.passengers === '5+'" class="mt-2">
-                      <input
-                        v-model.number="customPassengers"
-                        type="number"
-                        min="6"
-                        class="form-control"
-                        placeholder="Nhap so hanh khach "
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    class="col-md-3"
-                    v-if="['bus','train','plane'].includes(searchForm.vehicleType)"
-                  >
-                    <label class="form-label text-white fw-semibold">{{ companyLabel }}</label>
-                    <select v-model="searchForm.company" class="form-select">
-                      <option value="">Tat ca</option>
-                      <option
-                        v-for="name in availableCompanies"
-                        :key="'co-' + name"
-                        :value="name"
-                      >
-                        {{ name }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-6 d-flex align-items-end">
-                    <button
-                      @click="searchTrips"
-                      class="btn btn-primary btn-lg w-100 search-btn"
-                      :disabled="!isSearchValid || isLoadingTrips"
-                    >
-                      <span v-if="isLoadingTrips" class="spinner-border spinner-border-sm me-2"></span>
-                      <i v-else class="bx bx-search me-2"></i>
-                      {{ isLoadingTrips ? "Dang tim..." : "Tim chuyen" }}
-                    </button>
+                <div class="hero__wave hero__wave--ship">
+                  <div class="hero__ship">
+                    <i class="bx bx-ship"></i>
                   </div>
                 </div>
 
-                <div v-if="searchError" class="alert alert-danger mt-3 mb-0">
-                  {{ searchError }}
+                <div class="hero__particles">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="hero-timeline">
-          <div
-            class="hero-timeline__card"
-            v-for="ticket in featuredTickets"
-            :key="'timeline-' + ticket.id"
-          >
-            <div class="dot"></div>
-            <div>
-              <p class="eyebrow">{{ ticket.type }}</p>
-              <p class="route">{{ ticket.from }} -> {{ ticket.to }}</p>
-              <p class="meta">{{ ticket.time }} | {{ ticket.brand }}</p>
+
+          <div id="search" class="search-form hero__search">
+            <div class="row g-3">
+              <!-- Vehicle Type -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold"
+                  >Loại phương tiện</label
+                >
+                <select v-model="searchForm.vehicleType" class="form-select">
+                  <option value="">Chọn phương tiện</option>
+                  <option value="bus">Xe khách</option>
+                  <option value="train">Tàu hỏa</option>
+                  <option value="plane">Máy bay</option>
+                </select>
+              </div>
+
+              <!-- From -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold">Nơi đi</label>
+                <select v-model="searchForm.from" class="form-select">
+                  <option value="" disabled>Chọn nơi đi</option>
+                  <option v-for="city in cities" :key="city" :value="city">
+                    {{ city }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- To -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold">Nơi đến</label>
+                <select v-model="searchForm.to" class="form-select">
+                  <option value="" disabled>Chọn nơi đến</option>
+                  <option v-for="city in cities" :key="city" :value="city">
+                    {{ city }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Departure Date -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold">Ngày đi</label>
+                <input
+                  v-model="searchForm.departureDate"
+                  type="date"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <!-- Pickup/Drop-off Stations (for buses) -->
+              <div
+                class="col-md-3"
+                v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.from"
+              >
+                <label class="form-label text-white fw-semibold">{{ pickupLabel }}</label>
+                <select v-model="searchForm.pickupStation" class="form-select">
+                  <option value="" disabled>Chọn điểm đón</option>
+                  <option
+                    v-for="station in availablePickupStations"
+                    :key="'pickup-' + station"
+                    :value="station"
+                  >
+                    {{ station }}
+                  </option>
+                </select>
+              </div>
+
+              <div
+                class="col-md-3"
+                v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.to"
+              >
+                <label class="form-label text-white fw-semibold">{{ dropoffLabel }}</label>
+                <select v-model="searchForm.dropoffStation" class="form-select">
+                  <option value="" disabled>Chọn điểm trả</option>
+                  <option
+                    v-for="station in availableDropoffStations"
+                    :key="'dropoff-' + station"
+                    :value="station"
+                  >
+                    {{ station }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Passengers -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold"
+                  >Số hành khách</label
+                >
+                <select v-model="searchForm.passengers" class="form-select">
+                  <option value="1">1 hành khách</option>
+                  <option value="2">2 hành khách</option>
+                  <option value="3">3 hành khách</option>
+                  <option value="4">4 hành khách</option>
+                  <option value="5">5 hành khách</option>
+                  <option value="5+">Khác</option>
+                </select>
+                <div v-if="searchForm.passengers === '5+'" class="mt-2">
+                  <input
+                    v-model.number="customPassengers"
+                    type="number"
+                    min="6"
+                    class="form-control"
+                    placeholder="Nhập số hành khách "
+                  />
+                </div>
+              </div>
+
+              <!-- Company/Carrier selection -->
+              <div
+                class="col-md-3"
+                v-if="['bus','train','plane'].includes(searchForm.vehicleType)"
+              >
+                <label class="form-label text-white fw-semibold">{{ companyLabel }}</label>
+                <select v-model="searchForm.company" class="form-select">
+                  <option value="">Tất cả</option>
+                  <option
+                    v-for="name in availableCompanies"
+                    :key="'co-' + name"
+                    :value="name"
+                  >
+                    {{ name }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Search Button -->
+              <div class="col-md-6 d-flex align-items-end">
+                <button
+                  @click="searchTrips"
+                  class="btn btn-primary btn-lg w-100 search-btn"
+                  :disabled="!isSearchValid || isLoadingTrips"
+                >
+                  <span v-if="isLoadingTrips" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="bx bx-search me-2"></i>
+                  {{ isLoadingTrips ? "Đang tìm..." : "Tìm chuyến" }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="searchError" class="alert alert-danger mt-3 mb-0">
+              {{ searchError }}
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <GioiThieu />
 
     <!-- Seat Selection Modal -->
     <div v-if="seatModal.visible" class="seat-modal-backdrop">
@@ -939,6 +936,12 @@ export default {
       isLoadingSeats: false,
       searchError: "",
       showResults: false,
+      parallax: {
+        x: 0,
+        y: 0,
+        left: null,
+        top: null,
+      },
       sortBy: "default",
       searchForm: {
         vehicleType: "",
@@ -968,6 +971,7 @@ export default {
       suppressPriceWatch: false,
       trips: [],
       userInfo: {},
+      heroSelectedTrip: null,
       seatModal: {
         visible: false,
         trip: null,
@@ -978,27 +982,9 @@ export default {
       portalNotices: [],
       isLoadingNotices: false,
       noticesError: "",
-      featuredTickets: [
-        { id: 1, type: "May bay", from: "TP.HCM", to: "Ha Noi", time: "07:30", brand: "Express" },
-        { id: 2, type: "Tau hoa", from: "Da Nang", to: "Hue", time: "09:10", brand: "Coastal" },
-        { id: 3, type: "Xe khach", from: "Da Lat", to: "Sai Gon", time: "21:00", brand: "NightRide" },
-      ],
-      parallax: { x: 0.5, y: 0.5 },
     };
   },
   computed: {
-    heroTicket() {
-      const primary = this.featuredTickets?.[0] || {};
-      const from = this.searchForm.from || primary.from || "TP.HCM";
-      const to = this.searchForm.to || primary.to || "Ha Noi";
-      const brand = this.searchForm.company || primary.brand || "Express";
-      const time = primary.time || "07:30";
-      return {
-        route: `${from} -> ${to}`,
-        time,
-        brand,
-      };
-    },
     isLoggedIn() {
       return (
         localStorage.getItem("token") && Object.keys(this.userInfo).length > 0
@@ -1236,6 +1222,47 @@ export default {
     resultCount() {
       return this.meta?.count ?? this.trips.length;
     },
+    mouseGlowStyle() {
+      const size = 280;
+      if (this.parallax.left === null || this.parallax.top === null) {
+        return { opacity: 0 };
+      }
+      return {
+        opacity: 0.8,
+        left: `${this.parallax.left - size / 2}px`,
+        top: `${this.parallax.top - size / 2}px`,
+        transform: `translate3d(${this.parallax.x / 18}px, ${this.parallax.y / 18}px, 0)`,
+      };
+    },
+    heroTicketDisplay() {
+      const from = (this.searchForm.from || this.heroSelectedTrip?.fromCity || "TP.HCM").toUpperCase();
+      const to = (this.searchForm.to || this.heroSelectedTrip?.toCity || "Hà Nội").toUpperCase();
+      const pickup =
+        this.searchForm.pickupStation ||
+        this.heroSelectedTrip?.pickupStationName ||
+        this.heroSelectedTrip?.fromStation ||
+        "";
+      const dropoff =
+        this.searchForm.dropoffStation ||
+        this.heroSelectedTrip?.dropoffStationName ||
+        this.heroSelectedTrip?.toStation ||
+        "";
+      const dateText =
+        (this.searchForm.departureDate && this.formatRouteDate(this.searchForm.departureDate)) ||
+        this.heroSelectedTrip?.departureLabel ||
+        "";
+      const timeText = this.heroSelectedTrip?.departureTime || "";
+      const departure = [dateText, timeText].filter(Boolean).join(" · ");
+      const type = this.searchForm.vehicleType || this.heroSelectedTrip?.vehicleTypeKey || "plane";
+      return {
+        from,
+        to,
+        departure,
+        pickup,
+        dropoff,
+        iconClass: this.heroVehicleIcon(type),
+      };
+    },
   },
   watch: {
     "searchForm.vehicleType"() {
@@ -1267,24 +1294,41 @@ export default {
     },
   },
   methods: {
-    parallaxTransform(intensity = 10) {
-      const x = ((this.parallax.x || 0.5) - 0.5) * intensity;
-      const y = ((this.parallax.y || 0.5) - 0.5) * intensity;
-      const xPx = x.toFixed(2);
-      const yPx = y.toFixed(2);
-      return { transform: `translate3d(${xPx}px, ${yPx}px, 0)` };
+    scrollToSearch() {
+      this.$nextTick(() => {
+        const el = document.getElementById("search");
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     },
-    handleParallax(event) {
-      const rect = event.currentTarget?.getBoundingClientRect?.();
-      if (!rect) return;
-      const nx = (event.clientX - rect.left) / rect.width;
-      const ny = (event.clientY - rect.top) / rect.height;
-      this.parallax.x = Math.min(1, Math.max(0, nx));
-      this.parallax.y = Math.min(1, Math.max(0, ny));
+    heroVehicleIcon(type) {
+      const key = this.normalizeVehicleType(type) || "plane";
+      switch (key) {
+        case "bus":
+          return "bx bx-bus";
+        case "train":
+          return "bx bx-train";
+        default:
+          return "bx bxs-plane-alt";
+      }
+    },
+    handleParallax(evt) {
+      if (!evt?.currentTarget) return;
+      const rect = evt.currentTarget.getBoundingClientRect();
+      const x = evt.clientX - rect.left - rect.width / 2;
+      const y = evt.clientY - rect.top - rect.height / 2;
+      this.parallax.x = x;
+      this.parallax.y = y;
+      this.parallax.left = evt.clientX - rect.left;
+      this.parallax.top = evt.clientY - rect.top;
     },
     resetParallax() {
-      this.parallax.x = 0.5;
-      this.parallax.y = 0.5;
+      this.parallax = { x: 0, y: 0, left: null, top: null };
+    },
+    parallaxLayer(depth = 24) {
+      const factor = depth || 24;
+      return {
+        transform: `translate3d(${this.parallax.x / factor}px, ${this.parallax.y / factor}px, 0)`,
+      };
     },
     setPriceFilterMax(value, lockState = null) {
       this.suppressPriceWatch = true;
@@ -1610,6 +1654,7 @@ export default {
         this.trips = trips
           .map((item, idx) => this.normalizeTrip(item, idx))
           .filter(Boolean);
+        this.heroSelectedTrip = this.trips[0] || null;
         this.updatePriceLimitsFromTrips(this.trips);
         this.showResults = true;
 
@@ -1619,6 +1664,7 @@ export default {
             "Không tìm thấy chuyến phù hợp, vui lòng thử lại.";
           this.$toast?.info?.(message);
         } else {
+          this.$toast.success(`Đã tìm thấy ${this.trips.length} chuyến phù hợp! 🎉`);
           this.$nextTick(() => {
             document
               .querySelector(".results-section")
@@ -1630,6 +1676,7 @@ export default {
           error.response?.data?.message ||
           "Không tìm thấy chuyến phù hợp, vui lòng thử lại.";
         this.$toast?.error?.(this.searchError);
+        this.heroSelectedTrip = null;
         this.resetPriceLimits();
       } finally {
         this.isLoadingTrips = false;
@@ -1923,6 +1970,7 @@ export default {
           normalizedTrip,
           seatEntries
         );
+        this.heroSelectedTrip = normalizedTrip;
         this.seatModal = {
           visible: true,
           trip: normalizedTrip,
@@ -2236,9 +2284,14 @@ export default {
       const idx = this.seatModal.seatsSelected.indexOf(seat.id);
       if (idx >= 0) {
         this.seatModal.seatsSelected.splice(idx, 1);
+        this.$toast.info(`Đã bỏ chọn ghế ${seat.label || seat.id}`);
       } else {
-        if (this.seatModal.seatsSelected.length >= maxSelect) return;
+        if (this.seatModal.seatsSelected.length >= maxSelect) {
+          this.$toast.warning(`Bạn chỉ có thể chọn tối đa ${maxSelect} ghế!`);
+          return;
+        }
         this.seatModal.seatsSelected.push(seat.id);
+        this.$toast.success(`Đã chọn ghế ${seat.label || seat.id} ✓`);
       }
     },
     cancelSeatSelection() {
@@ -2251,10 +2304,11 @@ export default {
     confirmSeats() {
       const selectedCount = (this.seatModal?.seatsSelected || []).length;
       if (selectedCount === 0) {
-        alert("Vui lòng chọn ghế trước khi tiếp tục thanh toán.");
+        this.$toast.error("Vui lòng chọn ghế trước khi tiếp tục thanh toán.");
         return;
       }
 
+      this.$toast.success(`Đang chuyển đến trang thanh toán với ${selectedCount} ghế đã chọn...`);
       const trip = this.seatModal.trip || {};
       const price = Number(trip.price || trip.displayPrice || 0);
       const total = price * selectedCount;
@@ -2394,481 +2448,99 @@ export default {
     },
   },
   mounted() {
-    this.resetParallax();
     this.checkAuthStatus();
     this.bootstrapData();
+    
+    // Hiển thị toast chào mừng
+    setTimeout(() => {
+      const userName = this.userInfo?.ho_ten || this.userInfo?.ten || '';
+      if (userName) {
+        this.$toast.success(`Chào mừng trở lại, ${userName}! 👋`);
+      } else {
+        this.$toast.info('Chào mừng đến với hệ thống đặt vé DKMN! 🎫');
+      }
+    }, 500);
   },
 };
 </script>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-:global(:root) {
-  --ink: #041325;
-  --deep: #062136;
-  --mint: #2af598;
-  --aqua: #00c6ff;
-  --lime: #7cfb4c;
-  --glass: rgba(4, 19, 36, 0.72);
-  --glass-strong: rgba(4, 19, 36, 0.9);
-  --text: #e6f8ef;
-  --muted: #a7c0d8;
-}
-
 :global(body) {
-  background: radial-gradient(circle at 18% 20%, rgba(42, 245, 152, 0.12), transparent 28%),
-    radial-gradient(circle at 82% 12%, rgba(0, 198, 255, 0.18), transparent 32%),
-    linear-gradient(160deg, #041325 0%, #0a2237 55%, #041325 100%);
-  font-family: "Space Grotesk", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-  color: var(--text);
+  background: #f5f7fb;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #111827;
 }
 
 .container-fluid {
-  background: linear-gradient(180deg, #041325 0%, #062136 55%, #0b253a 75%, #0b1c2d 100%);
+  background:
+    radial-gradient(circle at 12% 14%, rgba(56, 189, 248, 0.18), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.16), transparent 32%),
+    linear-gradient(180deg, #040d1f 0%, #051a31 42%, #082744 72%, #0b2f57 100%);
   min-height: 100vh;
 }
 
-.hyper-hero {
+/* Hero area */
+.hero {
   position: relative;
-  min-height: 90vh;
+  min-height: 100vh;
+  padding: clamp(4rem, 8vw, 7rem) clamp(1.25rem, 5vw, 4rem) 5rem;
   overflow: hidden;
-  padding: clamp(3rem, 8vw, 5rem) clamp(1rem, 4vw, 2.75rem) clamp(3rem, 6vw, 4rem);
-  color: var(--text);
-}
-
-.hero-motion {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.hero-gradient {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 20% 30%, rgba(42, 245, 152, 0.22), transparent 40%),
-    radial-gradient(circle at 78% 18%, rgba(0, 198, 255, 0.24), transparent 42%),
-    radial-gradient(circle at 60% 70%, rgba(124, 251, 76, 0.14), transparent 46%),
-    linear-gradient(135deg, #051529 0%, #031020 100%);
-  filter: blur(0);
-}
-
-.hero-gridlines {
-  position: absolute;
-  inset: 10% 8%;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 110px 110px;
-  opacity: 0.25;
-  mask-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.6), transparent 70%);
-}
-
-.hero-glow {
-  position: absolute;
-  width: 460px;
-  height: 460px;
-  border-radius: 50%;
-  filter: blur(65px);
-  opacity: 0.42;
-  animation: heroFloat 24s ease-in-out infinite;
-}
-
-.hero-glow--mint {
-  top: -120px;
-  left: -40px;
-  background: radial-gradient(circle, rgba(42, 245, 152, 0.65), rgba(0, 198, 255, 0.25));
-}
-
-.hero-glow--cyan {
-  bottom: -160px;
-  right: -100px;
-  background: radial-gradient(circle, rgba(0, 198, 255, 0.45), rgba(124, 251, 76, 0.2));
-  animation-delay: 6s;
-}
-
-.mouse-light {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(124, 251, 76, 0.09), transparent 36%);
-  mix-blend-mode: screen;
-}
-
-.sky-lane {
-  position: absolute;
-  top: 12%;
-  left: 0;
-  right: 0;
-  height: 180px;
-}
-
-.plane-streak {
-  position: absolute;
-  right: -10%;
-  top: 30%;
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-  animation: planeFly 14s cubic-bezier(0.42, 0, 0.2, 1) infinite;
-}
-
-.plane-streak .trail {
-  width: 220px;
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(42, 245, 152, 0.8), rgba(0, 198, 255, 0));
-  filter: drop-shadow(0 0 12px rgba(0, 198, 255, 0.35));
-}
-
-.plane-icon {
-  width: 64px;
-  height: 64px;
-  filter: drop-shadow(0 10px 30px rgba(0, 198, 255, 0.35));
-}
-
-.floating-ticket {
-  position: absolute;
-  top: 24%;
-  left: 12%;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(4, 19, 36, 0.7);
-  border: 1px solid rgba(42, 245, 152, 0.25);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  animation: ticketFloat 10s ease-in-out infinite;
-}
-
-.floating-ticket:nth-child(2) {
-  top: 8%;
-  left: 60%;
-  animation-delay: 2s;
-}
-
-.floating-ticket:nth-child(3) {
-  top: 48%;
-  left: 32%;
-  animation-delay: 4s;
-}
-
-.ticket-mini__eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: var(--aqua);
-  margin: 0;
-}
-
-.ticket-mini__route {
-  font-weight: 700;
-  margin: 2px 0;
-}
-
-.ticket-mini__meta {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-.ground-track {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: 6%;
-  height: 140px;
-  background: linear-gradient(90deg, rgba(0, 198, 255, 0.16), rgba(42, 245, 152, 0.12));
-  border-top: 1px solid rgba(0, 198, 255, 0.35);
-  border-bottom: 1px solid rgba(42, 245, 152, 0.35);
-  overflow: hidden;
-}
-
-.vehicle {
-  position: absolute;
-  bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.35));
-}
-
-.vehicle-bus {
-  left: -30%;
-  animation: busSlide 12s ease-in-out infinite;
-}
-
-.vehicle-train {
-  right: -40%;
-  animation: trainSlide 12s ease-in-out infinite;
-  animation-delay: 2s;
-}
-
-.vehicle-body {
-  width: 220px;
-  height: 64px;
-  background: linear-gradient(135deg, rgba(42, 245, 152, 0.9), rgba(0, 198, 255, 0.85));
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.vehicle .window {
-  flex: 1;
-  height: 18px;
-  border-radius: 8px;
-  background: rgba(4, 19, 36, 0.75);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
-.vehicle-wheels {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-left: 12px;
-}
-
-.vehicle-wheels .wheel {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #0f172a;
-  box-shadow: inset 0 0 0 3px #0b1624;
-  border: 2px solid rgba(255, 255, 255, 0.14);
-}
-
-.vehicle-wheels.narrow .wheel {
-  width: 18px;
-  height: 18px;
-}
-
-.hero-shell {
-  position: relative;
-  z-index: 2;
-}
-
-.hero-copy {
-  max-width: 560px;
-}
-
-.hero-eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--aqua);
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-
-.hero-headline {
-  font-size: clamp(2.4rem, 4.8vw, 3.8rem);
-  font-weight: 700;
-  line-height: 1.1;
-  color: #e9fbf3;
-  margin-bottom: 0.75rem;
-}
-
-.text-electric {
-  color: var(--mint);
-}
-
-.hero-subtitle {
-  color: var(--muted);
-  font-size: 1.05rem;
-}
-
-.hero-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 1.25rem;
-}
-
-.pill {
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(0, 198, 255, 0.14);
-  color: #d6f7ff;
-  border: 1px solid rgba(42, 245, 152, 0.25);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-}
-
-.hero-panel {
-  padding: 18px;
-  background: var(--glass);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(14px);
-}
-
-.ticket-preview {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  margin-bottom: 14px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(42, 245, 152, 0.2), rgba(0, 198, 255, 0.18));
-  border: 1px solid rgba(42, 245, 152, 0.32);
-}
-
-.ticket-preview__icon {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: rgba(0, 198, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.ticket-preview__body {
-  flex: 1;
-}
-
-.ticket-preview__title {
-  margin: 0;
-  font-weight: 700;
-  color: #e9fbf3;
-}
-
-.ticket-preview__route {
-  margin: 4px 0;
-  font-size: 1.05rem;
-}
-
-.ticket-preview__meta {
-  margin: 0;
-  color: var(--muted);
-}
-
-.hero-timeline {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-top: 18px;
-}
-
-.hero-timeline__card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(4, 19, 36, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.hero-timeline__card .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--mint), var(--aqua));
-  margin-top: 6px;
-}
-
-.hero-timeline__card .route {
-  font-weight: 600;
-  margin: 0;
-}
-
-.hero-timeline__card .meta {
-  margin: 2px 0 0 0;
-  color: var(--muted);
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--aqua);
-  font-weight: 600;
-  margin: 0;
-  font-size: 0.78rem;
-}
-
-@keyframes heroFloat {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  40% {
-    transform: translate3d(30px, -24px, 0) scale(1.05);
-  }
-  70% {
-    transform: translate3d(-20px, 32px, 0) scale(0.98);
-  }
-}
-
-@keyframes planeFly {
-  0% {
-    transform: translate3d(30%, -20%, 0) rotate(8deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  50% {
-    transform: translate3d(-20%, 10%, 0) rotate(-3deg);
-  }
-  100% {
-    transform: translate3d(-120%, 40%, 0) rotate(-8deg);
-    opacity: 0.85;
-  }
-}
-
-@keyframes busSlide {
-  0% {
-    transform: translateX(-40%);
-  }
-  50% {
-    transform: translateX(40%);
-  }
-  100% {
-    transform: translateX(-40%);
-  }
-}
-
-@keyframes trainSlide {
-  0% {
-    transform: translateX(40%);
-  }
-  50% {
-    transform: translateX(-20%);
-  }
-  100% {
-    transform: translateX(40%);
-  }
-}
-
-@keyframes ticketFloat {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(8px, -12px, 0);
-  }
+  color: #fff;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  isolation: isolate;
 }
 
 .hero__overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.32), transparent 52%),
-    radial-gradient(circle at 80% 8%, rgba(14, 165, 233, 0.24), transparent 46%),
-    linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
-  opacity: 0.92;
+  background: radial-gradient(circle at 14% 18%, rgba(94, 234, 212, 0.22), transparent 44%),
+    radial-gradient(circle at 84% 10%, rgba(56, 189, 248, 0.22), transparent 40%),
+    linear-gradient(135deg, #041327, #061a32 52%, #04152e);
+  opacity: 0.96;
 }
 
 .hero__grid {
   position: absolute;
   inset: 10% 5%;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 96px 96px;
-  opacity: 0.3;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 86px 86px;
+  opacity: 0.25;
   z-index: 1;
+}
+
+.hero__snow {
+  position: absolute;
+  inset: -6% 0 0 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.9), transparent 55%),
+    radial-gradient(2px 2px at 80px 120px, rgba(255, 255, 255, 0.85), transparent 55%),
+    radial-gradient(3px 3px at 140px 10px, rgba(255, 255, 255, 0.8), transparent 55%),
+    radial-gradient(2px 2px at 200px 160px, rgba(255, 255, 255, 0.9), transparent 55%);
+  background-size: 220px 240px, 260px 320px, 180px 220px, 240px 300px;
+  background-repeat: repeat;
+  opacity: 0.75;
+  mix-blend-mode: screen;
+  animation: snowFall 22s linear infinite;
+}
+
+.hero__snow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 60px 40px, rgba(255, 255, 255, 0.8), transparent 55%),
+    radial-gradient(3px 3px at 160px 120px, rgba(255, 255, 255, 0.85), transparent 55%),
+    radial-gradient(2px 2px at 260px 90px, rgba(255, 255, 255, 0.8), transparent 55%),
+    radial-gradient(2px 2px at 320px 200px, rgba(255, 255, 255, 0.75), transparent 55%);
+  background-size: 280px 320px, 320px 360px, 240px 300px, 300px 360px;
+  background-repeat: repeat;
+  opacity: 0.85;
+  animation: snowFall 32s linear infinite reverse;
 }
 
 .blob {
@@ -2885,20 +2557,20 @@ export default {
 .blob-1 {
   top: -120px;
   left: -40px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.7), rgba(37, 99, 235, 0.3));
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.7), rgba(37, 99, 235, 0.25));
 }
 
 .blob-2 {
   bottom: -160px;
   right: -80px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.42), rgba(59, 130, 246, 0.22));
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.48), rgba(16, 185, 129, 0.22));
   animation-delay: 4s;
 }
 
 .blob-3 {
   top: 20%;
   right: 30%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.5), rgba(45, 212, 191, 0.2));
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.36), rgba(56, 189, 248, 0.24));
   animation-delay: 8s;
 }
 
@@ -2915,6 +2587,162 @@ export default {
   }
 }
 
+@keyframes snowFall {
+  0% {
+    transform: translateY(-10%);
+  }
+  100% {
+    transform: translateY(18%);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+@keyframes ringSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes squareOrbit {
+  0% {
+    transform: translate3d(-15%, 6%, 0) rotate(0deg) scale(0.92);
+  }
+  25% {
+    transform: translate3d(20%, -12%, 0) rotate(8deg) scale(1.04);
+  }
+  50% {
+    transform: translate3d(45%, 16%, 0) rotate(14deg) scale(1);
+  }
+  75% {
+    transform: translate3d(12%, 24%, 0) rotate(6deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-15%, 6%, 0) rotate(0deg) scale(0.92);
+  }
+}
+
+@keyframes squareOrbitReverse {
+  0% {
+    transform: translate3d(18%, -12%, 0) rotate(0deg) scale(1.05);
+  }
+  20% {
+    transform: translate3d(-5%, 4%, 0) rotate(-6deg) scale(0.95);
+  }
+  55% {
+    transform: translate3d(-35%, -10%, 0) rotate(-12deg) scale(1.04);
+  }
+  80% {
+    transform: translate3d(-8%, 16%, 0) rotate(-4deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(18%, -12%, 0) rotate(0deg) scale(1.05);
+  }
+}
+
+@keyframes squareBob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(8deg) scale(0.96);
+  }
+  40% {
+    transform: translate3d(-18%, 12%, 0) rotate(-6deg) scale(1.04);
+  }
+  70% {
+    transform: translate3d(10%, -14%, 0) rotate(4deg) scale(1.08);
+  }
+}
+
+@keyframes planeFlight {
+  0% {
+    transform: translate(-52%, 35%) rotate(-12deg) scale(0.9);
+  }
+  20% {
+    transform: translate(-10%, 10%) rotate(4deg) scale(1.02);
+  }
+  45% {
+    transform: translate(28%, -10%) rotate(14deg) scale(1.08);
+  }
+  60% {
+    transform: translate(55%, -24%) rotate(6deg) scale(1);
+  }
+  80% {
+    transform: translate(12%, -4%) rotate(2deg) scale(1.06);
+  }
+  100% {
+    transform: translate(-52%, 35%) rotate(-12deg) scale(0.9);
+  }
+}
+
+@keyframes busMerge {
+  0% {
+    transform: translateX(-65%) scale(0.95);
+  }
+  46% {
+    transform: translateX(40%) scale(1);
+  }
+  60% {
+    transform: translateX(32%) scale(1.02);
+  }
+  100% {
+    transform: translateX(-65%) scale(0.95);
+  }
+}
+
+@keyframes trainMerge {
+  0% {
+    transform: translateX(65%) scale(0.95);
+  }
+  46% {
+    transform: translateX(-40%) scale(1);
+  }
+  60% {
+    transform: translateX(-32%) scale(1.02);
+  }
+  100% {
+    transform: translateX(65%) scale(0.95);
+  }
+}
+
+@keyframes waveMove {
+  from {
+    transform: translateX(-20%);
+  }
+  to {
+    transform: translateX(20%);
+  }
+}
+
+@keyframes shipWave {
+  0%,
+  100% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes particleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
 .hero__content {
   position: relative;
   z-index: 2;
@@ -2924,30 +2752,450 @@ export default {
 }
 
 .hero__glass {
-  border-radius: 32px;
-  padding: clamp(1.75rem, 4vw, 3rem);
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 35px 90px rgba(15, 23, 42, 0.55);
+  border-radius: 36px;
+  padding: clamp(1.75rem, 4vw, 3.2rem);
+  background: linear-gradient(145deg, rgba(7, 16, 34, 0.7), rgba(7, 26, 44, 0.78));
+  border: 1px solid rgba(99, 255, 255, 0.14);
+  box-shadow: 0 40px 120px rgba(6, 182, 212, 0.14), 0 24px 60px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(18px);
   width: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 .hero__title {
-  font-size: clamp(2.2rem, 4vw, 3.6rem);
-  color: #fff;
-  font-weight: 700;
+  font-size: clamp(2.4rem, 4.8vw, 4rem);
+  color: #e0f2fe;
+  font-weight: 800;
   letter-spacing: 0.01em;
   margin-bottom: 0.6rem;
+  line-height: 1.15;
 }
 
-.hero__title .text-primary {
-  color: #93c5fd !important;
+.hero__title-highlight {
+  color: #8bf0ff;
+  background: linear-gradient(120deg, #7ce7ff, #bae6fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero__title-contrast {
+  display: inline-block;
+  padding: 0.12em 0.32em;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.14);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.32);
 }
 
 .hero__subtitle {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+}
+
+.hero__grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+}
+
+.hero__text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #a5f3fc;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  font-size: 0.72rem;
+  box-shadow: 0 12px 40px rgba(14, 165, 233, 0.35);
+}
+
+.hero__badge .pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6);
+  animation: pulseGlow 2s ease-out infinite;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.hero-btn {
+  border-radius: 14px;
+  padding: 0.85rem 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-btn--primary {
+  background: linear-gradient(120deg, #0ea5e9, #22d3ee);
+  color: #0b172a;
+  box-shadow: 0 20px 45px rgba(34, 211, 238, 0.35);
+}
+
+.hero-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 60px rgba(34, 211, 238, 0.45);
+}
+
+.hero-btn--ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0f2fe;
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.hero-btn--ghost:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.75);
+}
+
+.hero__ticket-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(145deg, rgba(30, 41, 89, 0.9), rgba(27, 38, 79, 0.92));
+  border-radius: 18px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  box-shadow: 0 18px 45px rgba(12, 18, 44, 0.5);
+  max-width: 360px;
+}
+
+.hero__ticket-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+  display: grid;
+  place-items: center;
+  color: #0b1224;
+  font-size: 1.4rem;
+  box-shadow: 0 10px 30px rgba(34, 211, 238, 0.45);
+}
+
+.ticket-eyebrow {
+  color: #c7d2fe;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.ticket-route {
+  margin: 2px 0 4px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #eef2ff;
+}
+
+.ticket-meta {
+  margin: 0;
+  color: #c7d2fe;
+  opacity: 0.9;
+}
+
+.hero__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.9rem;
+}
+
+.hero__stat {
+  padding: 0.75rem 0.95rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.hero__stat-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #8bf0ff;
+}
+
+.hero__stat-label {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.hero__scene-block {
+  position: relative;
+  min-height: 360px;
+}
+
+.hero__scene {
+  position: relative;
+  min-height: 360px;
+  border-radius: 26px;
+  background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.12), rgba(4, 13, 31, 0.9));
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(5, 9, 20, 0.4);
+}
+
+.hero__floating-squares {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-square {
+  position: absolute;
+  width: clamp(60px, 7vw, 90px);
+  height: clamp(60px, 7vw, 90px);
+  border-radius: 18px;
+  background: linear-gradient(140deg, rgba(59, 130, 246, 0.3), rgba(14, 165, 233, 0.1));
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  box-shadow: 0 20px 50px rgba(6, 182, 212, 0.25);
+  filter: drop-shadow(0 10px 25px rgba(59, 130, 246, 0.35));
+  backdrop-filter: blur(4px);
+  animation: squareOrbit 14s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.floating-square::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  opacity: 0.5;
+}
+
+.floating-square--primary {
+  top: 18%;
+  left: 14%;
+  animation-duration: 18s;
+  animation-delay: -2s;
+}
+
+.floating-square--secondary {
+  bottom: 18%;
+  right: 16%;
+  animation-duration: 16s;
+  animation-delay: -6s;
+  background: linear-gradient(140deg, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.2));
+  animation-name: squareOrbitReverse;
+}
+
+.floating-square--tertiary {
+  top: 12%;
+  right: 10%;
+  width: clamp(44px, 5vw, 70px);
+  height: clamp(44px, 5vw, 70px);
+  border-radius: 14px;
+  animation-duration: 20s;
+  animation-delay: -10s;
+  background: linear-gradient(140deg, rgba(236, 72, 153, 0.4), rgba(59, 130, 246, 0.18));
+  animation-name: squareBob;
+}
+
+.hero__rings {
+  position: absolute;
+  inset: 10% 14%;
+  border-radius: 50%;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  animation: ringSpin 26s linear infinite;
+}
+
+.ring--two {
+  inset: 12%;
+  border-color: rgba(16, 185, 129, 0.35);
+  animation-duration: 30s;
+}
+
+.hero__flight-path {
+  position: absolute;
+  inset: 12% 10% auto 10%;
+  height: 52%;
+}
+
+.hero__plane {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  width: 86px;
+  height: 86px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  color: #0b1a2d;
+  background: linear-gradient(135deg, #22d3ee, #38bdf8, #c084fc);
+  box-shadow: 0 24px 50px rgba(34, 211, 238, 0.45);
+  animation: planeFlight 8s ease-in-out infinite;
+}
+
+.hero__merge-line {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 18%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), rgba(59, 130, 246, 0.32), rgba(94, 234, 212, 0.14));
+  box-shadow: 0 0 25px rgba(14, 165, 233, 0.25);
+}
+
+.hero__merge-dot {
+  position: absolute;
+  inset: -10px auto auto 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #7ce7ff, rgba(14, 165, 233, 0.3));
+  box-shadow: 0 0 30px rgba(14, 165, 233, 0.7);
+}
+
+.hero__vehicle {
+  position: absolute;
+  bottom: -18px;
+  width: 74px;
+  height: 74px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  color: #0b1224;
+  font-size: 1.6rem;
+}
+
+.hero__vehicle--bus {
+  left: -12%;
+  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+  box-shadow: 0 18px 36px rgba(34, 211, 238, 0.4);
+  animation: busMerge 7s ease-in-out infinite;
+}
+
+.hero__vehicle--train {
+  right: -12%;
+  background: linear-gradient(135deg, #c084fc, #60a5fa);
+  box-shadow: 0 18px 36px rgba(96, 165, 250, 0.4);
+  animation: trainMerge 7s ease-in-out infinite;
+}
+
+.hero__wave {
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  width: 120px;
+  height: 120px;
+  border-radius: 30px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.2), rgba(14, 116, 144, 0.18));
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+}
+
+.hero__wave::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0,
+    rgba(255, 255, 255, 0.12) 6px,
+    transparent 6px,
+    transparent 14px
+  );
+  animation: waveMove 6s linear infinite;
+}
+
+.hero__ship {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #e0f2fe;
+  font-size: 1.6rem;
+  animation: shipWave 8s ease-in-out infinite;
+}
+
+.hero__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero__particles span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 12px rgba(134, 239, 172, 0.7);
+  animation: particleFloat 6s ease-in-out infinite;
+}
+
+.hero__particles span:nth-child(1) {
+  top: 24%;
+  left: 18%;
+  animation-duration: 7s;
+}
+.hero__particles span:nth-child(2) {
+  top: 42%;
+  right: 22%;
+  animation-delay: 1s;
+}
+.hero__particles span:nth-child(3) {
+  bottom: 20%;
+  left: 28%;
+  animation-duration: 8s;
+}
+.hero__particles span:nth-child(4) {
+  bottom: 32%;
+  right: 14%;
+  animation-delay: 2s;
+}
+
+.hero__cursor-glow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.32), rgba(14, 165, 233, 0));
+  filter: blur(24px);
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  mix-blend-mode: screen;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+.hero__search {
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  position: relative;
+  z-index: 2;
 }
 
 .notice-section {
@@ -3000,55 +3248,15 @@ export default {
 }
 
 .search-form {
-  background: var(--glass-strong);
-  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(5, 12, 28, 0.92), rgba(8, 24, 46, 0.86));
+  border-radius: 28px;
   padding: clamp(1.25rem, 3vw, 2rem);
-  border: 1px solid rgba(42, 245, 152, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 22px 70px rgba(0, 0, 0, 0.45);
-}
-
-.neon-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.neon-card::before {
-  content: "";
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(from 90deg, rgba(42, 245, 152, 0.24), transparent 50%, rgba(0, 198, 255, 0.22));
-  filter: blur(40px);
-  opacity: 0.7;
-  transform: translate3d(-10%, -10%, 0) rotate(8deg);
-}
-
-.neon-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.search-form__header h5 {
-  letter-spacing: 0.04em;
-}
-
-.search-eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.78rem;
-  color: var(--aqua);
-}
-
-.pulse-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--mint), var(--aqua));
-  box-shadow: 0 0 0 0 rgba(42, 245, 152, 0.6);
-  animation: pulse 1.8s infinite;
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 22px 60px rgba(14, 116, 144, 0.35);
 }
 
 .search-form .form-label {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.85rem;
   margin-bottom: 0.35rem;
   text-transform: uppercase;
@@ -3057,19 +3265,19 @@ export default {
 
 .search-form .form-select,
 .search-form .form-control {
-  background: rgba(6, 26, 42, 0.7);
-  border: 1px solid rgba(0, 198, 255, 0.28);
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 14px;
-  color: #e9fbf3;
+  color: #f8fafc;
   min-height: 48px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-form .form-select:focus,
 .search-form .form-control:focus {
-  border-color: rgba(42, 245, 152, 0.9);
-  box-shadow: 0 0 0 3px rgba(42, 245, 152, 0.22);
-  background: rgba(4, 20, 33, 0.92);
+  border-color: rgba(59, 130, 246, 0.9);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  background: rgba(11, 18, 36, 0.92);
 }
 
 .search-btn {
@@ -3078,34 +3286,22 @@ export default {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, #2af598, #00c6ff, #5efce8);
+  background: linear-gradient(135deg, #2563eb, #0ea5e9, #22d3ee);
   border: none;
   padding: 0.85rem 1.25rem;
-  box-shadow: 0 15px 35px rgba(42, 245, 152, 0.32);
+  box-shadow: 0 15px 35px rgba(34, 211, 238, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 20px 45px rgba(0, 198, 255, 0.45);
+  box-shadow: 0 20px 45px rgba(99, 102, 241, 0.45);
 }
 
 .search-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(42, 245, 152, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(42, 245, 152, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(42, 245, 152, 0);
-  }
 }
 
 /* Result cards */
@@ -3831,6 +4027,14 @@ export default {
     border-radius: 18px;
   }
 
+  .hero__grid-modern {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__scene {
+    min-height: 300px;
+  }
+
   .search-form {
     border-radius: 18px;
   }
@@ -3869,6 +4073,23 @@ export default {
 
   .hero__title {
     font-size: 2rem;
+  }
+
+  .hero__actions {
+    flex-direction: column;
+  }
+
+  .hero-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero__ticket-card {
+    width: 100%;
+  }
+
+  .hero__scene {
+    min-height: 260px;
   }
 
   .search-btn {

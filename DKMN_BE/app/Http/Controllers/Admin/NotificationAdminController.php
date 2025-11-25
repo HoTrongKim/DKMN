@@ -98,6 +98,16 @@ class NotificationAdminController extends Controller
         ], 201);
     }
 
+    public function destroy(ThongBao $thongBao)
+    {
+        $thongBao->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Đã xóa thông báo.',
+        ]);
+    }
+
     private function transform(ThongBao $notification): array
     {
         return [

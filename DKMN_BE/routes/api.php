@@ -126,6 +126,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:quan_tri'])->group(fun
 
     Route::get('/notifications', [NotificationAdminController::class, 'index']);
     Route::post('/notifications', [NotificationAdminController::class, 'store']);
+    Route::delete('/notifications/{thongBao}', [NotificationAdminController::class, 'destroy']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

@@ -97,6 +97,13 @@ export default {
 
       if (this.form.newPassword !== this.form.confirmPassword) {
         this.errorMessage = 'Mật khẩu mới không khớp.'
+        this.$toast?.error(this.errorMessage)
+        return
+      }
+
+      if (this.form.newPassword.length < 6) {
+        this.errorMessage = 'Mật khẩu mới phải có ít nhất 6 ký tự.'
+        this.$toast?.error(this.errorMessage)
         return
       }
 
@@ -108,6 +115,7 @@ export default {
           confirmPassword: this.form.confirmPassword,
         })
         this.successMessage = 'Đã cập nhật mật khẩu thành công.'
+        this.$toast?.success(this.successMessage + ' 🔒')
         this.form.currentPassword = ''
         this.form.newPassword = ''
         this.form.confirmPassword = ''
@@ -119,6 +127,7 @@ export default {
           error.response?.data?.message ||
           Object.values(error.response?.data?.errors || {})?.[0]?.[0] ||
           'Không thể đổi mật khẩu. Vui lòng thử lại.'
+        this.$toast?.error(this.errorMessage)
       } finally {
         this.isSubmitting = false
       }

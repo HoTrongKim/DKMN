@@ -210,8 +210,10 @@ export default {
       if (!this.canRate) {
         this.notice.text = 'Chuyến đi chưa đủ điều kiện để đánh giá.'
         this.notice.visible = true
+        this.$toast?.warning(this.notice.text)
         return
       }
+      this.$toast?.info('Đang chuyển đến trang đánh giá...')
       this.$router.push({
         path: '/client-danh-gia',
         query: {
@@ -227,6 +229,7 @@ export default {
       const ok = window.confirm('Bạn có chắc là muốn hủy chuyến đi này không?')
       if (!ok) return
       this.clearTicket()
+      this.$toast?.success('Đã hủy vé thành công!')
     },
     getCurrentUserInfo() {
       try {
@@ -346,11 +349,13 @@ export default {
   },
   async mounted() {
     this.isLoading = true
+    this.$toast?.info('Đang tải thông tin vé của bạn...')
     try {
       const queryTicket = this.ticketFromQuery()
       if (queryTicket) {
         this.saveTicketForOwner(queryTicket)
         this.tickets = this.loadTicketsFromStore()
+        this.$toast?.success('Đã tải thông tin vé thành công! 🎫')
       } else {
         const hasOwner = !!this.getTicketOwnerKey()
         if (hasOwner) {
@@ -358,9 +363,13 @@ export default {
         } else {
           this.tickets = this.loadLegacyTicket()
         }
+        if (this.tickets.length > 0) {
+          this.$toast?.success(`Tìm thấy ${this.tickets.length} vé đã đặt`)
+        }
       }
     } catch (error) {
       this.serverError = 'Không thể tải vé đã đặt. Vui lòng thử lại.'
+      this.$toast?.error(this.serverError)
     } finally {
       this.isLoading = false
     }

@@ -286,6 +286,7 @@ const fetchUsers = async (page = 1) => {
     const message = error?.response?.data?.message || error?.message || 'Không thể tải danh sách người dùng.';
     actionError.value = message;
     actionMessage.value = '';
+    window.$toast?.error?.(message);
     users.value = [];
     emptyMessage.value = message;
   } finally {
@@ -371,9 +372,11 @@ const submitForm = async () => {
       if (!selectedUser.value) throw new Error('Không tìm thấy người dùng đã chọn.');
       await api.patch(`/admin/users/${selectedUser.value.id}`, payload);
       actionMessage.value = 'Đã cập nhật người dùng.';
+      window.$toast?.success?.('Cập nhật người dùng thành công! ✅');
     } else {
       await api.post('/admin/users', payload);
       actionMessage.value = 'Đã thêm người dùng mới.';
+      window.$toast?.success?.('Thêm người dùng mới thành công! 👤');
     }
     actionError.value = '';
     showAdd.value = false;
@@ -381,7 +384,9 @@ const submitForm = async () => {
     const page = isEditMode.value ? pagination.value.currentPage || 1 : 1;
     await fetchUsers(page);
   } catch (error) {
-    formError.value = error?.response?.data?.message || error?.message || 'Không thể lưu người dùng.';
+    const errorMsg = error?.response?.data?.message || error?.message || 'Không thể lưu người dùng.';
+    formError.value = errorMsg;
+    window.$toast?.error?.(errorMsg);
   } finally {
     formSubmitting.value = false;
   }
@@ -393,12 +398,16 @@ const lockOrUnlock = async (user) => {
   actionLoading.value = true;
   try {
     await api.patch(`/admin/users/${user.id}/status`, { status: nextStatus });
-    actionMessage.value = nextStatus === 'locked' ? 'Đã khóa người dùng.' : 'Đã mở khóa người dùng.';
+    const successMsg = nextStatus === 'locked' ? 'Đã khóa người dùng.' : 'Đã mở khóa người dùng.';
+    actionMessage.value = successMsg;
     actionError.value = '';
+    window.$toast?.success?.(successMsg + ' 🔒');
     await fetchUsers(pagination.value.currentPage || 1);
   } catch (error) {
-    actionError.value = error?.response?.data?.message || error?.message || 'Không thể cập nhật trạng thái.';
+    const errorMsg = error?.response?.data?.message || error?.message || 'Không thể cập nhật trạng thái.';
+    actionError.value = errorMsg;
     actionMessage.value = '';
+    window.$toast?.error?.(errorMsg);
   } finally {
     actionLoading.value = false;
   }
@@ -426,13 +435,16 @@ const deleteUser = async (user) => {
     await api.delete(`/admin/users/${user.id}`);
     actionMessage.value = 'Đã xóa người dùng.';
     actionError.value = '';
+    window.$toast?.success?.('Đã xóa người dùng thành công! 🗑️');
     if (selectedId.value === user.id) {
       selectedId.value = null;
     }
     await fetchUsers(1);
   } catch (error) {
-    actionError.value = error?.response?.data?.message || error?.message || 'Không thể xóa người dùng.';
+    const errorMsg = error?.response?.data?.message || error?.message || 'Không thể xóa người dùng.';
+    actionError.value = errorMsg;
     actionMessage.value = '';
+    window.$toast?.error?.(errorMsg);
   } finally {
     actionLoading.value = false;
   }

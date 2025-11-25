@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -68,7 +68,7 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.js" charset="UTF-8"></script>
     <!--Start of Tawk.to Script-->
     <script type="text/javascript">
       var Tawk_API = Tawk_API || {},
@@ -90,6 +90,10 @@
           'Xin chào bạn, chào mừng bạn đến với DKMN! Đó là niềm vui của tôi được giúp bạn. Nhân viên của chúng tôi sẽ sớm hoạt động lại và trả lời tin nhắn của bạn. Và sẽ giải quyết vấn đề này của bạn.'
         let hasShownAutoReply = false
         let pendingTimer = null
+        const TAWK_BOTTOM = 14
+        const TAWK_RIGHT = 14
+        const TAWK_BOTTOM_MOBILE = 8
+        const TAWK_RIGHT_MOBILE = 8
 
         function createGreetingBubble() {
           let bubble = document.getElementById('dkmn-tawk-greeting')
@@ -140,6 +144,53 @@
           }, delay)
         }
 
+        function forceTawkPosition() {
+          const ids = [
+            'tawkchat-minified-wrapper',
+            'tawkchat-maximized-wrapper',
+            'tawkchat-container',
+            'tawkchat-iframe-container',
+            'tawkchat-prompt-wrapper',
+            'tawkchat-prompt-container',
+          ]
+          const isMobile = window.matchMedia('(max-width: 575.98px)').matches
+          const bottom = isMobile ? TAWK_BOTTOM_MOBILE : TAWK_BOTTOM
+          const right = isMobile ? TAWK_RIGHT_MOBILE : TAWK_RIGHT
+
+          ids.forEach((id) => {
+            const el = document.getElementById(id)
+            if (el) {
+              el.style.position = 'fixed'
+              el.style.bottom = `${bottom}px`
+              el.style.right = `${right}px`
+              el.style.left = 'auto'
+              el.style.transform = 'none'
+              el.style.zIndex = '2147483641'
+            }
+          })
+
+          const extras = document.querySelectorAll(
+            '#tawkchat-minified-header, #tawkchat-minified-icon, #tawkchat-status-text-container, [id^=\"tawkchat-\"][style*=\"bottom\"], [class^=\"tawk-\"][style*=\"bottom\"]'
+          )
+          extras.forEach((el) => {
+            el.style.bottom = `${bottom}px`
+            el.style.right = `${right}px`
+            el.style.left = 'auto'
+            el.style.transform = 'none'
+            el.style.zIndex = '2147483641'
+          })
+        }
+
+        function scheduleForcePosition(repeat = 6) {
+          let count = 0
+          forceTawkPosition()
+          const timer = setInterval(() => {
+            forceTawkPosition()
+            count += 1
+            if (count >= repeat) clearInterval(timer)
+          }, 800)
+        }
+
         function wrapTawkHandler(eventName, handler) {
           const api = (window.Tawk_API = window.Tawk_API || {})
           const previous = typeof api[eventName] === 'function' ? api[eventName] : null
@@ -161,18 +212,26 @@
 
         wrapTawkHandler('onLoad', function () {
           hasShownAutoReply = false
+          scheduleForcePosition()
         })
 
         wrapTawkHandler('onChatStarted', function () {
           triggerAutoReply()
+          scheduleForcePosition()
         })
 
         wrapTawkHandler('onMessageSubmit', function () {
           triggerAutoReply()
+          scheduleForcePosition()
         })
 
         wrapTawkHandler('onChatMaximized', function () {
           hideGreeting()
+          scheduleForcePosition()
+        })
+
+        document.addEventListener('DOMContentLoaded', () => {
+          scheduleForcePosition()
         })
       })()
     </script>

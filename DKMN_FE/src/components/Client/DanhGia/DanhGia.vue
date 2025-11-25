@@ -106,6 +106,8 @@ export default {
   methods: {
     setRating(n) {
       this.rating = n
+      const stars = '⭐'.repeat(n)
+      this.$toast?.info(`Bạn đã chọn ${n} sao ${stars}`)
     },
     statusLabel(status) {
       return (
@@ -134,6 +136,7 @@ export default {
           this.existingStatus = record.status
           this.rating = record.rating
           this.comment = record.comment || ''
+          this.$toast?.info('Bạn đã đánh giá chuyến đi này trước đó')
         }
       } catch (error) {
         console.warn('Cannot fetch rating info', error)
@@ -159,6 +162,12 @@ export default {
     },
     async submitRating() {
       if (!this.tripId || this.rating === 0 || this.submitting) return
+      
+      if (this.rating === 0) {
+        this.$toast?.warning('Vui lòng chọn số sao đánh giá!')
+        return
+      }
+
       this.submitting = true
       this.error = ''
       this.success = ''
@@ -172,6 +181,7 @@ export default {
 
         this.success =
           'Cảm ơn bạn đã đánh giá! Đánh giá sẽ được duyệt và hiển thị sau khi xét duyệt.'
+        this.$toast?.success(this.success + ' ⭐')
         this.alreadyRated = true
         this.existingStatus = 'cho_duyet'
         this.persistLocalRating()
@@ -182,6 +192,7 @@ export default {
       } catch (error) {
         this.error =
           error.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.'
+        this.$toast?.error(this.error)
       } finally {
         this.submitting = false
       }
@@ -190,6 +201,9 @@ export default {
   mounted() {
     this.loadFromQuery()
     this.checkExistingRating()
+    if (this.tripId) {
+      this.$toast?.info('Vui lòng đánh giá chuyến đi của bạn! ⭐')
+    }
   },
 }
 </script>

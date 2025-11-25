@@ -121,6 +121,7 @@ export default {
             }
 
             this.isLoading = true;
+            this.$toast?.info('Đang xử lý đăng nhập...');
             try {
                 const response = await api.post(
                     '/nguoi-dung/dang-nhap',

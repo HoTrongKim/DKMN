@@ -4,6 +4,9 @@
     <!-- Aurora Background -->
     <div class="aurora"></div>
 
+    <!-- Snow overlay -->
+    <div class="snow"></div>
+
     <!-- Floating Particles -->
     <span v-for="n in 40" :key="n" class="particle"></span>
 
@@ -45,6 +48,33 @@
 
         <!-- Main 3D Ticket -->
         <div class="ticket-3d tilt" :style="tiltStyle">
+          <div class="ticket-plane">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <defs>
+                <linearGradient id="planeGradient" x1="8" y1="8" x2="52" y2="44" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#93c5fd" />
+                  <stop offset="1" stop-color="#c084fc" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M7 33.5c-.9-.3-.9-1.7 0-2l47-15.5c1-.3 1.9.8 1.4 1.8l-7.4 13.8c-.1.2-.3.3-.5.3l-20.4-.8a.6.6 0 0 0-.4.2l-8.4 9.2c-.3.3-.8.3-1.1-.1l-3.5-4.1a.7.7 0 0 1 .2-1.1l10.6-5.5"
+                fill="url(#planeGradient)"
+                stroke="url(#planeGradient)"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M24.5 36.6 22 47.3c-.1.4-.7.5-.9.1l-3.4-6.5"
+                fill="none"
+                stroke="#e0f2fe"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="45.5" cy="27.5" r="2.3" fill="#e0f2fe" opacity=".9" />
+            </svg>
+          </div>
           <div class="ticket-header">Vé điện tử</div>
           <div class="ticket-body">
             <p>TP.HCM → Hà Nội</p>
@@ -117,6 +147,38 @@ function trackMouse(event) {
 @keyframes auroraMove {
   0% { transform: translateY(-20px); opacity: 0.75; }
   100% { transform: translateY(20px); opacity: 1; }
+}
+
+.snow {
+  position: absolute;
+  inset: -6% 0 0 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.9), transparent 55%),
+    radial-gradient(2px 2px at 80px 120px, rgba(255,255,255,0.85), transparent 55%),
+    radial-gradient(3px 3px at 140px 10px, rgba(255,255,255,0.8), transparent 55%),
+    radial-gradient(2px 2px at 200px 160px, rgba(255,255,255,0.9), transparent 55%);
+  background-size: 220px 240px, 260px 320px, 180px 220px, 240px 300px;
+  background-repeat: repeat;
+  opacity: 0.8;
+  mix-blend-mode: screen;
+  animation: snowFall 22s linear infinite;
+}
+
+.snow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 60px 40px, rgba(255,255,255,0.8), transparent 55%),
+    radial-gradient(3px 3px at 160px 120px, rgba(255,255,255,0.85), transparent 55%),
+    radial-gradient(2px 2px at 260px 90px, rgba(255,255,255,0.8), transparent 55%),
+    radial-gradient(2px 2px at 320px 200px, rgba(255,255,255,0.75), transparent 55%);
+  background-size: 280px 320px, 320px 360px, 240px 300px, 300px 360px;
+  background-repeat: repeat;
+  opacity: 0.9;
+  animation: snowFall 32s linear infinite reverse;
 }
 
 /* ------------------------------------------------------
@@ -204,6 +266,8 @@ function trackMouse(event) {
   border: 1px solid rgba(255,255,255,0.2);
   transform-style: preserve-3d;
   transition: transform .25s ease;
+  position: relative;
+  overflow: visible;
 }
 .ticket-header {
   font-weight: 700;
@@ -258,5 +322,30 @@ function trackMouse(event) {
 @keyframes drift {
   from { transform: translateY(260px) scale(.3); opacity: .3; }
   to { transform: translateY(-140px) scale(1); opacity: .8; }
+}
+
+.ticket-plane {
+  position: absolute;
+  top: -26px;
+  right: -18px;
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.35));
+  animation: planeFloat 6s ease-in-out infinite;
+}
+.ticket-plane svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(10deg);
+}
+
+@keyframes planeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes snowFall {
+  0% { transform: translateY(-10%); }
+  100% { transform: translateY(18%); }
 }
 </style>
