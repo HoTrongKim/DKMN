@@ -25,21 +25,21 @@
                 <span class="pulse"></span>
                 Chuyến đi siêu tiện lợi, <span class="hero__title-highlight">đặt vé online</span>
               </div>
-              <h1 class="hero__title">
+              <!-- <h1 class="hero__title">
                 Trung tâm đặt vé lớn và <span class="hero__title-highlight"> đứng đầu nước Việt Nam</span>
                 <span class="hero__title-contrast">DKMN</span>
-              </h1>
+              </h1> -->
               <p class="hero__subtitle text-white">
-                Trải nghiệm đặt vé xe khách, tàu hỏa, máy bay, tàu biển nhanh chóng và tiện lợi cho người dùng.
+               An toàn của bạn là ưu tiên hàng đầu của chúng tôi. Đặt vé xe khách, tàu hỏa và máy bay một cách nhanh chóng và tiện lợi với DKMN.
               </p>
-              <div class="hero__actions">
+              <!-- <div class="hero__actions">
                 <button class="hero-btn hero-btn--primary" @click="scrollToSearch">
                   Đặt vé ngay
                 </button>
                 <button class="hero-btn hero-btn--ghost" @click="scrollToSearch">
                   Xem lịch chạy
                 </button>
-              </div>
+              </div> -->
 
               <div class="hero__ticket-card">
                 <div class="hero__ticket-icon">
