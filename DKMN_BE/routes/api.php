@@ -139,3 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ratings/me', [RatingClientController::class, 'index']);
     Route::post('/ratings', [RatingClientController::class, 'store']);
 });
+
+// =========================================================
+// ===================== END DKMN API =====================
+// =========================================================
