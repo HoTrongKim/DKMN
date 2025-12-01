@@ -135,6 +135,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/me/orders', [OrderClientController::class, 'index']);
     Route::get('/me/orders/{donHang}', [OrderClientController::class, 'show']);
+    Route::post('/me/orders/{donHang}/cancel', [OrderClientController::class, 'cancel']);
 
     Route::get('/ratings/me', [RatingClientController::class, 'index']);
     Route::post('/ratings', [RatingClientController::class, 'store']);

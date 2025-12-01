@@ -45,6 +45,8 @@ const proxyTarget = process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:8000'
 export default defineConfig({
   plugins: [retryBusyRead(), vue()],
   server: {
+    host: '0.0.0.0',
+    port: Number(process.env.VITE_DEV_PORT) || 5174,
     proxy: {
       '/api': {
         target: proxyTarget,

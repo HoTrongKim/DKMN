@@ -131,4 +131,45 @@ class OrderClientController extends Controller
             default => 'Chưa thanh toán',
         };
     }
+    public function cancel(Request $request, DonHang $donHang): JsonResponse
+    {
+        $user = $request->user('sanctum') ?? $request->user();
+
+        if ((int) $donHang->nguoi_dung_id !== (int) $user->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không có quyền thao tác trên đơn hàng này.',
+            ], 403);
+        }
+
+        if (!in_array($donHang->trang_thai, ['cho_xu_ly', 'da_xac_nhan', 'cho_thanh_toan'])) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không thể hủy đơn hàng ở trạng thái hiện tại.',
+            ], 422);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($donHang) {
+            // 1. Update Order status
+            $donHang->update(['trang_thai' => 'da_huy']);
+
+            // 2. Update Ticket status
+            if ($donHang->ticket) {
+                $donHang->ticket->update(['status' => \App\Models\Ticket::STATUS_CANCELLED]);
+            }
+
+            // 3. Release Seats
+            $donHang->chiTietDonHang->each(function ($detail) {
+                if ($detail->ghe) {
+                    $detail->ghe->update(['trang_thai' => 'trong']);
+                }
+            });
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Hủy đơn hàng thành công.',
+            'data' => $this->transformOrder($donHang->fresh()),
+        ]);
+    }
 }

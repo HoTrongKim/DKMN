@@ -882,6 +882,7 @@
     <div id="features">
       <FeaturesSection />
     </div>
+    <ReviewsSection />
   </div>
 </template>
 
@@ -889,6 +890,7 @@
 import api from "../../../services/api";
 import FeaturesSection from "./FeaturesSection.vue";
 import GioiThieu from "./GioiThieu.vue";
+import ReviewsSection from "./ReviewsSection.vue";
 
 const DEFAULT_CITY_FALLBACKS = [
   { id: 1, name: "Hà Nội" },
@@ -918,6 +920,7 @@ export default {
   components: {
     GioiThieu,
     FeaturesSection,
+    ReviewsSection,
   },
   data() {
     return {

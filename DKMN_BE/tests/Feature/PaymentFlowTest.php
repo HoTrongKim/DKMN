@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\NguoiDung;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\CreatesTicketData;
 use Tests\TestCase;
 
@@ -14,8 +17,10 @@ class PaymentFlowTest extends TestCase
     public function test_qr_webhook_success_reconciles_ticket()
     {
         $ticket = $this->createTicketWithSeats([120000]);
+        $this->authenticateUser($ticket);
+
         $init = $this->withHeaders(['Idempotency-Key' => 'init-qrcode'])
-            ->postJson('/dkmn/payments/qr/init', [
+            ->postJson('/api/dkmn/payments/qr/init', [
                 'ticketId' => $ticket->id,
                 'channel' => 'vietqr',
                 'testMode' => false,
@@ -37,7 +42,7 @@ class PaymentFlowTest extends TestCase
         $webhook = $this->withHeaders([
             'X-Signature' => $signature,
             'X-Idempotency-Key' => 'wh-success',
-        ])->postJson('/dkmn/payments/qr/webhook', $payload);
+        ])->postJson('/api/dkmn/payments/qr/webhook', $payload);
 
         $webhook->assertStatus(200);
 
@@ -57,15 +62,17 @@ class PaymentFlowTest extends TestCase
         $replay = $this->withHeaders([
             'X-Signature' => $signature,
             'X-Idempotency-Key' => 'wh-success',
-        ])->postJson('/dkmn/payments/qr/webhook', $payload);
+        ])->postJson('/api/dkmn/payments/qr/webhook', $payload);
         $replay->assertStatus(200);
     }
 
     public function test_webhook_mismatch_amount_marks_mismatch()
     {
         $ticket = $this->createTicketWithSeats([140000]);
+        $this->authenticateUser($ticket);
+
         $init = $this->withHeaders(['Idempotency-Key' => 'init-mismatch'])
-            ->postJson('/dkmn/payments/qr/init', [
+            ->postJson('/api/dkmn/payments/qr/init', [
                 'ticketId' => $ticket->id,
                 'channel' => 'vietqr',
                 'testMode' => false,
@@ -85,7 +92,7 @@ class PaymentFlowTest extends TestCase
         $webhook = $this->withHeaders([
             'X-Signature' => $signature,
             'X-Idempotency-Key' => 'wh-mismatch',
-        ])->postJson('/dkmn/payments/qr/webhook', $payload);
+        ])->postJson('/api/dkmn/payments/qr/webhook', $payload);
 
         $webhook->assertStatus(422);
 
@@ -105,8 +112,10 @@ class PaymentFlowTest extends TestCase
         config(['payments.allowed_amount_delta' => 1200]);
 
         $ticket = $this->createTicketWithSeats([160000]);
+        $this->authenticateUser($ticket);
+
         $init = $this->withHeaders(['Idempotency-Key' => 'init-delta'])
-            ->postJson('/dkmn/payments/qr/init', [
+            ->postJson('/api/dkmn/payments/qr/init', [
                 'ticketId' => $ticket->id,
                 'channel' => 'vietqr',
                 'testMode' => false,
@@ -128,7 +137,7 @@ class PaymentFlowTest extends TestCase
         $webhook = $this->withHeaders([
             'X-Signature' => $signature,
             'X-Idempotency-Key' => 'wh-delta',
-        ])->postJson('/dkmn/payments/qr/webhook', $payload);
+        ])->postJson('/api/dkmn/payments/qr/webhook', $payload);
 
         $webhook->assertStatus(200);
 
@@ -148,8 +157,9 @@ class PaymentFlowTest extends TestCase
     public function test_onboard_confirm_marks_ticket_paid()
     {
         $ticket = $this->createTicketWithSeats([200000]);
+        $this->authenticateUser($ticket);
 
-        $response = $this->postJson('/dkmn/payments/onboard/confirm', [
+        $response = $this->postJson('/api/dkmn/payments/onboard/confirm', [
             'ticketId' => $ticket->id,
             'operatorId' => 'OP-01',
             'note' => 'Collect cash on board',
@@ -167,5 +177,22 @@ class PaymentFlowTest extends TestCase
             'id' => $ticket->id,
             'status' => 'PAID',
         ]);
+    }
+
+
+    private function authenticateUser($ticket)
+    {
+        $user = NguoiDung::create([
+            'ho_ten' => 'Test User',
+            'email' => 'test' . Str::random(5) . '@test.com',
+            'mat_khau' => bcrypt('password'),
+            'so_dien_thoai' => '0123456789',
+        ]);
+
+        $ticket->donHang->update(['nguoi_dung_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        return $user;
     }
 }

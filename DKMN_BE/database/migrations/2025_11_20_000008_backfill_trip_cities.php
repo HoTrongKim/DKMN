@@ -25,18 +25,28 @@ return new class extends Migration {
         });
 
         // Backfill city ids from tram references to avoid empty search results.
+        // Backfill city ids from tram references to avoid empty search results.
+        // Using correlated subqueries for SQLite compatibility.
         DB::statement(<<<SQL
-UPDATE chuyen_dis cd
-JOIN trams t ON cd.tram_di_id = t.id
-SET cd.noi_di_tinh_thanh_id = t.tinh_thanh_id
-WHERE cd.noi_di_tinh_thanh_id IS NULL
+UPDATE chuyen_dis
+SET noi_di_tinh_thanh_id = (
+    SELECT tinh_thanh_id
+    FROM trams
+    WHERE trams.id = chuyen_dis.tram_di_id
+)
+WHERE noi_di_tinh_thanh_id IS NULL
+  AND tram_di_id IS NOT NULL
 SQL);
 
         DB::statement(<<<SQL
-UPDATE chuyen_dis cd
-JOIN trams t ON cd.tram_den_id = t.id
-SET cd.noi_den_tinh_thanh_id = t.tinh_thanh_id
-WHERE cd.noi_den_tinh_thanh_id IS NULL
+UPDATE chuyen_dis
+SET noi_den_tinh_thanh_id = (
+    SELECT tinh_thanh_id
+    FROM trams
+    WHERE trams.id = chuyen_dis.tram_den_id
+)
+WHERE noi_den_tinh_thanh_id IS NULL
+  AND tram_den_id IS NOT NULL
 SQL);
 
         // Log a hint so operators know the migration ran.

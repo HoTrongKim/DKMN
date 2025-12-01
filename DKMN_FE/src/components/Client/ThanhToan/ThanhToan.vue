@@ -1076,18 +1076,35 @@ const TICKET_HOLD_MINUTES = 10;
           );
 
           try {
-            // Ghi nhận trạng thái chờ thanh toán trên xe; không auto xác nhận thành công
-            await this.recordPayment("tra_sau", "cho_thanh_toan");
+            const { data } = await api.post(PAYMENT_ONBOARD_ENDPOINT, {
+              ticketId: this.ticketId,
+              method: "CASH_ONBOARD",
+              provider: "cash_onboard",
+            });
+            const paymentPayload = data?.data || data || {};
+            const paymentId =
+              paymentPayload.paymentId ||
+              paymentPayload.id ||
+              this.qrModal.paymentId;
+            const paymentAmount =
+              Number(paymentPayload.amount) ||
+              Number(paymentPayload.amount_vnd) ||
+              this.total;
+
+            // Đồng bộ bảng thanh_toan cũ để admin vẫn theo dõi được
+            await this.recordPayment("later", "cho", paymentAmount);
+
             this.setStatus(
               "pending",
               "Chờ thanh toán trên xe",
-              "Vui lòng thanh toán cho nhà xe khi lên xe.",
-              80,
+              "Đã xác nhận giữ vé, vui lòng thanh toán cho nhà xe khi lên xe.",
+              85,
               false
             );
+            this.qrModal.paymentId = paymentId;
             this.$toast?.success("Đặt vé thành công! Vui lòng thanh toán khi lên xe 🚌");
             this.laterModal.visible = true;
-            this.saveTicketToLocal(this.qrModal.paymentId, this.total);
+            this.saveTicketToLocal(paymentId, paymentAmount);
             this.$router.push("/client-ve-da-dat");
           } catch (error) {
             const message =

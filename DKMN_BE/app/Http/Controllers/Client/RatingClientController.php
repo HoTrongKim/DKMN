@@ -88,7 +88,7 @@ class RatingClientController extends Controller
             'chuyen_di_id' => $validated['tripId'],
             'don_hang_id' => $order->id,
             'diem' => $validated['rating'],
-            'nhan_xet' => $validated['comment'] ?: null,
+            'nhan_xet' => $validated['comment'] ?? null,
             'trang_thai' => 'cho_duyet',
             'ngay_tao' => now(),
         ]);

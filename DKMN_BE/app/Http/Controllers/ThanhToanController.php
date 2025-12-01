@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\DonHang;
 use App\Models\ThanhToan;
+use App\Services\TicketNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class ThanhToanController extends Controller
 {
+    public function __construct(
+        private readonly TicketNotificationService $ticketNotificationService
+    ) {
+    }
+
     public function getData()
     {
         return response()->json(['data' => ThanhToan::orderByDesc('ngay_tao')->get()]);
@@ -75,6 +81,8 @@ class ThanhToanController extends Controller
             ]);
         }
 
+        $this->notifyTicketOwner($donHang, $data['trangThai']);
+
         return response()->json([
             'status' => true,
             'message' => 'Lưu trạng thái thanh toán thành công',
@@ -85,5 +93,21 @@ class ThanhToanController extends Controller
     private function generatePaymentCode(): string
     {
         return sprintf('PAY%s-%s', Carbon::now()->format('YmdHis'), Str::upper(Str::random(4)));
+    }
+
+    private function notifyTicketOwner(DonHang $donHang, string $status): void
+    {
+        if (!in_array($status, ['cho', 'thanh_cong'], true)) {
+            return;
+        }
+
+        try {
+            $ticket = $donHang->ticket()->first();
+            if ($ticket) {
+                $this->ticketNotificationService->sendTicketBookedMail($ticket);
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 }
