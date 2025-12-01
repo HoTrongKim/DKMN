@@ -58,6 +58,16 @@ const routes = [
     component: () => import('../components/Client/DanhGia/DanhGia.vue'),
     meta: { layout: 'client' }
   },
+  {
+    path: '/about',
+    component: () => import('../components/Client/About/About.vue'),
+    meta: { layout: 'client' }
+  },
+  {
+    path: '/contact',
+    component: () => import('../components/Client/Contact/Contact.vue'),
+    meta: { layout: 'client' }
+  },
   ///CLientCLient
   {
     path: "/view/home",
@@ -105,6 +115,12 @@ const routes = [
     path: "/view/baocao",
     component: () =>
       import("../components/Admin/QuanLiThongKe/BaoCaoThongKe.vue"),
+    meta: { layout: "admin", requiresAdmin: true },
+  },
+  {
+    path: "/view/lienhe",
+    component: () =>
+      import("../components/Admin/QuanLiLienHe/QuanLiLienHe.vue"),
     meta: { layout: "admin", requiresAdmin: true },
   },
   {

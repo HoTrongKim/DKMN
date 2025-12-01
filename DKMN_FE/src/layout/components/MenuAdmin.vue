@@ -85,6 +85,16 @@
         <Icon icon="mdi:chart-line" width="20" />
         <span v-if="!collapsed">Báo cáo & Thống kê</span>
       </RouterLink>
+
+      <RouterLink
+        to="/view/lienhe"
+        class="menu-item"
+        active-class="active"
+        :data-tip="collapsed ? 'Quản lý liên hệ' : null"
+      >
+        <Icon icon="mdi:email-outline" width="20" />
+        <span v-if="!collapsed">Quản lý liên hệ</span>
+      </RouterLink>
     </nav>
   </aside>
 </template>
