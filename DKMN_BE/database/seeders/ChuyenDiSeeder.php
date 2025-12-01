@@ -14,7 +14,7 @@ class ChuyenDiSeeder extends Seeder
     private const MAX_TRIP_PRICE = 2000;
     private const PRICE_VARIANCE_STEP = 50;
     private const TRIP_START_DATE = '2025-11-01';
-    private const TRIP_DATE_COUNT = 45; // cover 1/11 -> 15/12
+    private const TRIP_DATE_COUNT = 2; // cover 1/11 -> 2/11
     private const BUS_TIME_SLOTS = ['05:45', '13:30', '20:15'];
     private const PLANE_TIME_SLOTS = ['08:00', '15:00', '20:30'];
     private const TRAIN_TIME_SLOTS = ['06:10', '18:20'];
@@ -30,7 +30,7 @@ class ChuyenDiSeeder extends Seeder
     {
         Schema::disableForeignKeyConstraints();
         DB::table('chuyen_dis')->delete();
-        Schema::enableForeignKeyConstraints();
+        // Schema::enableForeignKeyConstraints();
 
         $operatorLookup = $this->buildLookupMap(
             DB::table('nha_van_hanhs')->get(['id', 'ten'])

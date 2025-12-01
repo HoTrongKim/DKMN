@@ -10,54 +10,64 @@ class GheSeeder extends Seeder
 {
     public function run(): void
     {
+
+
+        // We can skip truncate if we assume migrate:fresh was run, 
+        // or keep it but handle errors gracefully.
+        // Since DatabaseSeeder disables FK checks, we might not need to do it here again,
+        // but for safety when running individually:
         Schema::disableForeignKeyConstraints();
-        DB::table('ghes')->delete();
+        try {
+            DB::table('ghes')->truncate();
+        } catch (\Exception $e) {
+            try {
+                DB::table('ghes')->delete();
+            } catch (\Exception $e2) {
+                // ignore
+            }
+        }
         Schema::enableForeignKeyConstraints();
 
         $now = now();
 
-        $trips = DB::table('chuyen_dis')
+        // Use chunkById to avoid loading all trips into memory
+        DB::table('chuyen_dis')
             ->join('nha_van_hanhs', 'chuyen_dis.nha_van_hanh_id', '=', 'nha_van_hanhs.id')
             ->select('chuyen_dis.id', 'chuyen_dis.gia_co_ban', 'chuyen_dis.tong_ghe', 'nha_van_hanhs.loai')
             ->orderBy('chuyen_dis.id')
-            ->get();
-
-        foreach ($trips as $trip) {
-            $seatCount = (int) $trip->tong_ghe;
-            $available = 0;
-            $chunk = [];
-
-            for ($i = 1; $i <= $seatCount; $i++) {
-                $status = $this->seatStatus($i);
-                $chunk[] = [
-                    'chuyen_di_id' => $trip->id,
-                    'so_ghe' => $this->seatLabel($trip->loai, $i),
-                    'loai_ghe' => $this->seatType($trip->loai),
-                    'gia' => $trip->gia_co_ban,
-                    'trang_thai' => $status,
-                    'ngay_tao' => $now,
-                ];
-
-                if ($status === 'trong') {
-                    $available++;
+            ->chunkById(500, function ($trips) use ($now) {
+                foreach ($trips as $trip) {
+                    $this->processTrip($trip, $now);
                 }
+            }, 'chuyen_dis.id', 'id');
+    }
 
-                if (count($chunk) >= 1000) {
-                    DB::table('ghes')->insert($chunk);
-                    $chunk = [];
-                }
-            }
+    private function processTrip($trip, $now)
+    {
+        $seatCount = (int) $trip->tong_ghe;
+        $chunk = [];
 
-            if (!empty($chunk)) {
+        for ($i = 1; $i <= $seatCount; $i++) {
+            $status = $this->seatStatus($i);
+            $chunk[] = [
+                'chuyen_di_id' => $trip->id,
+                'so_ghe' => $this->seatLabel($trip->loai, $i),
+                'loai_ghe' => $this->seatType($trip->loai),
+                'gia' => $trip->gia_co_ban,
+                'trang_thai' => $status,
+                'ngay_tao' => $now,
+            ];
+
+            if (count($chunk) >= 100) {
+                DB::reconnect();
                 DB::table('ghes')->insert($chunk);
+                $chunk = [];
             }
+        }
 
-            DB::table('chuyen_dis')
-                ->where('id', $trip->id)
-                ->update([
-                    'ghe_con' => $available,
-                    'ngay_cap_nhat' => now(),
-                ]);
+        if (!empty($chunk)) {
+            DB::reconnect();
+            DB::table('ghes')->insert($chunk);
         }
     }
 
