@@ -90,6 +90,10 @@ class UserAdminController extends Controller
         ], 201);
     }
 
+    /**
+     * Cập nhật thông tin người dùng
+     * Cho phép sửa: name, email, phone, role, status, password
+     */
     public function update(Request $request, NguoiDung $nguoiDung)
     {
         $validated = $request->validate([
@@ -145,10 +149,10 @@ class UserAdminController extends Controller
     }
 
     /**
-     * Cập nhật thông tin người dùng
-     * Cho phép sửa: name, email, phone, role, status, password
+     * Cập nhật trạng thái người dùng (active/locked)
+     * Nhanh hơn update vì chỉ sửa status
      */
-    public function update(Request $request, NguoiDung $nguoiDung)
+    public function updateStatus(Request $request, NguoiDung $nguoiDung)
     {
         $validated = $request->validate([
             'status' => ['required', Rule::in(['active', 'locked'])],
@@ -166,10 +170,11 @@ class UserAdminController extends Controller
     }
 
     /**
-     * Cập nhật trạng thái người dùng (active/locked)
-     * Nhanh hơn update vì chỉ sửa status
+     * Xóa người dùng khỏi hệ thống
+     * Kiểm tra không cho xóa chính mình, nullify foreign keys trước khi xóa
+     * Sử dụng DB transaction để đảm bảo tính toàn vẹn dữ liệu
      */
-    public function updateStatus(Request $request, NguoiDung $nguoiDung)
+    public function destroy(Request $request, NguoiDung $nguoiDung)
     {
         $authId = $request->user()?->id;
         if ($authId && $nguoiDung->id === (int) $authId) {
