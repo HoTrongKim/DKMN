@@ -9,8 +9,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller quản lý thông báo (notifications) cho Admin
+ * Admin gửi thông báo tới khách hàng (bulk messaging)
+ * Hỗ trợ gửi theo user IDs hoặc emails
+ */
 class NotificationAdminController extends Controller
 {
+    /**
+     * Danh sách notification gần đây (limit tối đa 100)
+     * Eager load: nguoiDung
+     */
     public function index(Request $request)
     {
         $limitInput = $request->input('limit', 20);
@@ -34,6 +43,11 @@ class NotificationAdminController extends Controller
         ]);
     }
 
+    /**
+     * Tạo thông báo mới gửi tới khách hàng (bulk insert)
+     * Hỗ trợ gửi theo recipientIds hoặc recipientEmails
+     * Chỉ gửi cho user có vai_tro != 'quan_tri'
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -98,6 +112,9 @@ class NotificationAdminController extends Controller
         ], 201);
     }
 
+    /**
+     * Xóa notification
+     */
     public function destroy(ThongBao $thongBao)
     {
         $thongBao->delete();
@@ -108,6 +125,9 @@ class NotificationAdminController extends Controller
         ]);
     }
 
+    /**
+     * Transform notification object sang format API response
+     */
     private function transform(ThongBao $notification): array
     {
         return [

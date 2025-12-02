@@ -8,8 +8,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller quản lý đánh giá (ratings/reviews) cho Admin
+ * Xem danh sách, duyệt (approve/reject), xóa đánh giá của khách hàng
+ */
 class RatingAdminController extends Controller
 {
+    /**
+     * Danh sách đánh giá có filter: rating (1-5), status, search (theo tên khách/tuyến)
+     * Eager load: nguoiDung, chuyenDi.tramDi, chuyenDi.tramDen
+     */
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -61,6 +69,10 @@ class RatingAdminController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Cập nhật trạng thái đánh giá (cho_duyet/chap_nhan/tu_choi)
+     * Admin duyệt hoặc từ chối review của khách
+     */
     public function update(Request $request, DanhGia $danhGia): JsonResponse
     {
         $validated = $request->validate([
@@ -77,6 +89,9 @@ class RatingAdminController extends Controller
         ]);
     }
 
+    /**
+     * Xóa đánh giá (admin có quyền xóa review không phù hợp)
+     */
     public function destroy(DanhGia $danhGia): JsonResponse
     {
         $danhGia->delete();

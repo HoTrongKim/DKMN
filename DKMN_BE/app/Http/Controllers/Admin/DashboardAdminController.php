@@ -15,8 +15,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller quản lý dashboard và thống kê tổng quan cho Admin
+ * Xử lý các API trả về dữ liệu dashboard, báo cáo theo kỳ
+ */
 class DashboardAdminController extends Controller
 {
+    /**
+     * Lấy dữ liệu tổng quan dashboard
+     * Trả về: số liệu hôm nay, tổng vé/doanh thu, đơn gần đây, tuyến hot, doanh thu 6 tháng
+     */
     public function overview()
     {
         $today = Carbon::today();
@@ -92,6 +100,10 @@ class DashboardAdminController extends Controller
         ]);
     }
 
+    /**
+     * Tính doanh thu theo tháng (6 tháng gần nhất)
+     * Gộp doanh thu thủ công (thanh_toans) và online (payments nếu có)
+     */
     private function monthlyRevenue(bool $hasPaymentsTable): array
     {
         $from = Carbon::now()->subMonths(5)->startOfMonth();
@@ -125,6 +137,10 @@ class DashboardAdminController extends Controller
         ])->values()->toArray();
     }
 
+    /**
+     * Tạo báo cáo chi tiết theo kỳ (tuần/tháng/quý/năm)
+     * Bao gồm: tổng vé, doanh thu, tỷ lệ hủy, đánh giá trung bình, tuyến hot, nhà vận hành tốt nhất
+     */
     public function report(Request $request)
     {
         $validated = $request->validate([
@@ -212,6 +228,10 @@ class DashboardAdminController extends Controller
         ]);
     }
 
+    /**
+     * Kiểm tra xem bảng payments (thanh toán online) có tồn tại và đầy đủ cột không
+     * Cache kết quả để tránh query nhiều lần
+     */
     protected function hasPaymentsTable(): bool
     {
         static $cache = null;
@@ -231,6 +251,10 @@ class DashboardAdminController extends Controller
         return $cache;
     }
 
+    /**
+     * Chuyển đổi period (week/month/quarter/year) thành khoảng thời gian Carbon
+     * Trả về [start, end] để filter dữ liệu
+     */
     private function resolvePeriodRange(string $period): array
     {
         $end = Carbon::now()->endOfDay();
@@ -245,6 +269,10 @@ class DashboardAdminController extends Controller
         return [$start, $end];
     }
 
+    /**
+     * Tính tổng doanh thu trong một ngày cụ thể
+     * Gộp manual (thanh_toans) và online (payments nếu có)
+     */
     private function dailyRevenue(Carbon $date, bool $hasPaymentsTable): float
     {
         $manual = ThanhToan::where('trang_thai', 'thanh_cong')

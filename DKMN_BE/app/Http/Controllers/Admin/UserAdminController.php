@@ -17,8 +17,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller quản lý người dùng (admin + khách hàng)
+ * CRUD user, phân quyền, khóa/mở tài khoản
+ */
 class UserAdminController extends Controller
 {
+    /**
+     * Danh sách người dùng có filter: keyword, status (active/locked), role (admin/customer)
+     * Trả về paginated data
+     */
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -52,6 +60,10 @@ class UserAdminController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Tạo người dùng mới (admin hoặc customer)
+     * Require: name, email, phone, password, role, status
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -132,7 +144,11 @@ class UserAdminController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, NguoiDung $nguoiDung)
+    /**
+     * Cập nhật thông tin người dùng
+     * Cho phép sửa: name, email, phone, role, status, password
+     */
+    public function update(Request $request, NguoiDung $nguoiDung)
     {
         $validated = $request->validate([
             'status' => ['required', Rule::in(['active', 'locked'])],
@@ -149,7 +165,11 @@ class UserAdminController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, NguoiDung $nguoiDung)
+    /**
+     * Cập nhật trạng thái người dùng (active/locked)
+     * Nhanh hơn update vì chỉ sửa status
+     */
+    public function updateStatus(Request $request, NguoiDung $nguoiDung)
     {
         $authId = $request->user()?->id;
         if ($authId && $nguoiDung->id === (int) $authId) {
@@ -187,6 +207,10 @@ class UserAdminController extends Controller
         ]);
     }
 
+    /**
+     * Transform user object sang format API response
+     * Map role và status labels tiếng Việt
+     */
     private function transformUser(NguoiDung $user): array
     {
         $roleCode = $this->normalizeRole($user->vai_tro);
@@ -206,16 +230,25 @@ class UserAdminController extends Controller
         ];
     }
 
+    /**
+     * Normalize role: quan_tri → admin, khác → customer
+     */
     private function normalizeRole(?string $role): string
     {
         return $role === 'quan_tri' ? 'admin' : 'customer';
     }
 
+    /**
+     * Normalize status: khoa → locked, khác → active
+     */
     private function normalizeStatus(?string $status): string
     {
         return $status === 'khoa' ? 'locked' : 'active';
     }
 
+    /**
+     * Map role code sang label tiếng Việt
+     */
     private function mapRoleLabel(string $roleCode): string
     {
         return match ($roleCode) {
@@ -224,6 +257,9 @@ class UserAdminController extends Controller
         };
     }
 
+    /**
+     * Map status code sang label tiếng Việt
+     */
     private function mapStatusLabel(string $statusCode): string
     {
         return match ($statusCode) {
@@ -232,6 +268,9 @@ class UserAdminController extends Controller
         };
     }
 
+    /**
+     * Format datetime cho display (mặc định: d/m/Y H:i)
+     */
     private function formatDisplayDate($value, string $format = 'd/m/Y H:i'): ?string
     {
         if (!$value) {

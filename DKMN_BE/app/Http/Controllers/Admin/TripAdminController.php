@@ -17,10 +17,19 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Controller quản lý chuyến đi/tuyến (trips/routes) cho Admin
+ * CRUD trips, quản lý ghế, validation tuyến (province consistency)
+ * Gửi thông báo email + app khi có thay đổi chuyến đi
+ */
 class TripAdminController extends Controller
 {
     private static ?bool $tripProvinceColumns = null;
 
+    /**
+     * Danh sách chuyến đi có filter phức tạp: keyword, status, type, operatorId, dateFrom, dateTo
+     * Eager load: nhà vận hành, trạm đi/đến, tỉnh thành
+     */
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -85,6 +94,9 @@ class TripAdminController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Chi tiết chuyến đi với đầy đủ thông tin: trip, operator, stations, provinces
+     */
     public function show(ChuyenDi $chuyenDi)
     {
         $chuyenDi->load([
@@ -101,6 +113,11 @@ class TripAdminController extends Controller
         ]);
     }
 
+    /**
+     * Tạo chuyến đi mới
+     * Validate: province consistency (trạm đi/đến phải khác tỉnh)
+     * Auto sync seats sau khi tạo
+     */
     public function store(Request $request)
     {
         $payload = $this->validateTripPayload($request);
@@ -122,6 +139,11 @@ class TripAdminController extends Controller
         ], 201);
     }
 
+    /**
+     * Cập nhật chuyến đi
+     * Nếu sửa giá/thời gian/tuyến → nên thông báo khách đã đặt vé
+     * Auto sync seats sau khi update
+     */
     public function update(Request $request, ChuyenDi $chuyenDi)
     {
         $payload = $this->validateTripPayload($request, true);
@@ -148,6 +170,9 @@ class TripAdminController extends Controller
         ]);
     }
 
+    /**
+     * Xóa chuyến đi (chỉ cho phép nếu chưa có đơn hàng)
+     */
     public function destroy(ChuyenDi $chuyenDi)
     {
         if ($chuyenDi->donHangs()->exists()) {
@@ -165,6 +190,10 @@ class TripAdminController extends Controller
         ]);
     }
 
+    /**
+     * Gửi thông báo tới khách đã đặt vé về thay đổi chuyến đi
+     * Hỗ trợ channels: email, app (in-app notification)
+     */
     public function notify(Request $request, ChuyenDi $chuyenDi)
     {
         $validated = $request->validate([
@@ -226,6 +255,10 @@ class TripAdminController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Build notification title: "Thông báo chuyến X → Y (HH:mm dd/mm/YYYY)"
+     */
     private function buildNotificationTitle(ChuyenDi $trip): string
     {
         $from = $trip->tramDi->ten ?? 'Điểm đi';
@@ -235,6 +268,10 @@ class TripAdminController extends Controller
         return trim(sprintf('Thông báo chuyến %s → %s %s', $from, $to, $time ? "($time)" : ''));
     }
 
+    /**
+     * Build trip summary array cho email/notification
+     * Trả về: route, operator, vehicle, departure, arrival
+     */
     private function buildTripSummary(ChuyenDi $trip): array
     {
         return [
@@ -246,6 +283,9 @@ class TripAdminController extends Controller
         ];
     }
 
+    /**
+     * Convert string có dấu sang ASCII (dùng cho keyword search)
+     */
     private function ascii(?string $value): ?string
     {
         if ($value === null) {
@@ -254,6 +294,12 @@ class TripAdminController extends Controller
 
         return Str::ascii($value);
     }
+
+    /**
+     * Validate trip payload (tạo mới hoặc update)
+     * Check: province consistency (trạm đi/đến phải khác tỉnh)
+     * Auto fill province IDs từ station nếu chưa có
+     */
     private function validateTripPayload(Request $request, bool $isUpdate = false): array
     {
         $hasProvinceColumns = $this->hasTripProvinceColumns();
@@ -350,6 +396,9 @@ class TripAdminController extends Controller
         return $payload;
     }
 
+    /**
+     * Validate station và province consistency: station phải thuộc province đã chọn
+     */
     private function validateStationProvinceConsistency(?Tram $station, ?int $provinceId, string $field): void
     {
         if (!$station || !$provinceId) {
@@ -363,6 +412,10 @@ class TripAdminController extends Controller
         }
     }
 
+    /**
+     * Check xem bảng chuyen_dis có columns noi_di_tinh_thanh_id và noi_den_tinh_thanh_id không
+     * Cache kết quả trong static variable
+     */
     private function hasTripProvinceColumns(): bool
     {
         if (self::$tripProvinceColumns === null) {
@@ -374,6 +427,10 @@ class TripAdminController extends Controller
         return self::$tripProvinceColumns;
     }
 
+    /**
+     * Transform trip object sang format API response
+     * Tính toán derived status (COMPLETED nếu đã qua giờ đến, map status labels)
+     */
     private function transformTrip(ChuyenDi $trip): array
     {
         $operator = $trip->nhaVanHanh;
@@ -429,6 +486,9 @@ class TripAdminController extends Controller
         ];
     }
 
+    /**
+     * Derive status từ trip: check HUY, check đã qua giờ đến (COMPLETED), hoặc map từ trang_thai
+     */
     private function deriveStatus(ChuyenDi $trip): array
     {
         $rawNormalized = $this->normalizeStatus($trip->trang_thai);
@@ -456,6 +516,9 @@ class TripAdminController extends Controller
         ];
     }
 
+    /**
+     * Map trip status sang status code (AVAILABLE/SOLD_OUT/CANCELLED/COMPLETED)
+     */
     private function mapTripStatusCode(?string $status): string
     {
         return match ($status) {
@@ -467,6 +530,9 @@ class TripAdminController extends Controller
         };
     }
 
+    /**
+     * Map trip status sang label tiếng Việt
+     */
     private function mapTripStatus(?string $status): string
     {
         return match ($status) {
@@ -478,6 +544,9 @@ class TripAdminController extends Controller
         };
     }
 
+    /**
+     * Normalize status: AVAILABLE/CON_VE → CON_VE, SOLD_OUT/HET_VE → HET_VE, CANCELLED/HUY → HUY
+     */
     private function normalizeStatus(?string $status): ?string
     {
         if (!$status) {
@@ -492,6 +561,9 @@ class TripAdminController extends Controller
         };
     }
 
+    /**
+     * Map operator type từ DB (tau_hoa/may_bay/xe_khach) sang API format (train/plane/bus)
+     */
     private function mapOperatorType(?string $type): string
     {
         return match ($type) {
@@ -502,6 +574,9 @@ class TripAdminController extends Controller
         };
     }
 
+    /**
+     * Map frontend type (bus/train/plane) sang internal DB value (xe_khach/tau_hoa/may_bay)
+     */
     private function mapFrontendTypeToInternal(?string $type): ?string
     {
         if (!$type) {

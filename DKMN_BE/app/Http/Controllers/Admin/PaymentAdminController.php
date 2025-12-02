@@ -15,8 +15,17 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
+/**
+ * Controller quản lý thanh toán và xuất báo cáo cho Admin
+ * Xử lý cả thanh toán online (Payment) và manual (ThanhToan)
+ * Export Excel với thống kê tổng hợp
+ */
 class PaymentAdminController extends Controller
 {
+    /**
+     * Danh sách giao dịch có filter: type (online/manual), status, method, dateFrom, dateTo
+     * Merge 2 table: payments (online) và thanh_toans (manual)
+     */
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -41,6 +50,11 @@ class PaymentAdminController extends Controller
         return $this->onlinePayments($request, $validated);
     }
 
+    /**
+     * Xuất báo cáo thanh toán ra file Excel
+     * Hỗ trợ filter tương tự index + limit row
+     * Có summary: tổng giao dịch, tổng tiền, tỷ lệ thành công...
+     */
     public function export(Request $request): BinaryFileResponse|JsonResponse
     {
         $validated = $request->validate([
@@ -94,6 +108,10 @@ class PaymentAdminController extends Controller
         return Excel::download($export, $fileName);
     }
 
+    /**
+     * Query thanh toán online từ bảng payments (paginated)
+     * Transform: lấy order ID, map status label
+     */
     private function onlinePayments(Request $request, array $filters)
     {
         $paginator = $this->onlinePaymentsQuery($filters)->paginate($this->resolvePerPage($request));
@@ -115,6 +133,10 @@ class PaymentAdminController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Query thanh toán manual từ bảng thanh_toans (paginated)
+     * Transform: lấy order ID, map status label, method = 'MANUAL'
+     */
     private function manualPayments(Request $request, array $filters)
     {
         $paginator = $this->manualPaymentsQuery($filters)->paginate($this->resolvePerPage($request));
@@ -136,6 +158,10 @@ class PaymentAdminController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Build query cho payments table (online payments)
+     * Filters: status, method, dateFrom, dateTo
+     */
     private function onlinePaymentsQuery(array $filters): Builder
     {
         $query = Payment::query()->with('ticket.donHang')->orderByDesc('paid_at');
@@ -159,6 +185,10 @@ class PaymentAdminController extends Controller
         return $query;
     }
 
+    /**
+     * Build query cho thanh_toans table (manual payments)
+     * Filters: status, method, dateFrom, dateTo
+     */
     private function manualPaymentsQuery(array $filters): Builder
     {
         $query = ThanhToan::query()->with('donHang')->orderByDesc('thoi_diem_thanh_toan');
@@ -182,6 +212,9 @@ class PaymentAdminController extends Controller
         return $query;
     }
 
+    /**
+     * Map status từ filter input (success/failed/refunded) sang online payment DB status
+     */
     private function mapOnlineStatus(string $status): string
     {
         return match ($status) {
@@ -192,6 +225,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Map status từ filter input sang manual payment DB status
+     */
     private function mapManualStatus(string $status): string
     {
         return match ($status) {
@@ -201,6 +237,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Map online payment status sang label tiếng Việt
+     */
     private function mapOnlineStatusLabel(?string $status): string
     {
         return match ($status) {
@@ -212,6 +251,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Map manual payment status sang label tiếng Việt
+     */
     private function mapManualStatusLabel(?string $status): string
     {
         return match ($status) {
@@ -221,6 +263,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Trả về response rỗng khi bảng payments chưa tồn tại
+     */
     private function emptyOnlinePaymentsResponse(Request $request): JsonResponse
     {
         $perPage = $this->resolvePerPage($request);
@@ -237,6 +282,9 @@ class PaymentAdminController extends Controller
         ]);
     }
 
+    /**
+     * Transform online payments thành rows cho Excel export
+     */
     private function mapOnlineExportRows(Collection $payments): Collection
     {
         return $payments->map(function (Payment $payment) {
@@ -257,6 +305,9 @@ class PaymentAdminController extends Controller
         });
     }
 
+    /**
+     * Transform manual payments thành rows cho Excel export
+     */
     private function mapManualExportRows(Collection $payments): Collection
     {
         return $payments->map(function (ThanhToan $payment) {
@@ -277,6 +328,9 @@ class PaymentAdminController extends Controller
         });
     }
 
+    /**
+     * Tính tổng summary từ export rows: tổng tiền, tổng số, count theo status
+     */
     private function summarizeExportRows(Collection $rows): array
     {
         return [
@@ -288,6 +342,9 @@ class PaymentAdminController extends Controller
         ];
     }
 
+    /**
+     * Convert online payment status sang status key (success/refunded/failed/pending)
+     */
     private function statusKeyFromOnline(?string $status): string
     {
         return match ($status) {
@@ -298,6 +355,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Convert manual payment status sang status key (success/refunded/pending)
+     */
     private function statusKeyFromManual(?string $status): string
     {
         return match ($status) {
@@ -307,6 +367,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Resolve limit cho export (min: 100, max: 10000, default: 2000)
+     */
     private function resolveExportLimit(Request $request): int
     {
         $limit = (int) $request->input('limit', 2000);
@@ -314,6 +377,9 @@ class PaymentAdminController extends Controller
         return max(100, min(10000, $limit));
     }
 
+    /**
+     * Mô tả filters đang áp dụng (type, method, status) cho Excel
+     */
     private function describeFilters(array $filters, string $type): string
     {
         $parts = [
@@ -331,6 +397,9 @@ class PaymentAdminController extends Controller
         return implode(' | ', array_filter($parts)) ?: 'Không áp dụng bộ lọc bổ sung';
     }
 
+    /**
+     * Mô tả khoảng thời gian filter (dateFrom → dateTo) cho Excel
+     */
     private function describePeriod(array $filters): string
     {
         $from = $filters['dateFrom'] ?? null;
@@ -351,11 +420,17 @@ class PaymentAdminController extends Controller
         return 'Toàn bộ thời gian';
     }
 
+    /**
+     * Format date label cho display (d/m/Y)
+     */
     private function formatDateLabel(string $value): string
     {
         return Carbon::parse($value)->format('d/m/Y');
     }
 
+    /**
+     * Map filter status input sang label tiếng Việt
+     */
     private function filterStatusLabel(string $status): string
     {
         return match ($status) {
@@ -366,6 +441,9 @@ class PaymentAdminController extends Controller
         };
     }
 
+    /**
+     * Format order code cho display (ORD-000123 hoặc "—" nếu null)
+     */
     private function formatOrderCode(?int $orderId): string
     {
         if (!$orderId) {

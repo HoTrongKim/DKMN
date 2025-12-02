@@ -15,8 +15,17 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller quản lý đơn hàng/vé cho Admin
+ * CRUD orders, cập nhật status, giải phóng ghế khi hủy đơn
+ * Xử lý logic refund và nullify foreign keys
+ */
 class OrderAdminController extends Controller
 {
+    /**
+     * Danh sách đơn hàng có filter: search (mã đơn/tên khách/email/phone), status, paymentStatus
+     * Eager load: chuyến đi, trạm, nhà vận hành, user, tickets, thanh toán, ghế
+     */
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -80,6 +89,10 @@ class OrderAdminController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Chi tiết đơn hàng: order info + items (tickets/seats) + payments
+     * Eager load: chuyến đi chi tiết, ghế, thanh toán
+     */
     public function show(DonHang $donHang)
     {
         $donHang->load([
@@ -117,6 +130,10 @@ class OrderAdminController extends Controller
         ]);
     }
 
+    /**
+     * Cập nhật đơn hàng: status (cho_xu_ly/da_xac_nhan/hoan_tat/da_huy), paymentStatus
+     * Xử lý logic refund nếu cần
+     */
     public function update(Request $request, DonHang $donHang)
     {
         $validated = $request->validate([
@@ -154,6 +171,10 @@ class OrderAdminController extends Controller
         ]);
     }
 
+    /**
+     * Xóa đơn hàng: giải phóng ghế, xóa ratings/payments, nullify foreign keys
+     * Dùng DB transaction để đảm bảo tính toàn vẹn
+     */
     public function destroy(DonHang $donHang)
     {
         DB::transaction(function () use ($donHang) {
@@ -175,6 +196,10 @@ class OrderAdminController extends Controller
         ]);
     }
 
+    /**
+     * Transform order object sang format API response
+     * Lấy thông tin: customer, trip, status, payment, tính toán labels
+     */
     private function transformOrder(DonHang $order): array
     {
         $trip = $order->chuyenDi;
@@ -220,6 +245,9 @@ class OrderAdminController extends Controller
         ];
     }
 
+    /**
+     * Map filter status từ frontend sang DB values
+     */
     private function mapFilterStatus(string $status): string
     {
         return match ($status) {
@@ -231,6 +259,9 @@ class OrderAdminController extends Controller
         };
     }
 
+    /**
+     * Map order status sang label tiếng Việt
+     */
     private function mapStatusLabel(?string $status): string
     {
         return match ($status) {
@@ -242,6 +273,9 @@ class OrderAdminController extends Controller
         };
     }
 
+    /**
+     * Resolve payment status code từ order's thanhToans
+     */
     private function resolvePaymentStatusCode(DonHang $order): string
     {
         $latest = $order->thanhToans->first();
@@ -252,6 +286,9 @@ class OrderAdminController extends Controller
         };
     }
 
+    /**
+     * Map payment status code sang label tiếng Việt (Đã TT/Hoàn tiền/Chờ TT)
+     */
     private function mapPaymentLabel(string $statusCode): string
     {
         return match ($statusCode) {
@@ -261,6 +298,9 @@ class OrderAdminController extends Controller
         };
     }
 
+    /**
+     * Đồng bộ payment status: tạo ThanhToan record mới với status và gateway
+     */
     private function syncPaymentStatus(DonHang $order, string $status, string $gateway): void
     {
         $statusMap = [
@@ -284,6 +324,10 @@ class OrderAdminController extends Controller
         ]);
     }
 
+    /**
+     * Giải phóng ghế khi hủy đơn: set ghế về 'trong', tăng ghe_con của trip
+     * Return: số ghế đã giải phóng
+     */
     private function releaseSeats(DonHang $order): int
     {
         $seatIds = $order->chiTietDonHang()->pluck('ghe_id')->filter()->values();
@@ -309,6 +353,9 @@ class OrderAdminController extends Controller
         return $seatIds->count();
     }
 
+    /**
+     * Format datetime cho display (default: d/m/Y H:i)
+     */
     private function formatDisplayDate($value, string $format = 'd/m/Y H:i'): ?string
     {
         if (!$value) {
