@@ -16,6 +16,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller xử lý thanh toán qua cổng VNPAY
+ * Tạo payment intent, xử lý IPN webhook từ VNPAY, xử lý return URL sau thanh toán
+ */
 class VnpayController extends Controller
 {
     public function __construct(
@@ -26,6 +30,11 @@ class VnpayController extends Controller
     ) {
     }
 
+    /**
+     * Khởi tạo payment intent với VNPAY
+     * Tạo payment record và build URL chuyển hướng đến VNPAY
+     * Hỗ trợ idempotency key để tránh tạo payment trùng lặp
+     */
     public function init(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -124,6 +133,11 @@ class VnpayController extends Controller
         ], 201);
     }
 
+    /**
+     * Xử lý IPN (Instant Payment Notification) từ VNPAY
+     * Verify signature, kiểm tra amount, cập nhật status payment
+     * VNPAY gọi webhook này khi thanh toán thành công/thất bại
+     */
     public function ipn(Request $request): JsonResponse
     {
         $payload = $request->all();
@@ -186,6 +200,11 @@ class VnpayController extends Controller
         return $this->ipnResponse('00', 'Confirm success', $payment->fresh());
     }
 
+    /**
+     * Xử lý return URL sau khi user hoàn tất thanh toán trên VNPAY
+     * User được redirect về đây kèm query params chứa kết quả
+     * Verify signature và complete payment nếu thành công
+     */
     public function handleReturn(Request $request): JsonResponse
     {
         $payload = $request->all();
@@ -228,6 +247,11 @@ class VnpayController extends Controller
         ]);
     }
 
+    /**
+     * Complete payment: cập nhật status thành succeeded, set paid_at
+     * Cập nhật amount trên ticket và gửi email xác nhận
+     * Sử dụng DB transaction để đảm bảo tính toàn vẹn
+     */
     private function completePayment(
         Payment $payment,
         int $amount,
@@ -255,6 +279,10 @@ class VnpayController extends Controller
         return $ticketForMail;
     }
 
+    /**
+     * Format response cho IPN theo chuẩn của VNPAY
+     * RspCode: 00=success, 97=invalid signature, 01=not found, 04=amount mismatch
+     */
     private function ipnResponse(string $code, string $message, ?Payment $payment = null): JsonResponse
     {
         $data = [
@@ -269,6 +297,10 @@ class VnpayController extends Controller
         return response()->json($data);
     }
 
+    /**
+     * Kiểm tra quyền sở hữu vé: chỉ cho phép user tạo order hoặc admin
+     * Return null nếu OK, return JsonResponse nếu unauthorized/forbidden
+     */
     private function guardTicketOwner(Request $request, Ticket $ticket): ?JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -296,6 +328,9 @@ class VnpayController extends Controller
         return null;
     }
 
+    /**
+     * Helper response với payment data đã serialize
+     */
     private function respondWithPayment(Payment $payment, int $status = 200): JsonResponse
     {
         return response()->json([
@@ -304,6 +339,10 @@ class VnpayController extends Controller
         ], $status);
     }
 
+    /**
+     * Transform payment model sang format API response
+     * Include: paymentId, status, method, amount, QR URL, timestamps
+     */
     private function serializePayment(Payment $payment): array
     {
         return [

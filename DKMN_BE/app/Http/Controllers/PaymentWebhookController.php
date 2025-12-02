@@ -8,12 +8,24 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
+/**
+ * Controller xử lý webhook từ SePay (ngân hàng tự động đối soát)
+ * Nhận thông báo chuyển khoản từ SePay, extract mã order, tìm payment tương ứng và mark succeeded
+ */
 class PaymentWebhookController extends Controller
 {
     public function __construct(private readonly PaymentReconcileService $reconcileService)
     {
     }
 
+    /**
+     * Xử lý webhook từ SePay
+     * - Xác thực token/API key
+     * - Kiểm tra IP whitelist (nếu có)
+     * - Extract order code từ description hoặc payload
+     * - Tìm payment pending tương ứng
+     * - Mark payment succeeded nếu match
+     */
     public function handleSepay(Request $request): JsonResponse
     {
         // Cho phép GET để SePay kiểm tra URL (trả về 200)
@@ -111,6 +123,10 @@ class PaymentWebhookController extends Controller
         ]);
     }
 
+    /**
+     * Helper response chuẩn cho SePay webhook
+     * Trả về JSON với success/status/message
+     */
     private function respond(bool $ok, string $message, int $status = 200, array $data = []): JsonResponse
     {
         return response()->json(array_merge([

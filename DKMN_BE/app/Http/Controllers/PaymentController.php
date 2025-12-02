@@ -16,6 +16,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller xử lý thanh toán QR (VietQR, SePay, v.v.)
+ * Khởi tạo QR payment, xử lý webhook, confirm thanh toán onboard (tiền mặt/QR trên xe)
+ */
 class PaymentController extends Controller
 {
     public function __construct(
@@ -26,6 +30,11 @@ class PaymentController extends Controller
     ) {
     }
 
+    /**
+     * Khởi tạo thanh toán QR (VietQR/SePay)
+     * Tạo payment record, generate QR code, trả về QR image URL
+     * Hỗ trợ idempotency key để tránh tạo payment trùng
+     */
     public function initQr(Request $request): JsonResponse
     {
         $channelRule = ['nullable', 'string'];
@@ -107,6 +116,10 @@ class PaymentController extends Controller
         return $this->respondWithPayment($payment, 201);
     }
 
+    /**
+     * Lấy status của payment
+     * Kiểm tra quyền sở hữu trước khi trả về thông tin
+     */
     public function status(Request $request, Payment $payment): JsonResponse
     {
         if ($response = $this->guardPaymentOwner($request, $payment)) {
@@ -116,6 +129,11 @@ class PaymentController extends Controller
         return $this->respondWithPayment($payment);
     }
 
+    /**
+     * Xử lý webhook từ các hệ thống QR payment (VietQR, SePay, v.v.)
+     * Verify signature, kiểm tra amount match, cập nhật payment status
+     * Gửi email xác nhận nếu thanh toán thành công
+     */
     public function handleQrWebhook(Request $request): JsonResponse
     {
         $payload = $request->validate([
@@ -210,6 +228,11 @@ class PaymentController extends Controller
         return $this->respondWithPayment($payment->fresh());
     }
 
+    /**
+     * Xác nhận thanh toán onboard (tiền mặt/QR trên xe)
+     * Tài xế/nhân viên xác nhận đã nhận tiền, tạo payment SUCCEEDED ngay
+     * Hỗ trợ QR, CASH_ONBOARD, MANUAL
+     */
     public function confirmOnboard(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -272,6 +295,9 @@ class PaymentController extends Controller
         return $this->respondWithPayment($payment, 201);
     }
 
+    /**
+     * Kiểm tra quyền sở hữu payment: load ticket rồi gọi guardTicketOwner
+     */
     private function guardPaymentOwner(Request $request, Payment $payment): ?JsonResponse
     {
         $payment->loadMissing('ticket.donHang');
@@ -287,6 +313,10 @@ class PaymentController extends Controller
         return $this->guardTicketOwner($request, $ticket);
     }
 
+    /**
+     * Kiểm tra quyền sở hữu vé: chỉ cho phép user tạo order hoặc admin
+     * Return null nếu OK, return JsonResponse nếu unauthorized/forbidden
+     */
     private function guardTicketOwner(Request $request, Ticket $ticket): ?JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -314,6 +344,9 @@ class PaymentController extends Controller
         return null;
     }
 
+    /**
+     * Helper response với payment data đã serialize
+     */
     private function respondWithPayment(Payment $payment, int $status = 200): JsonResponse
     {
         return response()->json([
@@ -322,6 +355,10 @@ class PaymentController extends Controller
         ], $status);
     }
 
+    /**
+     * Transform payment model sang format API response
+     * Include: paymentId, status, method, amount, QR URL, timestamps
+     */
     private function serializePayment(Payment $payment): array
     {
         return [
@@ -339,11 +376,17 @@ class PaymentController extends Controller
         ];
     }
 
+    /**
+     * Lấy danh sách provider keys từ config
+     */
     private function providerKeys(): array
     {
         return array_keys(config('payments.providers', []));
     }
 
+    /**
+     * Normalize payment method: QR, MANUAL, hoặc CASH_ONBOARD
+     */
     private function normalizeMethod(?string $method): string
     {
         return match (strtoupper((string) $method)) {
