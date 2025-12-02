@@ -9,8 +9,8 @@
         <div class="nav-links">
           <a href="#search" class="nav-link">Tìm vé</a>
           <a href="#features" class="nav-link">Tính năng</a>
-          <a href="#about" class="nav-link">Giới thiệu</a>
-          <a href="#contact" class="nav-link">Liên hệ</a>
+          <router-link to="/about" class="nav-link">Giới thiệu</router-link>
+          <router-link to="/contact" class="nav-link">Liên hệ</router-link>
         </div>
         <div class="notice-bell dropdown" v-if="isLoggedIn">
           <button class="notice-trigger" type="button" data-bs-toggle="dropdown" @click="fetchNotices">
@@ -806,9 +806,11 @@ export default {
   transition: color 0.3s ease;
   padding: 0.5rem 1rem;
   border-radius: 5px;
+  display: inline-block;
 }
 
-.nav-link:hover {
+.nav-link:hover,
+.nav-link.router-link-active {
   color: #fff;
   background-color: rgba(37, 99, 235, 0.25);
 }

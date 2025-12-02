@@ -31,6 +31,7 @@ use App\Http\Controllers\ThongKeDoanhThuController;
 use App\Http\Controllers\TinhThanhController;
 use App\Http\Controllers\TramController;
 use App\Http\Controllers\HuyVeController;
+use App\Http\Controllers\LienHeController;
 use Illuminate\Support\Facades\Route;
 
 // =========================================================
@@ -51,6 +52,9 @@ Route::prefix('dkmn')->group(function () {
     Route::match(['get', 'post'], '/chuyen-di/search', [ChuyenDiController::class, 'search']);
     Route::get('/chuyen-di/{chuyenDi}/ghe', [GheController::class, 'getByChuyenDi']);
     Route::get('/cau-hinh/get-data', [CauHinhHeThongController::class, 'getData']);
+
+    // Contact form (public)
+    Route::post('/lien-he', [LienHeController::class, 'store']);
 
     // Webhook callbacks remain open (handled via signature)
     Route::post('/payments/qr/webhook', [PaymentController::class, 'handleQrWebhook']);
@@ -94,6 +98,10 @@ Route::prefix('dkmn')->middleware(['auth:sanctum', 'role:quan_tri'])->group(func
     Route::get('/thong-bao/get-data', [DkmnThongBaoController::class, 'getData']);
     Route::get('/thong-ke-doanh-thu/get-data', [ThongKeDoanhThuController::class, 'getData']);
     Route::get('/nhat-ky-hoat-dong/get-data', [NhatKyHoatDongController::class, 'getData']);
+    
+    Route::get('/lien-he/get-data', [LienHeController::class, 'getData']);
+    Route::put('/lien-he/{lienHe}', [LienHeController::class, 'update']);
+    Route::delete('/lien-he/{lienHe}', [LienHeController::class, 'destroy']);
 });
 
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:quan_tri'])->group(function () {

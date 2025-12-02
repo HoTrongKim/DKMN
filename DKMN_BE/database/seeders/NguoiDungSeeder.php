@@ -20,6 +20,17 @@ class NguoiDungSeeder extends Seeder
             ['id'=>4,'ho_ten'=>'Le Minh Chau','email'=>'kh3@example.com','so_dien_thoai'=>'0911222333','mat_khau'=>$password,'vai_tro'=>'khach_hang','trang_thai'=>'khoa','ngay_tao'=>now(),'ngay_cap_nhat'=>now()],
             ['id'=>5,'ho_ten'=>'Pham Quang Duy','email'=>'support@dkmn.com','so_dien_thoai'=>'0909009900','mat_khau'=>$password,'vai_tro'=>'quan_tri','trang_thai'=>'hoat_dong','ngay_tao'=>now(),'ngay_cap_nhat'=>now()],
             ['id'=>6,'ho_ten'=>'Dang Thi Cam Nhung','email'=>'kh4@example.com','so_dien_thoai'=>'0977333444','mat_khau'=>$password,'vai_tro'=>'khach_hang','trang_thai'=>'hoat_dong','ngay_tao'=>now(),'ngay_cap_nhat'=>now()],
+            [
+                'id'=>7,
+                'ho_ten'=>'Tran Cong Minh',
+                'email'=>'tranminh6464aimbot@gmail.com',
+                'so_dien_thoai'=>'0909123123',
+                'mat_khau'=>$password,
+                'vai_tro'=>'khach_hang',
+                'trang_thai'=>'hoat_dong',
+                'ngay_tao'=>now(),
+                'ngay_cap_nhat'=>now(),
+            ],
         ]);
     }
 }
