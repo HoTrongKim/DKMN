@@ -7,7 +7,7 @@
       </div>
       <nav class="nav">
         <div class="nav-links">
-          <a href="#search" class="nav-link">Tìm vé</a>
+          <a href="#" class="nav-link" @click.prevent="goToSearch">Tìm vé</a>
           <a href="#features" class="nav-link">Tính năng</a>
           <router-link to="/about" class="nav-link">Giới thiệu</router-link>
           <router-link to="/contact" class="nav-link">Liên hệ</router-link>
@@ -467,6 +467,24 @@ export default {
         dong: 'Đóng',
       }
       return map[status] || status
+    },
+    goToSearch() {
+      const scrollToSearchSection = () => {
+        const searchSection = document.getElementById('search') || document.querySelector('.search-form')
+        if (searchSection) {
+          searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }
+      
+      // Nếu đang ở trang chủ, scroll đến phần đặt vé
+      if (this.$route.path === '/' || this.$route.path === '/TrangChu') {
+        scrollToSearchSection()
+      } else {
+        // Nếu không ở trang chủ, chuyển về trang chủ rồi scroll
+        this.$router.push('/').then(() => {
+          setTimeout(scrollToSearchSection, 500)
+        })
+      }
     },
   },
 }
