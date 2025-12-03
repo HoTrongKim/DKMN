@@ -11,8 +11,16 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetOtpMail;
 
+/**
+ * Controller xử lý authentication và quản lý profile người dùng
+ * Đăng ký, đăng nhập, quên mật khẩu (OTP qua email), đổi mật khẩu
+ * Cập nhật thông tin cá nhân, lấy thông tin user hiện tại
+ */
 class NguoiDungController extends Controller
 {
+    /**
+     * Lấy danh sách tất cả người dùng (admin/internal)
+     */
     public function getData()
     {
         return response()->json(['data' => NguoiDung::orderByDesc('ngay_tao')->get()]);

@@ -5,8 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\DanhGia;
 use Illuminate\Http\Request;
 
+/**
+ * Controller lấy danh sách đánh giá đã được chấp nhận
+ * Dùng để hiển thị reviews trên trang chủ/public
+ */
 class DanhGiaController extends Controller
 {
+    /**
+     * Lấy danh sách đánh giá đã duyệt (trang_thai = 'chap_nhan')
+     * Limit tối đa 20 records, default 9
+     * Transform sang format gọn với trip info, customer name, rating
+     */
     public function getData(Request $request)
     {
         $limit = (int) $request->input('limit', 9);

@@ -16,13 +16,30 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
+/**
+ * Controller xử lý đặt vé và quản lý đơn hàng
+ * Tạo đơn hàng mới, khóa ghế, tạo ticket, xử lý transaction
+ * Gửi thông báo và ghi log hoạt động
+ */
 class DonHangController extends Controller
 {
+    /**
+     * Lấy danh sách tất cả đơn hàng (dùng cho admin/internal)
+     */
     public function getData()
     {
         return response()->json(['data' => DonHang::orderByDesc('ngay_tao')->get()]);
     }
 
+    /**
+     * Tạo đơn hàng mới: validate ghế, lock ghế, tạo order + ticket
+     * Sử dụng DB transaction để đảm bảo tính toàn vẹn dữ liệu
+     * Gửi thông báo và ghi log sau khi tạo thành công
+     * 
+     * Flow: validate seats → lock trip → check seat availability → 
+     *        create order → create order details → update seat status → 
+     *        create ticket → log activity → send notification
+     */
     public function store(Request $request)
     {
         $data = $request->validate([

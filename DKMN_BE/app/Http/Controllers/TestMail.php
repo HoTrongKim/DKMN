@@ -5,8 +5,16 @@ namespace App\Http\Controllers;
 use App\Mail\MasterMail;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Controller test gửi email (development/testing only)
+ * Gửi email mẫu để kiểm tra cấu hình mail server
+ */
 class TestMail extends Controller
 {
+    /**
+     * Gửi email test với template booking confirmation
+     * Dùng để verify mail config và template layout
+     */
     public function testmail()
     {
         $subject = 'DKMN - Xác nhận đặt vé thành công';

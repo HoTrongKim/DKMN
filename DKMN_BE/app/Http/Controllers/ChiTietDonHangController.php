@@ -5,8 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\ChiTietDonHang;
 use Illuminate\Http\Request;
 
+/**
+ * Controller lấy chi tiết đơn hàng (thông tin hành khách)
+ * Hỗ trợ filter theo donHangId, maDon, keyword (tên/sđt hành khách, số ghế)
+ */
 class ChiTietDonHangController extends Controller
 {
+    /**
+     * Lấy danh sách chi tiết đơn hàng với eager loading
+     * Eager load: donHang, ghe, chuyenDi để tránh N+1
+     * Filter: donHangId, maDon, keyword (search tên/sđt hành khách, mã đơn, nơi đi/đến, số ghế)
+     */
     public function getData(Request $request)
     {
         $query = ChiTietDonHang::query()

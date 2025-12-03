@@ -5,8 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\ThongKeDoanhThu;
 use Illuminate\Http\Request;
 
+/**
+ * Controller thống kê doanh thu (revenue statistics)
+ * Lấy dữ liệu thống kê theo date range, loại phương tiện
+ * Tính tổng doanh thu, số đơn, số vé, tỷ lệ hủy
+ */
 class ThongKeDoanhThuController extends Controller
 {
+    /**
+     * Lấy thống kê doanh thu có filter:
+     * - fromDate, toDate: Lọc theo khoảng thời gian
+     * - vehicleType: Lọc theo loại phương tiện (bus/train/plane)
+     * 
+     * Trả về data + meta với tổng doanh thu, net revenue, số đơn, số vé, tỷ lệ hủy
+     */
     public function getData(Request $request)
     {
         $query = ThongKeDoanhThu::query()->orderByDesc('ngay');

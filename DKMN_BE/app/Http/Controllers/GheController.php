@@ -8,8 +8,16 @@ use App\Models\Ghe;
 use App\Services\TripSeatSynchronizer;
 use Illuminate\Support\Collection;
 
+/**
+ * Controller quản lý ghế (seats) cho chuyến đi
+ * Lấy danh sách ghế theo chuyến, sync seat status
+ * Transform seat data sang format API (code, status, price)
+ */
 class GheController extends Controller
 {
+    /**
+     * Lấy danh sách tất cả ghế (admin/internal)
+     */
     public function getData()
     {
         return response()->json(['data' => Ghe::orderByDesc('ngay_tao')->get()]);

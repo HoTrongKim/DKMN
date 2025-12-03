@@ -8,8 +8,16 @@ use App\Models\DonHang;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Controller quản lý đánh giá (ratings) cho khách hàng
+ * Xem lịch sử đánh giá, gửi đánh giá mới cho chuyến đã hoàn thành
+ */
 class RatingClientController extends Controller
 {
+    /**
+     * Danh sách đánh giá của user hiện tại
+     * Optional filter: tripId
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -40,6 +48,12 @@ class RatingClientController extends Controller
         ]);
     }
 
+    /**
+     * Gửi đánh giá mới cho chuyến đã hoàn thành
+     * Validate: user phải có đơn hàng (status: hoan_tat hoặc da_xac_nhan), chưa đánh giá trước đó
+     * Rating từ 1-5 sao, comment tối đa 500 ký tự
+     * Status mặc định: cho_duyet (chờ admin duyệt)
+     */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();

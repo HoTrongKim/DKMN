@@ -8,8 +8,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
+/**
+ * Controller quản lý đơn hàng cho khách hàng
+ * Xem danh sách đơn hàng, chi tiết đơn, hủy đơn
+ * Kiểm tra ownership để đảm bảo chỉ user tạo đơn mới xem/hủy được
+ */
 class OrderClientController extends Controller
 {
+    /**
+     * Danh sách đơn hàng của user hiện tại (paginated)
+     * Eager load: chuyến đi, trạm, nhà vận hành, ticket, thanh toán
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -31,6 +40,10 @@ class OrderClientController extends Controller
         return $this->respondWithPagination($paginator, $data);
     }
 
+    /**
+     * Chi tiết đơn hàng: order info + items (passengers/seats) + payments
+     * Kiểm tra ownership trước khi trả dữ liệu
+     */
     public function show(Request $request, DonHang $donHang): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -79,6 +92,10 @@ class OrderClientController extends Controller
         ]);
     }
 
+    /**
+     * Transform order object sang format API response
+     * Lấy thông tin: trip, customer, status, payment status
+     */
     private function transformOrder(DonHang $order): array
     {
         $trip = $order->chuyenDi;
@@ -108,6 +125,9 @@ class OrderClientController extends Controller
         ];
     }
 
+    /**
+     * Map order status sang label tiếng Việt
+     */
     private function mapStatusLabel(?string $status): string
     {
         return match ($status) {
@@ -119,6 +139,9 @@ class OrderClientController extends Controller
         };
     }
 
+    /**
+     * Resolve payment status từ latest ThanhToan record
+     */
     private function mapPaymentStatus(DonHang $order): string
     {
         $latest = $order->thanhToans->first();
@@ -131,6 +154,12 @@ class OrderClientController extends Controller
             default => 'Chưa thanh toán',
         };
     }
+
+    /**
+     * Hủy đơn hàng của user
+     * Kiểm tra ownership và status (chỉ cho phép hủy nếu chưa đi/chưa hoàn tất)
+     * Giải phóng ghế và cập nhật số ghế còn của chuyến
+     */
     public function cancel(Request $request, DonHang $donHang): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();

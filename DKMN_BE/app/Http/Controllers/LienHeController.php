@@ -9,8 +9,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller CRUD liên hệ từ khách hàng
+ * Khách gửi tin nhắn qua form contact, admin trả lời và cập nhật trạng thái
+ * Khi trả lời, tự động tạo thông báo cho user nếu họ đã đăng ký tài khoản
+ */
 class LienHeController extends Controller
 {
+    /**
+     * Tạo tin nhắn liên hệ mới từ khách hàng
+     * Không cần đăng nhập, lưu thông tin: họ tên, email, sđt, chủ đề, nội dung
+     * Trạng thái mặc định: 'moi'
+     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -37,6 +47,10 @@ class LienHeController extends Controller
         ], 201);
     }
 
+    /**
+     * Lấy danh sách liên hệ với filter
+     * Filter: trang_thai (moi/dang_xu_ly/da_tra_loi/dong), keyword (tìm trong họ tên/email/chủ đề/nội dung)
+     */
     public function getData(Request $request): JsonResponse
     {
         $query = LienHe::query()
@@ -66,6 +80,12 @@ class LienHeController extends Controller
         ]);
     }
 
+    /**
+     * Cập nhật trạng thái và trả lời tin nhắn liên hệ
+     * Nếu status = 'da_tra_loi' và có nội dung trả lời:
+     * - Lưu ngày trả lời, người phụ trách
+     * - Tự động tạo thông báo cho user (nếu email match với tài khoản)
+     */
     public function update(Request $request, LienHe $lienHe): JsonResponse
     {
         $validated = $request->validate([
@@ -107,6 +127,9 @@ class LienHeController extends Controller
         ]);
     }
 
+    /**
+     * Xóa tin nhắn liên hệ
+     */
     public function destroy(LienHe $lienHe): JsonResponse
     {
         $lienHe->delete();

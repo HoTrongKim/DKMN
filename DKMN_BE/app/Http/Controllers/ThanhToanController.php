@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * Controller xử lý thanh toán manual (admin tạo payment record thủ công)
+ * Tạo payment record sau khi admin xác nhận khách đã thanh toán
+ * Hỗ trợ các cổng: tiền mặt, chuyển khoản, momo, v.v.
+ */
 class ThanhToanController extends Controller
 {
     public function __construct(
@@ -16,6 +21,9 @@ class ThanhToanController extends Controller
     ) {
     }
 
+    /**
+     * Lấy danh sách tất cả thanh toán (admin/internal)
+     */
     public function getData()
     {
         return response()->json(['data' => ThanhToan::orderByDesc('ngay_tao')->get()]);

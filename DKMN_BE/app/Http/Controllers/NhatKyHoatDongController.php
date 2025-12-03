@@ -5,8 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\NhatKyHoatDong;
 use Illuminate\Http\Request;
 
+/**
+ * Controller quản lý nhật ký hoạt động (activity logs)
+ * Lấy logs theo user, action, date range
+ * Dùng để audit trail và tracking user activities
+ */
 class NhatKyHoatDongController extends Controller
 {
+    /**
+     * Lấy danh sách nhật ký hoạt động có filter:
+     * - nguoi_dung_id: Lọc theo user cụ thể
+     * - me: Lấy logs của user hiện tại
+     * - hanh_dong: Lọc theo loại action
+     * - tu_ngay, den_ngay: Lọc theo date range
+     */
     public function getData(Request $request)
     {
         $query = NhatKyHoatDong::query()->orderByDesc('ngay_tao');

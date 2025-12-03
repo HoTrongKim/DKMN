@@ -6,8 +6,16 @@ use App\Models\NhaVanHanh;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Controller quản lý nhà vận hành (carriers/operators)
+ * Lấy danh sách nhà vận hành, filter theo loại (bus/train/plane)
+ * Hỗ trợ search và caching
+ */
 class NhaVanHanhController extends Controller
 {
+    /**
+     * Lấy danh sách nhà vận hành có cache, filter theo loại và keyword
+     */
     public function getData(Request $request)
     {
         $query = NhaVanHanh::query();

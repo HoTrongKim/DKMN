@@ -12,6 +12,11 @@ use Illuminate\Support\Str;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Controller xử lý tìm kiếm và tra cứu chuyến đi cho khách hàng
+ * Hỗ trợ search theo tỉnh/thành, bến, loại xe (bus/train/plane)
+ * Tự động resolve provinces và stations, fallback thông minh
+ */
 class ChuyenDiController extends Controller
 {
     private static ?bool $tripProvinceColumns = null;
@@ -33,11 +38,30 @@ class ChuyenDiController extends Controller
         'plane' => 'san_bay',
     ];
 
+    /**
+     * Lấy danh sách tất cả chuyến đi (dùng cho admin/internal)
+     */
     public function getData()
     {
         return response()->json(['data' => ChuyenDi::orderByDesc('ngay_tao')->get()]);
     }
 
+    /**
+     * Tìm kiếm chuyến đi theo điều kiện phức tạp
+     * 
+     * Filters:
+     * - vehicleType: bus/train/plane (bắt buộc)
+     * - from/fromId: Tỉnh đi (hỗ trợ ID hoặc tên)
+     * - to/toId: Tỉnh đến
+     * - departureDate: Ngày khởi hành
+     * - returnDate: Ngày về (optional, cho round-trip)
+     * - pickupStation/pickupStationId: Bến đón
+     * - dropoffStation/dropoffStationId: Bến trả
+     * - passengers: Số hành khách (để filter ghế còn)
+     * - company/companyId: Nhà vận hành
+     * 
+     * Tự động resolve tỉnh/bến nếu chỉ có tên, hỗ trợ fallback thông minh
+     */
     public function search(Request $request)
     {
         $validated = $request->validate([

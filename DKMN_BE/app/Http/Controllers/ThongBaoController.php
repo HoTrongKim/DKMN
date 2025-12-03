@@ -5,8 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\ThongBao;
 use Illuminate\Http\Request;
 
+/**
+ * Controller quản lý thông báo (notifications) cho user
+ * User xem thông báo của mình, mark as read
+ * Inbox system với thông báo chia theo loại
+ */
 class ThongBaoController extends Controller
 {
+    /**
+     * Lấy danh sách tất cả thông báo (admin/internal)
+     */
     public function getData()
     {
         return response()->json(['data' => ThongBao::orderByDesc('ngay_tao')->get()]);

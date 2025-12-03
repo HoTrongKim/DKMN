@@ -8,8 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller quản lý tickets (vé đã tạo)
+ * User xem danh sách vé của mình, chi tiết vé
+ * Admin có thể xem tất cả tickets
+ */
 class TicketController extends Controller
 {
+    /**
+     * Danh sách tickets của user hiện tại hoặc tất cả (nếu admin)
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();

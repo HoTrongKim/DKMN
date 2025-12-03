@@ -6,8 +6,16 @@ use App\Models\Tram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Controller quản lý trạm/bến (stations)
+ * Lấy danh sách trạm, filter theo tỉnh/thành, search theo keyword
+ * Hỗ trợ caching để tăng performance
+ */
 class TramController extends Controller
 {
+    /**
+     * Lấy danh sách trạm có cache, filter theo tỉnh thành và keyword
+     */
     public function getData(Request $request)
     {
         $query = Tram::query()->with('tinhThanh');
