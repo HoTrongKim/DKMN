@@ -21,9 +21,13 @@ class LienHeController extends Controller
      * Không cần đăng nhập, lưu thông tin: họ tên, email, sđt, chủ đề, nội dung
      * Trạng thái mặc định: 'moi'
      */
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'ho_ten' => 'required|string|max:100',
             'email' => 'required|string|email|max:150',
             'so_dien_thoai' => 'nullable|string|max:20',
@@ -31,6 +35,7 @@ class LienHeController extends Controller
             'noi_dung' => 'required|string|max:5000',
         ]);
 
+        // Thao tác database
         $lienHe = LienHe::create([
             'ho_ten' => $validated['ho_ten'],
             'email' => $validated['email'],
@@ -40,6 +45,7 @@ class LienHeController extends Controller
             'trang_thai' => 'moi',
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất.',
@@ -74,6 +80,7 @@ class LienHeController extends Controller
 
         $lienHes = $query->get();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $lienHes,
@@ -86,9 +93,13 @@ class LienHeController extends Controller
      * - Lưu ngày trả lời, người phụ trách
      * - Tự động tạo thông báo cho user (nếu email match với tài khoản)
      */
+        /**
+     * Cập nhật bản ghi theo ID
+     */
     public function update(Request $request, LienHe $lienHe): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'trang_thai' => 'required|string|in:moi,dang_xu_ly,da_tra_loi,dong',
             'tra_loi' => 'nullable|string|max:5000',
         ]);
@@ -108,7 +119,8 @@ class LienHeController extends Controller
         $lienHe->update($updateData);
 
         if ($validated['trang_thai'] === 'da_tra_loi' && !empty($updateData['tra_loi'])) {
-            $user = NguoiDung::where('email', $lienHe->email)->first();
+            // Thao tác database
+        $user = NguoiDung::where('email', $lienHe->email)->first();
             if ($user) {
                 ThongBao::create([
                     'nguoi_dung_id' => $user->id,
@@ -120,6 +132,7 @@ class LienHeController extends Controller
             }
         }
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật tin nhắn liên hệ thành công',
@@ -130,10 +143,14 @@ class LienHeController extends Controller
     /**
      * Xóa tin nhắn liên hệ
      */
+        /**
+     * Xóa bản ghi theo ID
+     */
     public function destroy(LienHe $lienHe): JsonResponse
     {
         $lienHe->delete();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã xóa tin nhắn liên hệ',

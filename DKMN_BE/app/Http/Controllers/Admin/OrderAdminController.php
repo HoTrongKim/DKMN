@@ -26,9 +26,13 @@ class OrderAdminController extends Controller
      * Danh sách đơn hàng có filter: search (mã đơn/tên khách/email/phone), status, paymentStatus
      * Eager load: chuyến đi, trạm, nhà vận hành, user, tickets, thanh toán, ghế
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'search' => 'nullable|string|max:150',
             'status' => ['nullable', Rule::in(['da_dat', 'dang_xu_ly', 'da_di', 'da_huy'])],
             'paymentStatus' => ['nullable', Rule::in(['paid', 'pending', 'refunded'])],
@@ -93,6 +97,9 @@ class OrderAdminController extends Controller
      * Chi tiết đơn hàng: order info + items (tickets/seats) + payments
      * Eager load: chuyến đi chi tiết, ghế, thanh toán
      */
+        /**
+     * Lấy chi tiết một bản ghi theo ID
+     */
     public function show(DonHang $donHang)
     {
         $donHang->load([
@@ -124,6 +131,7 @@ class OrderAdminController extends Controller
             ];
         });
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $order,
@@ -134,9 +142,13 @@ class OrderAdminController extends Controller
      * Cập nhật đơn hàng: status (cho_xu_ly/da_xac_nhan/hoan_tat/da_huy), paymentStatus
      * Xử lý logic refund nếu cần
      */
+        /**
+     * Cập nhật bản ghi theo ID
+     */
     public function update(Request $request, DonHang $donHang)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'status' => ['nullable', Rule::in(['cho_xu_ly', 'da_xac_nhan', 'hoan_tat', 'da_huy'])],
             'paymentStatus' => ['nullable', Rule::in(['paid', 'pending', 'refunded'])],
             'paymentGateway' => 'nullable|string|max:50',
@@ -160,6 +172,7 @@ class OrderAdminController extends Controller
             );
         }
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật đơn hàng thành công.',
@@ -174,6 +187,9 @@ class OrderAdminController extends Controller
     /**
      * Xóa đơn hàng: giải phóng ghế, xóa ratings/payments, nullify foreign keys
      * Dùng DB transaction để đảm bảo tính toàn vẹn
+     */
+        /**
+     * Xóa bản ghi theo ID
      */
     public function destroy(DonHang $donHang)
     {
@@ -190,6 +206,7 @@ class OrderAdminController extends Controller
             $donHang->delete();
         });
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã xóa đơn hàng.',

@@ -30,9 +30,13 @@ class TripAdminController extends Controller
      * Danh sách chuyến đi có filter phức tạp: keyword, status, type, operatorId, dateFrom, dateTo
      * Eager load: nhà vận hành, trạm đi/đến, tỉnh thành
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'keyword' => 'nullable|string|max:150',
             'status' => 'nullable|string|in:AVAILABLE,SOLD_OUT,CANCELLED,CON_VE,HET_VE,HUY,con_ve,het_ve,huy',
             'type' => 'nullable|string|in:bus,train,plane',
@@ -97,6 +101,9 @@ class TripAdminController extends Controller
     /**
      * Chi tiết chuyến đi với đầy đủ thông tin: trip, operator, stations, provinces
      */
+        /**
+     * Lấy chi tiết một bản ghi theo ID
+     */
     public function show(ChuyenDi $chuyenDi)
     {
         $chuyenDi->load([
@@ -107,6 +114,7 @@ class TripAdminController extends Controller
             'noiDenTinhThanh',
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $this->transformTrip($chuyenDi),
@@ -118,10 +126,14 @@ class TripAdminController extends Controller
      * Validate: province consistency (trạm đi/đến phải khác tỉnh)
      * Auto sync seats sau khi tạo
      */
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request)
     {
         $payload = $this->validateTripPayload($request);
 
+        // Thao tác database
         $trip = ChuyenDi::create($payload);
         TripSeatSynchronizer::sync($trip);
         $trip = $trip->fresh([
@@ -132,6 +144,7 @@ class TripAdminController extends Controller
             'noiDenTinhThanh',
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Tạo chuyến đi thành công.',
@@ -143,6 +156,9 @@ class TripAdminController extends Controller
      * Cập nhật chuyến đi
      * Nếu sửa giá/thời gian/tuyến → nên thông báo khách đã đặt vé
      * Auto sync seats sau khi update
+     */
+        /**
+     * Cập nhật bản ghi theo ID
      */
     public function update(Request $request, ChuyenDi $chuyenDi)
     {
@@ -163,6 +179,7 @@ class TripAdminController extends Controller
             'noiDenTinhThanh',
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật chuyến đi thành công.',
@@ -173,10 +190,14 @@ class TripAdminController extends Controller
     /**
      * Xóa chuyến đi (chỉ cho phép nếu chưa có đơn hàng)
      */
+        /**
+     * Xóa bản ghi theo ID
+     */
     public function destroy(ChuyenDi $chuyenDi)
     {
         if ($chuyenDi->donHangs()->exists()) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không thể xóa chuyến đi vì đã phát sinh đơn hàng.',
             ], 422);
@@ -184,6 +205,7 @@ class TripAdminController extends Controller
 
         $chuyenDi->delete();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã xóa chuyến đi.',
@@ -196,7 +218,8 @@ class TripAdminController extends Controller
      */
     public function notify(Request $request, ChuyenDi $chuyenDi)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'message' => 'required|string|max:1000',
             'channels' => ['required', 'array', 'min:1'],
             'channels.*' => ['required', Rule::in(['email', 'app', 'sms'])],
@@ -211,7 +234,8 @@ class TripAdminController extends Controller
             ->get();
 
         if ($recipients->isEmpty()) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Khong tim thay khach hang hop le.',
             ], 422);
@@ -244,6 +268,7 @@ class TripAdminController extends Controller
             }
         }
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Da gui thong bao den khach hang.',
@@ -337,7 +362,8 @@ class TripAdminController extends Controller
         }
         if (array_key_exists('fromStationId', $validated)) {
             $payload['tram_di_id'] = $validated['fromStationId'];
-            $fromStationModel = Tram::find($validated['fromStationId']);
+            // Thao tác database
+        $fromStationModel = Tram::find($validated['fromStationId']);
             if (!$fromStationModel) {
                 throw ValidationException::withMessages([
                     'fromStationId' => 'Bến xuất phát không hợp lệ.',
@@ -346,7 +372,8 @@ class TripAdminController extends Controller
         }
         if (array_key_exists('toStationId', $validated)) {
             $payload['tram_den_id'] = $validated['toStationId'];
-            $toStationModel = Tram::find($validated['toStationId']);
+            // Thao tác database
+        $toStationModel = Tram::find($validated['toStationId']);
             if (!$toStationModel) {
                 throw ValidationException::withMessages([
                     'toStationId' => 'Bến đến không hợp lệ.',

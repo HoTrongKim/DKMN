@@ -43,6 +43,7 @@ class ChuyenDiController extends Controller
      */
     public function getData()
     {
+        // Trả về JSON response
         return response()->json(['data' => ChuyenDi::orderByDesc('ngay_tao')->get()]);
     }
 
@@ -64,7 +65,8 @@ class ChuyenDiController extends Controller
      */
     public function search(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'vehicleType' => 'required|in:bus,train,plane',
             'from' => 'required_without:fromId|nullable|string|max:100',
             'fromId' => 'required_without:from|nullable|integer|exists:tinh_thanhs,id',
@@ -91,7 +93,8 @@ class ChuyenDiController extends Controller
             ?? $this->resolveTinhThanh($validated['to'] ?? '');
 
         if (!$fromCity || !$toCity) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Tinh thanh khong hop le',
             ], 422);

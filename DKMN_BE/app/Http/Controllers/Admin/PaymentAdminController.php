@@ -26,9 +26,13 @@ class PaymentAdminController extends Controller
      * Danh sách giao dịch có filter: type (online/manual), status, method, dateFrom, dateTo
      * Merge 2 table: payments (online) và thanh_toans (manual)
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'type' => 'nullable|string|in:online,manual',
             'status' => 'nullable|string|in:pending,success,failed,refunded',
             'method' => 'nullable|string|max:50',
@@ -57,7 +61,8 @@ class PaymentAdminController extends Controller
      */
     public function export(Request $request): BinaryFileResponse|JsonResponse
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'type' => 'nullable|string|in:online,manual',
             'status' => 'nullable|string|in:pending,success,failed,refunded',
             'method' => 'nullable|string|max:50',
@@ -75,7 +80,8 @@ class PaymentAdminController extends Controller
             $rows = $this->mapManualExportRows($records);
         } else {
             if (!$hasPayments) {
-                return response()->json([
+                // Trả về JSON response
+        return response()->json([
                     'status' => false,
                     'message' => 'Bảng payments chưa sẵn sàng. Không thể xuất báo cáo giao dịch online.',
                 ], 422);
@@ -85,7 +91,8 @@ class PaymentAdminController extends Controller
         }
 
         if ($rows->isEmpty()) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không có giao dịch phù hợp để xuất.',
             ], 422);
@@ -270,6 +277,7 @@ class PaymentAdminController extends Controller
     {
         $perPage = $this->resolvePerPage($request);
 
+        // Trả về JSON response
         return response()->json([
             'data' => [],
             'meta' => [

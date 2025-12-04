@@ -42,6 +42,7 @@ class NhaVanHanhController extends Controller
             ? Cache::remember(implode(':', $cacheKeyParts), 300, $resolver)
             : $resolver();
 
+        // Trả về JSON response
         return response()->json(['data' => $data]);
     }
 }

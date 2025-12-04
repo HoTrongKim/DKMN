@@ -18,12 +18,16 @@ class TicketController extends Controller
     /**
      * Danh sách tickets của user hiện tại hoặc tất cả (nếu admin)
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'message' => 'Unauthenticated',
             ], 401);
         }
@@ -52,6 +56,7 @@ class TicketController extends Controller
 
         $data = $tickets->toArray();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $data,
@@ -66,7 +71,8 @@ class TicketController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'message' => 'Unauthenticated',
             ], 401);
         }
@@ -83,12 +89,14 @@ class TicketController extends Controller
             ->first();
 
         if (!$ticket) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => true,
                 'data' => null,
             ]);
         }
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $this->transformTicket($ticket),

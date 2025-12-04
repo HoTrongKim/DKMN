@@ -20,6 +20,7 @@ class TinhThanhController extends Controller
             return TinhThanh::orderBy('ten')->get();
         });
 
+        // Trả về JSON response
         return response()->json(['data' => $data]);
     }
 }

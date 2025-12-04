@@ -31,9 +31,11 @@ class DashboardAdminController extends Controller
         $yesterday = Carbon::yesterday();
         $totalTrips = ChuyenDi::count();
         $totalOrders = DonHang::count();
+        // Thao tác database
         $totalCustomers = NguoiDung::where('vai_tro', 'khach_hang')->count();
 
         $hasPayments = $this->hasPaymentsTable();
+        // Thao tác database
         $manualRevenue = ThanhToan::where('trang_thai', 'thanh_cong')->sum('so_tien');
         $onlineRevenue = $hasPayments
             ? Payment::where('status', Payment::STATUS_SUCCEEDED)->sum('amount_vnd')
@@ -42,6 +44,7 @@ class DashboardAdminController extends Controller
         $ticketsYesterday = DonHang::whereDate('ngay_tao', $yesterday)->count();
         $revenueToday = $this->dailyRevenue($today, $hasPayments);
         $revenueYesterday = $this->dailyRevenue($yesterday, $hasPayments);
+        // Thao tác database
         $newCustomers = NguoiDung::where('vai_tro', 'khach_hang')
             ->where('ngay_tao', '>=', Carbon::now()->subDays(7))
             ->count();
@@ -75,6 +78,7 @@ class DashboardAdminController extends Controller
 
         $monthlyRevenue = $this->monthlyRevenue($hasPayments);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => [
@@ -143,7 +147,8 @@ class DashboardAdminController extends Controller
      */
     public function report(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'period' => ['nullable', Rule::in(['week', 'month', 'quarter', 'year'])],
         ]);
 
@@ -209,6 +214,7 @@ class DashboardAdminController extends Controller
             ? round(($cancelledOrders / $totalOrders) * 100, 2)
             : 0.0;
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => [
@@ -275,6 +281,7 @@ class DashboardAdminController extends Controller
      */
     private function dailyRevenue(Carbon $date, bool $hasPaymentsTable): float
     {
+        // Thao tác database
         $manual = ThanhToan::where('trang_thai', 'thanh_cong')
             ->whereDate('thoi_diem_thanh_toan', $date)
             ->sum('so_tien');

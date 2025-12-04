@@ -20,6 +20,7 @@ class GheController extends Controller
      */
     public function getData()
     {
+        // Trả về JSON response
         return response()->json(['data' => Ghe::orderByDesc('ngay_tao')->get()]);
     }
     public function getByChuyenDi(ChuyenDi $chuyenDi)
@@ -46,6 +47,7 @@ class GheController extends Controller
 
         $seatLayout = $this->buildSeatLayout($seats, $chuyenDi);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => [

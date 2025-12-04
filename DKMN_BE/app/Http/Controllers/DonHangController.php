@@ -28,6 +28,7 @@ class DonHangController extends Controller
      */
     public function getData()
     {
+        // Trả về JSON response
         return response()->json(['data' => DonHang::orderByDesc('ngay_tao')->get()]);
     }
 
@@ -40,9 +41,13 @@ class DonHangController extends Controller
      *        create order → create order details → update seat status → 
      *        create ticket → log activity → send notification
      */
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $data = // Validate dữ liệu từ request
+        $request->validate([
             'tripId' => 'required|integer|exists:chuyen_dis,id',
             'seatIds' => 'nullable|array',
             'seatIds.*' => 'required|string',
@@ -67,7 +72,8 @@ class DonHangController extends Controller
         );
 
         if (empty($identifiers)) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Chưa chọn ghế nào.',
             ], 422);
@@ -77,7 +83,8 @@ class DonHangController extends Controller
         $userId = $authenticatedUser?->id;
 
         if (!$userId) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Yeu cau dang nhap truoc khi dat ve.',
             ], 401);
@@ -97,7 +104,8 @@ class DonHangController extends Controller
                 $seats = $this->fetchSeatsForTrip($trip->id, $identifiers);
             }
             if ($seats->count() !== count($identifiers)) {
-                return response()->json([
+                // Trả về JSON response
+        return response()->json([
                     'status' => false,
                     'message' => 'Một số ghế không tồn tại hoặc không thuộc chuyến đã chọn.',
                 ], 422);
@@ -105,14 +113,16 @@ class DonHangController extends Controller
 
             $blocked = $seats->filter(fn ($seat) => $seat->trang_thai !== 'trong');
             if ($blocked->isNotEmpty()) {
-                return response()->json([
+                // Trả về JSON response
+        return response()->json([
                     'status' => false,
                     'message' => 'Một hoặc nhiều ghế đã bị đặt trước đó.',
                 ], 422);
             }
 
             $orderPayload = $this->orderPayload($request, $userId, $trip->id, $context, $data);
-            $order = DonHang::create($orderPayload);
+            // Thao tác database
+        $order = DonHang::create($orderPayload);
 
             $now = Carbon::now();
             $detailRows = $seats->map(function (Ghe $seat) use ($order, $data, $now) {
@@ -153,7 +163,8 @@ class DonHangController extends Controller
                 $baseFare = (int) round($data['total'] ?? 0);
             }
 
-            $ticket = Ticket::create([
+            // Thao tác database
+        $ticket = Ticket::create([
                 'don_hang_id' => $order->id,
                 'trip_id' => $trip->id,
                 'seat_numbers' => $seatNumbers,
@@ -201,6 +212,7 @@ class DonHangController extends Controller
 
         $booking['context'] = $context;
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã lưu đơn hàng tạm thời.',
@@ -240,6 +252,7 @@ class DonHangController extends Controller
         $numericIds = array_values(array_filter($identifiers, fn ($value) => is_numeric($value)));
         $labels = array_values(array_filter($identifiers, fn ($value) => !is_numeric($value)));
 
+        // Thao tác database
         $query = Ghe::where('chuyen_di_id', $tripId);
         $query->where(function ($sub) use ($numericIds, $labels) {
             if (!empty($numericIds)) {

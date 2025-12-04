@@ -18,9 +18,13 @@ class RatingAdminController extends Controller
      * Danh sách đánh giá có filter: rating (1-5), status, search (theo tên khách/tuyến)
      * Eager load: nguoiDung, chuyenDi.tramDi, chuyenDi.tramDen
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'rating' => 'nullable|integer|min:1|max:5',
             'status' => ['nullable', Rule::in(['cho_duyet', 'chap_nhan', 'tu_choi'])],
             'search' => 'nullable|string|max:150',
@@ -73,9 +77,13 @@ class RatingAdminController extends Controller
      * Cập nhật trạng thái đánh giá (cho_duyet/chap_nhan/tu_choi)
      * Admin duyệt hoặc từ chối review của khách
      */
+        /**
+     * Cập nhật bản ghi theo ID
+     */
     public function update(Request $request, DanhGia $danhGia): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'status' => ['required', Rule::in(['cho_duyet', 'chap_nhan', 'tu_choi'])],
         ]);
 
@@ -83,6 +91,7 @@ class RatingAdminController extends Controller
             'trang_thai' => $validated['status'],
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã cập nhật trạng thái đánh giá.',
@@ -92,10 +101,14 @@ class RatingAdminController extends Controller
     /**
      * Xóa đánh giá (admin có quyền xóa review không phù hợp)
      */
+        /**
+     * Xóa bản ghi theo ID
+     */
     public function destroy(DanhGia $danhGia): JsonResponse
     {
         $danhGia->delete();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã xóa đánh giá.',
