@@ -155,6 +155,19 @@ export default {
       if (this.step === 'verify') return this.verifyOtp()
       return this.resetPassword()
     },
+    /**
+     * Gửi yêu cầu đặt lại mật khẩu (Request OTP).
+     * 
+     * Logic hoạt động:
+     * 1. Validate email client-side.
+     * 2. Gọi API `POST /dkmn/password/forgot` (hoặc endpoint từ env).
+     *    - Backend: `ForgotPasswordController::sendResetLinkEmail`.
+     *    - Backend kiểm tra email có tồn tại không.
+     *    - Nếu có, sinh mã OTP/Token, lưu vào DB/Cache, và gửi email cho user.
+     * 3. Xử lý kết quả:
+     *    - Thành công: Chuyển sang bước nhập OTP (`step = 'verify'`).
+     *    - Thất bại: Hiển thị lỗi.
+     */
     async requestOtp() {
       if (this.isLoading) return
       this.error = ''
@@ -183,6 +196,18 @@ export default {
         this.isLoading = false
       }
     },
+    /**
+     * Xác thực mã OTP người dùng nhập.
+     * 
+     * Logic hoạt động:
+     * 1. Validate OTP client-side.
+     * 2. Gọi API `POST /dkmn/password/verify-otp`.
+     *    - Backend: `ForgotPasswordController::verifyOtp`.
+     *    - Backend kiểm tra OTP có khớp với email và còn hạn không.
+     * 3. Xử lý kết quả:
+     *    - Thành công: Chuyển sang bước nhập mật khẩu mới (`step = 'reset'`).
+     *    - Thất bại: Báo lỗi OTP sai hoặc hết hạn.
+     */
     async verifyOtp() {
       if (this.isLoading) return
       this.error = ''
@@ -209,6 +234,20 @@ export default {
         this.isLoading = false
       }
     },
+    /**
+     * Đặt lại mật khẩu mới.
+     * 
+     * Logic hoạt động:
+     * 1. Validate mật khẩu và xác nhận mật khẩu client-side.
+     * 2. Gọi API `POST /dkmn/password/reset`.
+     *    - Backend: `ResetPasswordController::reset`.
+     *    - Backend verify lại OTP/Token lần cuối (để đảm bảo bảo mật).
+     *    - Hash mật khẩu mới và cập nhật vào DB.
+     *    - Xóa OTP/Token đã sử dụng.
+     * 3. Xử lý kết quả:
+     *    - Thành công: Chuyển hướng về trang đăng nhập.
+     *    - Thất bại: Báo lỗi.
+     */
     async resetPassword() {
       if (this.isLoading) return
       this.error = ''

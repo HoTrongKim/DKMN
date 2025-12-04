@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
+/**
+ * Seeder dữ liệu Trạm/Bến/Sân bay
+ * Map các địa điểm này vào tỉnh thành tương ứng dựa trên tên
+ */
 class TramSeeder extends Seeder
 {
     private array $busStations = [

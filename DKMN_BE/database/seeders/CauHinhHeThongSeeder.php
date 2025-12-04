@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Cấu hình hệ thống
+ * Tạo các key-value config mặc định cho website (email, sdt, tài khoản ngân hàng...)
+ */
 class CauHinhHeThongSeeder extends Seeder
 {
     public function run(): void

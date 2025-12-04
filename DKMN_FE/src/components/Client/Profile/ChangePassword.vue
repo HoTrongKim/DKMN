@@ -91,6 +91,23 @@ export default {
     }
   },
   methods: {
+    /**
+     * Xử lý đổi mật khẩu.
+     * 
+     * API: `POST /dkmn/me/change-password`
+     * Backend Controller: `NguoiDungController::changePassword` (dự đoán)
+     * 
+     * Logic:
+     * 1. Validate client-side:
+     *    - Mật khẩu mới và xác nhận phải khớp.
+     *    - Mật khẩu mới phải >= 6 ký tự.
+     * 2. Gọi API đổi mật khẩu.
+     *    - Backend sẽ kiểm tra mật khẩu hiện tại có đúng không.
+     *    - Backend sẽ hash mật khẩu mới và cập nhật DB.
+     * 3. Xử lý kết quả:
+     *    - Thành công: Hiển thị thông báo, reset form.
+     *    - Thất bại: Hiển thị lỗi từ server.
+     */
     async handleSubmit() {
       this.errorMessage = ''
       this.successMessage = ''

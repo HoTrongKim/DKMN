@@ -46,8 +46,8 @@ class DonHangController extends Controller
      */
     public function store(Request $request)
     {
-        $data = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate dữ liệu đầu vào
+        $data = $request->validate([
             'tripId' => 'required|integer|exists:chuyen_dis,id',
             'seatIds' => 'nullable|array',
             'seatIds.*' => 'required|string',
@@ -90,19 +90,27 @@ class DonHangController extends Controller
             ], 401);
         }
 
+        // Bắt đầu transaction để đảm bảo tính toàn vẹn dữ liệu
         $booking = DB::transaction(function () use ($data, $identifiers, $request, $userId) {
+            // Lấy thông tin chuyến đi và lock row để tránh race condition
             $trip = ChuyenDi::with(['tramDi.tinhThanh', 'tramDen.tinhThanh', 'nhaVanHanh'])
                 ->lockForUpdate()
                 ->findOrFail($data['tripId']);
 
+            // Đồng bộ trạng thái ghế (nếu cần thiết, ví dụ từ hệ thống khác)
             TripSeatSynchronizer::sync($trip);
             $context = $this->buildTripContext($trip, $data, count($identifiers));
 
+            // Lấy danh sách ghế theo identifiers (ID hoặc số ghế)
             $seats = $this->fetchSeatsForTrip($trip->id, $identifiers);
+            
+            // Retry fetch nếu số lượng không khớp (có thể do sync chậm)
             if ($seats->count() !== count($identifiers)) {
                 TripSeatSynchronizer::sync($trip);
                 $seats = $this->fetchSeatsForTrip($trip->id, $identifiers);
             }
+            
+            // Kiểm tra lại số lượng ghế tìm thấy
             if ($seats->count() !== count($identifiers)) {
                 // Trả về JSON response
         return response()->json([
@@ -111,6 +119,7 @@ class DonHangController extends Controller
                 ], 422);
             }
 
+            // Kiểm tra xem có ghế nào không còn trống không
             $blocked = $seats->filter(fn ($seat) => $seat->trang_thai !== 'trong');
             if ($blocked->isNotEmpty()) {
                 // Trả về JSON response
@@ -120,11 +129,13 @@ class DonHangController extends Controller
                 ], 422);
             }
 
+            // Tạo payload cho đơn hàng
             $orderPayload = $this->orderPayload($request, $userId, $trip->id, $context, $data);
             // Thao tác database
         $order = DonHang::create($orderPayload);
 
             $now = Carbon::now();
+            // Tạo chi tiết đơn hàng cho từng ghế
             $detailRows = $seats->map(function (Ghe $seat) use ($order, $data, $now) {
                 return [
                     'don_hang_id' => $order->id,
@@ -140,21 +151,25 @@ class DonHangController extends Controller
                 ChiTietDonHang::insert($detailRows);
             }
 
+            // Cập nhật trạng thái ghế thành 'da_dat'
             $seatUpdate = ['trang_thai' => 'da_dat'];
             if (Schema::hasColumn('ghes', 'ngay_cap_nhat')) {
                 $seatUpdate['ngay_cap_nhat'] = $now;
             }
             Ghe::whereIn('id', $seats->pluck('id')->toArray())->update($seatUpdate);
 
+            // Cập nhật số ghế còn lại của chuyến đi
             $trip->update([
                 'ghe_con' => max(0, $trip->ghe_con - $seats->count()),
                 'ngay_cap_nhat' => $now,
             ]);
 
+            // Tính toán giá vé
             $seatNumbers = $seats->pluck('so_ghe')->implode(',');
             $seatCount = $seats->count();
             $baseFare = (int) round($seats->sum('gia'));
 
+            // Fallback giá vé nếu giá ghế = 0
             if ($baseFare <= 0) {
                 $baseFare = (int) round(($trip->gia_co_ban ?? 0) * max(1, $seatCount));
             }
@@ -163,8 +178,8 @@ class DonHangController extends Controller
                 $baseFare = (int) round($data['total'] ?? 0);
             }
 
-            // Thao tác database
-        $ticket = Ticket::create([
+            // Tạo Ticket
+            $ticket = Ticket::create([
                 'don_hang_id' => $order->id,
                 'trip_id' => $trip->id,
                 'seat_numbers' => $seatNumbers,
@@ -172,6 +187,7 @@ class DonHangController extends Controller
                 'total_amount_vnd' => $baseFare,
             ]);
 
+            // Cập nhật tổng tiền đơn hàng
             $order->forceFill([
                 'tong_tien' => $baseFare,
             ])->save();

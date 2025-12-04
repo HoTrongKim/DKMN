@@ -4,7 +4,7 @@ require $projectBase . '/vendor/autoload.php';
 $app = require $projectBase . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $request = Illuminate\Http\Request::create('/api/nguoi-dung/dang-nhap', 'POST', [
-    'email' => 'admin@dkmn.com',
+    'email' => 'tranminh6464aimbot@gmail.com',
     'password' => '123456',
 ]);
 $response = $kernel->handle($request);

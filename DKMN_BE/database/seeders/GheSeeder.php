@@ -6,6 +6,11 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Seeder dữ liệu Ghế (Seats)
+ * Tạo danh sách ghế cho từng chuyến đi dựa trên số lượng ghế của chuyến
+ * Logic đánh số ghế (A1, A2...) và set trạng thái ngẫu nhiên (trống, đã đặt, khóa)
+ */
 class GheSeeder extends Seeder
 {
     public function run(): void

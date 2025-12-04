@@ -15,6 +15,8 @@ class NguoiDungQuyenHanController extends Controller
      */
     public function getData()
     {
+        // Lấy danh sách phân quyền người dùng, sắp xếp theo ngày cấp mới nhất
+        // Dùng để admin kiểm tra ai đang giữ quyền gì
         return response()->json(['data' => NguoiDungQuyenHan::orderByDesc('ngay_cap')->get()]);
     }
 }

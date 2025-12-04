@@ -15,6 +15,7 @@ class HuyVeController extends Controller
      */
     public function getData()
     {
+        // Trả về danh sách hủy vé, mới nhất lên đầu
         return response()->json(['data' => HuyVe::orderByDesc('ngay_huy')->get()]);
     }
 }

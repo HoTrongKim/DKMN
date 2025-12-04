@@ -7,6 +7,11 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Seeder dữ liệu Payment (New)
+ * Tạo dữ liệu thanh toán cho bảng payments mới (hỗ trợ QR, Cash onboard)
+ * Link với bảng tickets
+ */
 class PaymentSeeder extends Seeder
 {
     public function run(): void

@@ -298,6 +298,18 @@ export default {
     this.fetchMessages()
   },
   methods: {
+    /**
+     * Tải danh sách tin nhắn liên hệ từ server.
+     * 
+     * API: `GET /dkmn/lien-he/get-data`
+     * Backend Controller: `LienHeController::getData` (dự đoán)
+     * 
+     * Logic:
+     * 1. Chuẩn bị tham số lọc (`keyword`, `trang_thai`).
+     * 2. Gọi API lấy danh sách tin nhắn.
+     * 3. Cập nhật `messages` với dữ liệu trả về.
+     * 4. Xử lý lỗi nếu có.
+     */
     async fetchMessages() {
       this.isLoading = true
       this.actionError = ''
@@ -351,6 +363,19 @@ export default {
         tra_loi: ''
       }
     },
+    /**
+     * Gửi phản hồi cho tin nhắn liên hệ.
+     * 
+     * API: `PUT /dkmn/lien-he/{id}`
+     * Backend Controller: `LienHeController::update` (dự đoán)
+     * 
+     * Logic:
+     * 1. Kiểm tra ID tin nhắn được chọn.
+     * 2. Gọi API cập nhật tin nhắn với nội dung trả lời và trạng thái mới.
+     * 3. Xử lý kết quả:
+     *    - Thành công: Đóng modal, hiển thị thông báo, tải lại danh sách.
+     *    - Thất bại: Hiển thị lỗi.
+     */
     async submitReply() {
       if (!this.selectedId) {
         this.actionError = 'Vui lòng chọn tin nhắn cần trả lời'
@@ -378,6 +403,20 @@ export default {
         this.actionLoading = false
       }
     },
+    /**
+     * Xóa tin nhắn liên hệ.
+     * 
+     * API: `DELETE /dkmn/lien-he/{id}`
+     * Backend Controller: `LienHeController::destroy` (dự đoán)
+     * 
+     * Logic:
+     * 1. Kiểm tra ID tin nhắn được chọn.
+     * 2. Hiển thị confirm dialog.
+     * 3. Gọi API xóa tin nhắn.
+     * 4. Xử lý kết quả:
+     *    - Thành công: Hiển thị thông báo, tải lại danh sách.
+     *    - Thất bại: Hiển thị lỗi.
+     */
     async deleteSelected() {
       if (!this.selectedId) {
         this.actionError = 'Vui lòng chọn tin nhắn cần xóa'

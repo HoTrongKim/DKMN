@@ -356,6 +356,22 @@ const toDateInput = value => {
   }
 };
 
+/**
+ * Tải danh sách đơn hàng từ server.
+ * 
+ * API: `GET /admin/orders`
+ * Backend Controller: `AdminOrderController::index` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API với các tham số phân trang và lọc:
+ *    - `page`: Trang hiện tại.
+ *    - `search`: Từ khóa tìm kiếm (mã đơn, tên khách, SĐT).
+ *    - `status`: Trạng thái đơn hàng (da_dat, dang_xu_ly, da_di, da_huy).
+ *    - `paymentStatus`: Trạng thái thanh toán (paid, pending, refunded).
+ * 2. Cập nhật danh sách `orders` và thông tin phân trang `pagination`.
+ * 3. Reset `selectedId` (bỏ chọn dòng).
+ * 4. Xử lý lỗi và hiển thị thông báo nếu có.
+ */
 const fetchOrders = async (page = 1) => {
   isLoading.value = true;
   emptyMessage.value = "Đang tải dữ liệu...";
@@ -459,6 +475,21 @@ const patchOrder = async (orderId, payload) => {
   }
 };
 
+/**
+ * Lưu thay đổi thông tin đơn hàng (chỉnh sửa).
+ * 
+ * API: `PATCH /admin/orders/{id}`
+ * Backend Controller: `AdminOrderController::update` (dự đoán)
+ * 
+ * Logic:
+ * 1. Chuẩn bị payload từ form:
+ *    - Map trạng thái hiển thị sang mã status code (VD: "Đã đặt" -> "da_xac_nhan").
+ *    - Map trạng thái thanh toán sang mã code (VD: "Đã TT" -> "paid").
+ * 2. Gọi API cập nhật (`patchOrder`).
+ * 3. Xử lý kết quả:
+ *    - Thành công: Đóng modal, reset form, hiển thị thông báo, tải lại danh sách.
+ *    - Thất bại: Hiển thị lỗi trên form.
+ */
 const saveForm = async () => {
   if (!form.id) return;
   const payload = {};
@@ -495,6 +526,18 @@ const openCancelSelected = () => {
   showCancel.value = true;
 };
 
+/**
+ * Xác nhận hủy đơn hàng.
+ * 
+ * API: `PATCH /admin/orders/{id}`
+ * Backend Controller: `AdminOrderController::update` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API cập nhật trạng thái đơn hàng thành "da_huy".
+ * 2. Xử lý kết quả:
+ *    - Thành công: Đóng modal, hiển thị thông báo, tải lại danh sách.
+ *    - Thất bại: Hiển thị lỗi.
+ */
 const confirmCancel = async () => {
   if (!selectedItem.value || cancelLoading.value) return;
   cancelLoading.value = true;
@@ -519,6 +562,18 @@ const openDeleteSelected = () => {
   showDelete.value = true;
 };
 
+/**
+ * Xác nhận xóa vĩnh viễn đơn hàng.
+ * 
+ * API: `DELETE /admin/orders/{id}`
+ * Backend Controller: `AdminOrderController::destroy` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API xóa đơn hàng.
+ * 2. Xử lý kết quả:
+ *    - Thành công: Đóng modal, hiển thị thông báo, tải lại danh sách.
+ *    - Thất bại: Hiển thị lỗi.
+ */
 const confirmDelete = async () => {
   if (!selectedItem.value || deleteLoading.value) return;
   deleteLoading.value = true;
@@ -540,6 +595,18 @@ const confirmDelete = async () => {
   }
 };
 
+/**
+ * Đánh dấu đơn hàng là hoàn thành.
+ * 
+ * API: `PATCH /admin/orders/{id}`
+ * Backend Controller: `AdminOrderController::update` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API cập nhật trạng thái đơn hàng thành "hoan_tat".
+ * 2. Xử lý kết quả:
+ *    - Thành công: Hiển thị thông báo, tải lại danh sách.
+ *    - Thất bại: Hiển thị lỗi.
+ */
 const markAsCompleted = async () => {
   if (!selectedItem.value || actionLoading.value) return;
   actionLoading.value = true;

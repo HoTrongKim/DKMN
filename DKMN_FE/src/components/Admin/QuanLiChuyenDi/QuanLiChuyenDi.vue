@@ -651,166 +651,213 @@ function validateForm() {
 }
 
 
-async function onSubmit() {
-  formError.value = ''
-  const err = validateForm()
-  if (err) {
-    formError.value = err
-    window.$toast?.warning?.(err)
-    return
-  }
+    /**
+     * Xử lý tạo mới hoặc cập nhật chuyến đi.
+     * 
+     * Logic hoạt động:
+     * 1. Validate form client-side (giờ đi < giờ đến, giá > 0, ...).
+     * 2. Chuẩn bị payload:
+     *    - Convert datetime sang ISO string (UTC/Server time).
+     *    - Convert các field ID sang Number.
+     * 3. Gọi API:
+     *    - Nếu là Edit (`isEdit` = true): `PUT /admin/trips/{id}`.
+     *    - Nếu là Create: `POST /admin/trips`.
+     *    - Backend: `TripController::store` hoặc `TripController::update`.
+     * 4. Xử lý kết quả:
+     *    - Thành công: Đóng modal, reload danh sách, toast success.
+     *    - Thất bại: Hiển thị lỗi từ response.
+     */
+    async function onSubmit() {
+      formError.value = ''
+      const err = validateForm()
+      if (err) {
+        formError.value = err
+        window.$toast?.warning?.(err)
+        return
+      }
 
-  const payload = {
-    operatorId: Number(form.operatorId),
-    fromProvinceId: Number(form.fromProvinceId),
-    fromStationId: Number(form.fromStationId),
-    toProvinceId: Number(form.toProvinceId),
-    toStationId: Number(form.toStationId),
-    departureTime: toServerDate(form.departureTime),
-    arrivalTime: toServerDate(form.arrivalTime),
-    basePrice: Number(form.basePrice),
-    totalSeats: Number(form.totalSeats),
-    remainingSeats: Number(form.availableSeats),
-    status: form.status,
-  }
+      const payload = {
+        operatorId: Number(form.operatorId),
+        fromProvinceId: Number(form.fromProvinceId),
+        fromStationId: Number(form.fromStationId),
+        toProvinceId: Number(form.toProvinceId),
+        toStationId: Number(form.toStationId),
+        departureTime: toServerDate(form.departureTime),
+        arrivalTime: toServerDate(form.arrivalTime),
+        basePrice: Number(form.basePrice),
+        totalSeats: Number(form.totalSeats),
+        remainingSeats: Number(form.availableSeats),
+        status: form.status,
+      }
 
-  submitting.value = true
-  try {
-    if (isEdit.value && form.id) {
-      await api.put(`/admin/trips/${form.id}`, payload)
-      window.$toast?.success?.('Cập nhật chuyến đi thành công! ✅')
-    } else {
-      await api.post('/admin/trips', payload)
-      window.$toast?.success?.('Tạo chuyến đi thành công! 🚌')
+      submitting.value = true
+      try {
+        if (isEdit.value && form.id) {
+          await api.put(`/admin/trips/${form.id}`, payload)
+          window.$toast?.success?.('Cập nhật chuyến đi thành công! ✅')
+        } else {
+          await api.post('/admin/trips', payload)
+          window.$toast?.success?.('Tạo chuyến đi thành công! 🚌')
+        }
+        closeModal()
+        await fetchTrips(isEdit.value ? pagination.currentPage : 1)
+      } catch (error) {
+        const errorMsg = resolveError(error, 'Không thể lưu chuyến đi.')
+        formError.value = errorMsg
+        window.$toast?.error?.(errorMsg)
+      } finally {
+        submitting.value = false
+      }
     }
-    closeModal()
-    await fetchTrips(isEdit.value ? pagination.currentPage : 1)
-  } catch (error) {
-    const errorMsg = resolveError(error, 'Không thể lưu chuyến đi.')
-    formError.value = errorMsg
-    window.$toast?.error?.(errorMsg)
-  } finally {
-    submitting.value = false
-  }
-}
 
-async function onDelete() {
-  if (!selectedId.value) {
-    confirming.value = false
-    return
-  }
-  deleteError.value = ''
-  if (deleting.value) return
-  deleting.value = true
+    /**
+     * Xóa chuyến đi đã chọn.
+     * 
+     * Logic hoạt động:
+     * 1. Kiểm tra `selectedId` có hợp lệ không.
+     * 2. Gọi API `DELETE /admin/trips/{id}`.
+     *    - Backend: `TripController::destroy`.
+     *    - Backend sẽ kiểm tra ràng buộc (ví dụ: chuyến đã có vé đặt thì không cho xóa hoặc xóa mềm).
+     * 3. Xử lý kết quả:
+     *    - Thành công: Reset selection, reload danh sách (xử lý lùi trang nếu xóa hết item trang cuối).
+     *    - Thất bại: Toast error.
+     */
+    async function onDelete() {
+      if (!selectedId.value) {
+        confirming.value = false
+        return
+      }
+      deleteError.value = ''
+      if (deleting.value) return
+      deleting.value = true
 
-  const currentCount = items.value.length
-  const nextPage = pagination.currentPage > 1 && currentCount === 1 ? pagination.currentPage - 1 : pagination.currentPage
+      const currentCount = items.value.length
+      const nextPage = pagination.currentPage > 1 && currentCount === 1 ? pagination.currentPage - 1 : pagination.currentPage
 
-  try {
-    await api.delete(`/admin/trips/${selectedId.value}`)
-    confirming.value = false
-    selectedId.value = null
-    window.$toast?.success?.('Đã xóa chuyến đi thành công! 🗑️')
-    await fetchTrips(nextPage)
-  } catch (error) {
-    const errorMsg = resolveError(error, 'Không thể xóa chuyến đi.')
-    deleteError.value = errorMsg
-    window.$toast?.error?.(errorMsg)
-  } finally {
-    deleting.value = false
-  }
-}
-
-async function fetchOperators() {
-  try {
-    const { data } = await api.get('/dkmn/nha-van-hanh/get-data')
-    operators.value = Array.isArray(data?.data) ? data.data : []
-  } catch (error) {
-    operators.value = []
-    console.warn('Cannot load operators', error)
-  } finally {
-    ensureOperatorForType()
-  }
-}
-
-async function fetchStations() {
-  try {
-    const { data } = await api.get('/dkmn/tram/get-data')
-    stations.value = Array.isArray(data?.data) ? data.data : []
-  } catch (error) {
-    stations.value = []
-    console.warn('Cannot load stations', error)
-  } finally {
-    ensureStationFor('from')
-    ensureStationFor('to')
-  }
-}
-
-async function fetchCustomers() {
-  isLoadingCustomers.value = true
-  customersError.value = ''
-  try {
-    const { data } = await api.get('/admin/users', {
-      params: { role: 'customer', perPage: 200 },
-    })
-    customers.value = Array.isArray(data?.data) ? data.data : []
-  } catch (error) {
-    customers.value = []
-    customersError.value = resolveError(error, 'Không tải được danh sách khách hàng.')
-  } finally {
-    isLoadingCustomers.value = false
-  }
-}
-
-async function fetchProvinces() {
-  try {
-    const { data } = await api.get('/dkmn/tinh-thanh/get-data')
-    provinces.value = (Array.isArray(data?.data) ? data.data : [])
-      .map((item) => ({
-        id: item.id ?? item.ma ?? item.code,
-        ten: item.ten ?? item.ten_tinh ?? item.name,
-      }))
-      .filter((item) => item.id && item.ten)
-  } catch (error) {
-    provinces.value = []
-    console.warn('Cannot load provinces', error)
-  }
-}
-
-async function fetchTrips(page = 1) {
-  isLoading.value = true
-  loadError.value = ''
-  try {
-    const params = {
-      page,
-      perPage: DEFAULT_PER_PAGE,
-      keyword: filters.keyword || undefined,
-      status: filters.status || undefined,
-      type: filters.type || undefined,
-      dateFrom: filters.fromDate || undefined,
-      dateTo: filters.toDate || undefined,
+      try {
+        await api.delete(`/admin/trips/${selectedId.value}`)
+        confirming.value = false
+        selectedId.value = null
+        window.$toast?.success?.('Đã xóa chuyến đi thành công! 🗑️')
+        await fetchTrips(nextPage)
+      } catch (error) {
+        const errorMsg = resolveError(error, 'Không thể xóa chuyến đi.')
+        deleteError.value = errorMsg
+        window.$toast?.error?.(errorMsg)
+      } finally {
+        deleting.value = false
+      }
     }
-    const { data } = await api.get('/admin/trips', { params })
-    const list = Array.isArray(data?.data) ? data.data.map(mapTripResponse) : []
 
-    items.value = list
-    pagination.currentPage = data?.meta?.currentPage ?? page
-    pagination.lastPage = data?.meta?.lastPage ?? 1
-    pagination.total = data?.meta?.total ?? list.length
+    /**
+     * Các hàm tải dữ liệu danh mục (Lookup Data) từ Backend.
+     * 
+     * - fetchOperators: GET /dkmn/nha-van-hanh/get-data (Lấy danh sách nhà xe/hãng bay)
+     * - fetchStations: GET /dkmn/tram/get-data (Lấy danh sách bến xe/sân bay/ga)
+     * - fetchCustomers: GET /admin/users?role=customer (Lấy danh sách khách hàng để gửi thông báo)
+     * - fetchProvinces: GET /dkmn/tinh-thanh/get-data (Lấy danh sách tỉnh thành)
+     */
+    async function fetchOperators() {
+      try {
+        const { data } = await api.get('/dkmn/nha-van-hanh/get-data')
+        operators.value = Array.isArray(data?.data) ? data.data : []
+      } catch (error) {
+        operators.value = []
+        console.warn('Cannot load operators', error)
+      } finally {
+        ensureOperatorForType()
+      }
+    }
 
-    if (!list.some((it) => it.id === selectedId.value)) {
-      selectedId.value = null
+    async function fetchStations() {
+      try {
+        const { data } = await api.get('/dkmn/tram/get-data')
+        stations.value = Array.isArray(data?.data) ? data.data : []
+      } catch (error) {
+        stations.value = []
+        console.warn('Cannot load stations', error)
+      } finally {
+        ensureStationFor('from')
+        ensureStationFor('to')
+      }
     }
-  } catch (error) {
-    loadError.value = resolveError(error, 'Không tải được danh sách chuyến đi.')
-    items.value = []
-  } finally {
-    isLoading.value = false
-    if (!isReady.value) {
-      isReady.value = true
+
+    async function fetchCustomers() {
+      isLoadingCustomers.value = true
+      customersError.value = ''
+      try {
+        const { data } = await api.get('/admin/users', {
+          params: { role: 'customer', perPage: 200 },
+        })
+        customers.value = Array.isArray(data?.data) ? data.data : []
+      } catch (error) {
+        customers.value = []
+        customersError.value = resolveError(error, 'Không tải được danh sách khách hàng.')
+      } finally {
+        isLoadingCustomers.value = false
+      }
     }
-  }
-}
+
+    async function fetchProvinces() {
+      try {
+        const { data } = await api.get('/dkmn/tinh-thanh/get-data')
+        provinces.value = (Array.isArray(data?.data) ? data.data : [])
+          .map((item) => ({
+            id: item.id ?? item.ma ?? item.code,
+            ten: item.ten ?? item.ten_tinh ?? item.name,
+          }))
+          .filter((item) => item.id && item.ten)
+      } catch (error) {
+        provinces.value = []
+        console.warn('Cannot load provinces', error)
+      }
+    }
+
+    /**
+     * Tải danh sách chuyến đi từ Backend với phân trang và bộ lọc.
+     * 
+     * Logic hoạt động:
+     * 1. Chuẩn bị params từ `filters` (keyword, type, status, dateFrom, dateTo).
+     * 2. Gọi API `GET /admin/trips`.
+     *    - Backend: `TripController::index`.
+     *    - Trả về: Danh sách chuyến đi (data) và thông tin phân trang (meta).
+     * 3. Map dữ liệu trả về qua `mapTripResponse` để chuẩn hóa field cho Frontend.
+     * 4. Cập nhật state `items` và `pagination`.
+     */
+    async function fetchTrips(page = 1) {
+      isLoading.value = true
+      loadError.value = ''
+      try {
+        const params = {
+          page,
+          perPage: DEFAULT_PER_PAGE,
+          keyword: filters.keyword || undefined,
+          status: filters.status || undefined,
+          type: filters.type || undefined,
+          dateFrom: filters.fromDate || undefined,
+          dateTo: filters.toDate || undefined,
+        }
+        const { data } = await api.get('/admin/trips', { params })
+        const list = Array.isArray(data?.data) ? data.data.map(mapTripResponse) : []
+
+        items.value = list
+        pagination.currentPage = data?.meta?.currentPage ?? page
+        pagination.lastPage = data?.meta?.lastPage ?? 1
+        pagination.total = data?.meta?.total ?? list.length
+
+        if (!list.some((it) => it.id === selectedId.value)) {
+          selectedId.value = null
+        }
+      } catch (error) {
+        loadError.value = resolveError(error, 'Không tải được danh sách chuyến đi.')
+        items.value = []
+      } finally {
+        isLoading.value = false
+        if (!isReady.value) {
+          isReady.value = true
+        }
+      }
+    }
 
   function mapTripResponse(trip) {
     const totalSeats = trip.totalSeats ?? trip.seats?.total ?? 0
@@ -952,56 +999,66 @@ function resolveError(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback
 }
 
-async function sendNotify() {
-  notify.error = ''
-  notify.success = ''
+    /**
+     * Gửi thông báo cho khách hàng đã đặt vé hoặc khách hàng tiềm năng.
+     * 
+     * Logic hoạt động:
+     * 1. Validate input: Phải chọn kênh gửi (Email, App, SMS), nội dung, và danh sách người nhận.
+     * 2. Gọi API `POST /admin/trips/{id}/notify`.
+     *    - Backend: `TripController::notifyCustomers`.
+     *    - Backend sẽ queue job gửi email/SMS/push notification tới danh sách userIds được gửi lên.
+     * 3. Hiển thị kết quả thành công/thất bại.
+     */
+    async function sendNotify() {
+      notify.error = ''
+      notify.success = ''
 
-  if (!form.id) {
-    notify.error = 'Vui lòng lưu chuyến trước khi gửi thông báo.'
-    window.$toast?.warning?.('Vui lòng lưu chuyến trước khi gửi thông báo.')
-    return
-  }
+      if (!form.id) {
+        notify.error = 'Vui lòng lưu chuyến trước khi gửi thông báo.'
+        window.$toast?.warning?.('Vui lòng lưu chuyến trước khi gửi thông báo.')
+        return
+      }
 
-  const selectedChannels = Object.entries(notify.channels)
-    .filter(([, value]) => value)
-    .map(([key]) => key)
+      const selectedChannels = Object.entries(notify.channels)
+        .filter(([, value]) => value)
+        .map(([key]) => key)
 
-  if (!selectedChannels.length) {
-    notify.error = 'Chọn ít nhất một kênh gửi.'
-    window.$toast?.warning?.('Chọn ít nhất một kênh gửi.')
-    return
-  }
+      if (!selectedChannels.length) {
+        notify.error = 'Chọn ít nhất một kênh gửi.'
+        window.$toast?.warning?.('Chọn ít nhất một kênh gửi.')
+        return
+      }
 
-  if (!notify.message.trim()) {
-    notify.error = 'Nội dung thông báo không được để trống.'
-    window.$toast?.warning?.('Nội dung thông báo không được để trống.')
-    return
-  }
+      if (!notify.message.trim()) {
+        notify.error = 'Nội dung thông báo không được để trống.'
+        window.$toast?.warning?.('Nội dung thông báo không được để trống.')
+        return
+      }
 
-  if (!notify.recipients.length) {
-    notify.error = 'Chọn ít nhất một khách hàng.'
-    window.$toast?.warning?.('Chọn ít nhất một khách hàng.')
-    return
-  }
+      if (!notify.recipients.length) {
+        notify.error = 'Chọn ít nhất một khách hàng.'
+        window.$toast?.warning?.('Chọn ít nhất một khách hàng.')
+        return
+      }
 
-  notify.loading = true
-  window.$toast?.info?.('Đang gửi thông báo...')
-  try {
-    await api.post(`/admin/trips/${form.id}/notify`, {
-      message: notify.message.trim(),
-      channels: selectedChannels,
-      recipientIds: notify.recipients.map((id) => Number(id)),
-    })
-    notify.success = 'Đã gửi thông báo.'
-    window.$toast?.success?.('Đã gửi thông báo thành công! 📧')
-  } catch (error) {
-    const errorMsg = resolveError(error, 'Không thể gửi thông báo.')
-    notify.error = errorMsg
-    window.$toast?.error?.(errorMsg)
-  } finally {
-    notify.loading = false
-  }
-}
+      notify.loading = true
+      window.$toast?.info?.('Đang gửi thông báo...')
+      try {
+        await api.post(`/admin/trips/${form.id}/notify`, {
+          message: notify.message.trim(),
+          channels: selectedChannels,
+          recipientIds: notify.recipients.map((id) => Number(id)),
+        })
+        notify.success = 'Đã gửi thông báo.'
+        window.$toast?.success?.('Đã gửi thông báo thành công! 📧')
+      } catch (error) {
+        const errorMsg = resolveError(error, 'Không thể gửi thông báo.')
+        notify.error = errorMsg
+        window.$toast?.error?.(errorMsg)
+      } finally {
+        notify.loading = false
+      }
+    }
 
 function toInputDate(value) {
   if (!value) return ''

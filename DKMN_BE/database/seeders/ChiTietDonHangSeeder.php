@@ -5,6 +5,11 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder Chi tiết đơn hàng
+ * Gán hành khách vào ghế cụ thể cho mỗi đơn hàng
+ * Đảm bảo mỗi đơn hàng có ít nhất 1 vé/ghế
+ */
 class ChiTietDonHangSeeder extends Seeder
 {
     public function run(): void

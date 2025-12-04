@@ -6,6 +6,10 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Seeder dữ liệu Người dùng
+ * Tạo tài khoản Admin mặc định và các user mẫu để test
+ */
 class NguoiDungSeeder extends Seeder
 {
     public function run(): void

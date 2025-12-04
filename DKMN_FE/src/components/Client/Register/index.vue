@@ -137,6 +137,25 @@ export default {
             d.setHours(0, 0, 0, 0);
             return d > today;
         },
+        /**
+         * Xử lý đăng ký tài khoản mới.
+         * 
+         * Logic hoạt động:
+         * 1. Validate form client-side:
+         *    - Kiểm tra các trường bắt buộc (Họ tên, Email, SĐT, Mật khẩu).
+         *    - Kiểm tra định dạng số điện thoại (10 số).
+         *    - Kiểm tra mật khẩu nhập lại có khớp không.
+         *    - Kiểm tra ngày sinh không được ở tương lai.
+         * 2. Chuẩn bị payload gửi lên server:
+         *    - Map các trường dữ liệu vào payload (ho_ten, email, so_dien_thoai, ngay_sinh, password).
+         * 3. Gọi API `POST /nguoi-dung/dang-ky`.
+         *    - Backend: `NguoiDungController::dangKy`.
+         *    - Backend sẽ validate tính duy nhất của email và số điện thoại.
+         *    - Backend hash mật khẩu và tạo record user mới.
+         * 4. Xử lý kết quả:
+         *    - Thành công: Hiển thị thông báo và chuyển hướng sang trang đăng nhập.
+         *    - Thất bại: Hiển thị lỗi từ server (ví dụ: email đã tồn tại).
+         */
         async dangKyTaiKhoan() {
             if (this.isLoading) return;
 

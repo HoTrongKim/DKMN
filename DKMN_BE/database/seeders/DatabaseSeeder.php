@@ -6,14 +6,24 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Seeder chính của hệ thống
+ * Chịu trách nhiệm gọi các seeder con theo đúng thứ tự để đảm bảo ràng buộc dữ liệu
+ * Thực hiện truncate/delete dữ liệu cũ trước khi seed mới
+ */
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
+        // Tắt kiểm tra khóa ngoại để có thể truncate/delete dữ liệu thoải mái
         Schema::disableForeignKeyConstraints();
         $this->prepareTables();
 
         $this->call([
+            // Gọi các seeder con theo thứ tự logic (từ điển -> master data -> transaction data)
             TinhThanhSeeder::class,
             TramSeeder::class,
             NhaVanHanhSeeder::class,

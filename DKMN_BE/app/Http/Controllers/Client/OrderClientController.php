@@ -19,25 +19,33 @@ class OrderClientController extends Controller
      * Danh sách đơn hàng của user hiện tại (paginated)
      * Eager load: chuyến đi, trạm, nhà vận hành, ticket, thanh toán
      */
-        /**
-     * Lấy danh sách dữ liệu với phân trang và filter
+    /**
+     * Danh sách đơn hàng của user hiện tại (paginated)
+     * Eager load: chuyến đi, trạm, nhà vận hành, ticket, thanh toán
+     * Logic:
+     * - Lấy user hiện tại từ request
+     * - Query đơn hàng thuộc về user đó
+     * - Eager load các quan hệ cần thiết để hiển thị thông tin tóm tắt
+     * - Sắp xếp đơn mới nhất lên đầu và phân trang
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
 
+        // Query builder với eager loading tối ưu
         $paginator = DonHang::query()
             ->with([
-                'chuyenDi.tramDi.tinhThanh',
-                'chuyenDi.tramDen.tinhThanh',
-                'chuyenDi.nhaVanHanh',
-                'ticket',
-                'thanhToans',
+                'chuyenDi.tramDi.tinhThanh', // Load thông tin trạm đi và tỉnh thành
+                'chuyenDi.tramDen.tinhThanh', // Load thông tin trạm đến và tỉnh thành
+                'chuyenDi.nhaVanHanh', // Load thông tin nhà xe
+                'ticket', // Load thông tin vé điện tử
+                'thanhToans', // Load lịch sử thanh toán
             ])
-            ->where('nguoi_dung_id', $user->id)
+            ->where('nguoi_dung_id', $user->id) // Chỉ lấy đơn của user hiện tại
             ->orderByDesc('ngay_tao')
             ->paginate($this->resolvePerPage($request, 10));
 
+        // Transform dữ liệu trả về
         $data = $paginator->getCollection()->map(fn (DonHang $order) => $this->transformOrder($order));
 
         return $this->respondWithPagination($paginator, $data);
@@ -54,6 +62,7 @@ class OrderClientController extends Controller
     {
         $user = $request->user('sanctum') ?? $request->user();
 
+        // Kiểm tra quyền sở hữu đơn hàng
         if ((int) $donHang->nguoi_dung_id !== (int) $user->id) {
             // Trả về JSON response
         return response()->json([
@@ -62,15 +71,17 @@ class OrderClientController extends Controller
             ], 403);
         }
 
+        // Load chi tiết các quan hệ sâu hơn cho trang chi tiết
         $donHang->load([
             'chuyenDi.tramDi.tinhThanh',
             'chuyenDi.tramDen.tinhThanh',
             'chuyenDi.nhaVanHanh',
-            'chiTietDonHang.ghe',
+            'chiTietDonHang.ghe', // Load chi tiết ghế ngồi
             'ticket',
             'thanhToans',
         ]);
 
+        // Map danh sách ghế/hành khách
         $items = $donHang->chiTietDonHang->map(function ($item) {
             return [
                 'seatId' => $item->ghe_id,
@@ -81,8 +92,11 @@ class OrderClientController extends Controller
             ];
         });
 
+        // Transform thông tin chung đơn hàng
         $order = $this->transformOrder($donHang);
         $order['items'] = $items;
+        
+        // Map lịch sử thanh toán
         $order['payments'] = $donHang->thanhToans->map(function ($payment) {
             return [
                 'id' => $payment->id,
@@ -107,6 +121,7 @@ class OrderClientController extends Controller
     private function transformOrder(DonHang $order): array
     {
         $trip = $order->chuyenDi;
+        // Fallback tên trạm từ order nếu trip đã bị xóa hoặc thay đổi
         $from = $trip?->tramDi?->ten ?? $order->noi_di;
         $to = $trip?->tramDen?->ten ?? $order->noi_den;
 
@@ -152,7 +167,8 @@ class OrderClientController extends Controller
      */
     private function mapPaymentStatus(DonHang $order): string
     {
-        $latest = $order->thanhToans->first();
+        // Lấy trạng thái thanh toán mới nhất
+        $latest = $order->thanhToans->first(); // Giả định quan hệ thanhToans đã được sắp xếp mới nhất
         $status = $latest?->trang_thai;
 
         return match ($status) {
@@ -172,6 +188,7 @@ class OrderClientController extends Controller
     {
         $user = $request->user('sanctum') ?? $request->user();
 
+        // 1. Kiểm tra quyền sở hữu
         if ((int) $donHang->nguoi_dung_id !== (int) $user->id) {
             // Trả về JSON response
         return response()->json([
@@ -180,6 +197,7 @@ class OrderClientController extends Controller
             ], 403);
         }
 
+        // 2. Kiểm tra trạng thái đơn hàng (chỉ cho hủy khi chưa hoàn tất/đã đi)
         if (!in_array($donHang->trang_thai, ['cho_xu_ly', 'da_xac_nhan', 'cho_thanh_toan'])) {
             // Trả về JSON response
         return response()->json([
@@ -188,21 +206,24 @@ class OrderClientController extends Controller
             ], 422);
         }
 
+        // 3. Thực hiện hủy trong transaction
         \Illuminate\Support\Facades\DB::transaction(function () use ($donHang) {
-            // 1. Update Order status
+            // Cập nhật trạng thái đơn hàng
             $donHang->update(['trang_thai' => 'da_huy']);
 
-            // 2. Update Ticket status
+            // Cập nhật trạng thái vé (nếu có)
             if ($donHang->ticket) {
                 $donHang->ticket->update(['status' => \App\Models\Ticket::STATUS_CANCELLED]);
             }
 
-            // 3. Release Seats
+            // Giải phóng ghế ngồi (quan trọng để người khác có thể đặt)
             $donHang->chiTietDonHang->each(function ($detail) {
                 if ($detail->ghe) {
                     $detail->ghe->update(['trang_thai' => 'trong']);
                 }
             });
+            
+            // Lưu ý: Có thể cần cập nhật lại số ghế còn (ghe_con) của chuyến đi tại đây hoặc dùng Observer/Event
         });
 
         // Trả về JSON response

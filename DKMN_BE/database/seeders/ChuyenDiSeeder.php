@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
+/**
+ * Seeder dữ liệu Chuyến đi (Trips)
+ * Tạo dữ liệu chuyến đi giả lập cho các tuyến đường (Bus, Train, Plane)
+ * Logic phức tạp: tạo tuyến đường giữa các tỉnh, nhân bản theo ngày/giờ, random giá vé
+ */
 class ChuyenDiSeeder extends Seeder
 {
     private const MIN_TRIP_PRICE = 1000;

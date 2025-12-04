@@ -142,6 +142,17 @@ export default {
     },
   },
   methods: {
+    /**
+     * Lấy danh sách đánh giá từ khách hàng.
+     * 
+     * API: `GET /dkmn/danh-gia/get-data`
+     * Backend Controller: `DanhGiaController::getData` (dự đoán)
+     * 
+     * Logic:
+     * - Gọi API với tham số limit (mặc định 12).
+     * - Map dữ liệu trả về qua `normalizeReview` để chuẩn hóa.
+     * - Reset phân trang về trang đầu tiên.
+     */
     async fetchReviews() {
       this.loading = true;
       this.error = "";

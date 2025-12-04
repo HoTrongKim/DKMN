@@ -15,6 +15,8 @@ class PhiDichVuController extends Controller
      */
     public function getData()
     {
+        // Lấy danh sách các loại phí dịch vụ, sắp xếp theo tên
+        // Dùng để hiển thị cấu hình phí cho admin
         return response()->json(['data' => PhiDichVu::orderBy('ten')->get()]);
     }
 }

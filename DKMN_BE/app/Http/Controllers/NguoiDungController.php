@@ -54,22 +54,17 @@ class NguoiDungController extends Controller
             'mat_khau' => 'required|string|min:4',
         ]);
 
-        // Tạo user mới trong database
-        // - mat_khau được hash bằng bcrypt
-        // - vai_tro mặc định là 'khach_hang'
-        // - trang_thai mặc định là 'hoat_dong' (không cần kích hoạt email)
-        // Thao tác database
+        // Tạo người dùng mới
         $nguoiDung = NguoiDung::create([
             'ho_ten' => $data['ho_ten'],
             'email' => $data['email'],
             'so_dien_thoai' => $data['so_dien_thoai'] ?? null,
-            'mat_khau' => // Xử lý mã hóa/kiểm tra password
-        Hash::make($data['mat_khau']),
+            'mat_khau' => Hash::make($data['mat_khau']), // Hash mật khẩu
             'vai_tro' => 'khach_hang',
             'trang_thai' => 'hoat_dong',
         ]);
 
-        // Tạo Sanctum token để tự động đăng nhập sau khi đăng ký
+        // Tạo token đăng nhập ngay sau khi đăng ký
         $token = $nguoiDung->createToken('key_client')->plainTextToken;
 
         // Trả về thông tin user và token để frontend lưu vào localStorage
@@ -140,7 +135,7 @@ class NguoiDungController extends Controller
             ]);
         }
 
-        // Tạo Sanctum token cho session
+        // Tạo token đăng nhập
         $token = $nguoiDung->createToken('key_client')->plainTextToken;
         
         // Redirect URL dựa vào vai trò: admin -> /ADMIN, khách hàng -> /
@@ -275,8 +270,7 @@ class NguoiDungController extends Controller
         $hashedOtp = // Xử lý mã hóa/kiểm tra password
         Hash::make((string) $otp);
 
-        // Lưu/cập nhật OTP vào bảng password_reset_tokens
-        // updateOrInsert: nếu email đã có thì update, chưa có thì insert
+        // Lưu OTP vào bảng password_reset_tokens (hash OTP để bảo mật)
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $data['email']],
             ['token' => $hashedOtp, 'created_at' => now()]
@@ -284,6 +278,7 @@ class NguoiDungController extends Controller
 
         // Gửi email chứa mã OTP cho user
         try {
+            // Gửi email chứa OTP
             Mail::to($data['email'])->send(new ResetOtpMail($otp));
         } catch (\Throwable $e) {
             // Không lộ lỗi mail ra client để tránh leak thông tin
@@ -407,6 +402,7 @@ class NguoiDungController extends Controller
             ], 404);
         }
 
+        // Cập nhật mật khẩu mới và xóa token
         $user->forceFill([
             'mat_khau' => // Xử lý mã hóa/kiểm tra password
         Hash::make($validated['password']),

@@ -15,6 +15,8 @@ class QuyenHanController extends Controller
      */
     public function getData()
     {
+        // Lấy danh sách các quyền hạn trong hệ thống, sắp xếp theo tên
+        // Dùng để gán quyền cho user
         return response()->json(['data' => QuyenHan::orderBy('ten')->get()]);
     }
 }

@@ -15,7 +15,8 @@ class PhanHoiController extends Controller
      */
     public function getData()
     {
-        // Trả về JSON response
+        // Lấy danh sách phản hồi từ khách hàng, mới nhất lên đầu
+        // Dùng cho admin xử lý feedback
         return response()->json(['data' => PhanHoi::orderByDesc('ngay_tao')->get()]);
     }
 }

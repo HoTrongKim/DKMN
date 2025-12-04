@@ -25,28 +25,45 @@ class PaymentAdminController extends Controller
     /**
      * Danh sách giao dịch có filter: type (online/manual), status, method, dateFrom, dateTo
      * Merge 2 table: payments (online) và thanh_toans (manual)
+     * Logic:
+     * - Xác định loại giao dịch cần lấy (online hoặc manual) dựa trên input hoặc tình trạng bảng payments
+     * - Gọi hàm xử lý riêng cho từng loại (onlinePayments hoặc manualPayments)
+     * - Áp dụng các filter về trạng thái, phương thức, thời gian
+     */
+    /**
+     * Danh sách giao dịch có filter: type (online/manual), status, method, dateFrom, dateTo
+     * Merge 2 table: payments (online) và thanh_toans (manual)
+     * Logic:
+     * - Xác định loại giao dịch cần lấy (online hoặc manual) dựa trên input hoặc tình trạng bảng payments
+     * - Gọi hàm xử lý riêng cho từng loại (onlinePayments hoặc manualPayments)
+     * - Áp dụng các filter về trạng thái, phương thức, thời gian
      */
         /**
      * Lấy danh sách dữ liệu với phân trang và filter
      */
     public function index(Request $request)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
-            'type' => 'nullable|string|in:online,manual',
-            'status' => 'nullable|string|in:pending,success,failed,refunded',
-            'method' => 'nullable|string|max:50',
-            'dateFrom' => 'nullable|date',
-            'dateTo' => 'nullable|date|after_or_equal:dateFrom',
+        // Validate các tham số lọc đầu vào
+        $validated = $request->validate([
+            'type' => 'nullable|string|in:online,manual', // Loại thanh toán: online (VNPAY/Momo) hoặc manual (tiền mặt/CK)
+            'status' => 'nullable|string|in:pending,success,failed,refunded', // Trạng thái giao dịch
+            'method' => 'nullable|string|max:50', // Phương thức thanh toán cụ thể
+            'dateFrom' => 'nullable|date', // Ngày bắt đầu lọc
+            'dateTo' => 'nullable|date|after_or_equal:dateFrom', // Ngày kết thúc lọc
         ]);
 
+        // Kiểm tra xem hệ thống đã có bảng payments chưa (cho tính năng thanh toán online)
         $hasPayments = $this->hasPaymentsTable();
+        // Xác định loại thanh toán mặc định nếu user không chọn
+        // Nếu có bảng payments thì ưu tiên hiển thị online, ngược lại hiển thị manual
         $type = $validated['type'] ?? ($hasPayments ? 'online' : 'manual');
 
+        // Điều hướng xử lý dựa trên loại thanh toán
         if ($type === 'manual') {
             return $this->manualPayments($request, $validated);
         }
 
+        // Nếu chọn online nhưng bảng chưa có -> trả về rỗng kèm warning
         if (!$hasPayments) {
             return $this->emptyOnlinePaymentsResponse($request);
         }
@@ -61,22 +78,24 @@ class PaymentAdminController extends Controller
      */
     public function export(Request $request): BinaryFileResponse|JsonResponse
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate tham số export
+        $validated = $request->validate([
             'type' => 'nullable|string|in:online,manual',
             'status' => 'nullable|string|in:pending,success,failed,refunded',
             'method' => 'nullable|string|max:50',
             'dateFrom' => 'nullable|date',
             'dateTo' => 'nullable|date|after_or_equal:dateFrom',
-            'limit' => 'nullable|integer|min:10|max:10000',
+            'limit' => 'nullable|integer|min:10|max:10000', // Giới hạn số dòng export để tránh timeout/memory limit
         ]);
 
         $hasPayments = $this->hasPaymentsTable();
         $type = $validated['type'] ?? ($hasPayments ? 'online' : 'manual');
         $limit = $this->resolveExportLimit($request);
 
+        // Lấy dữ liệu cần export dựa trên loại thanh toán
         if ($type === 'manual') {
             $records = $this->manualPaymentsQuery($validated)->limit($limit)->get();
+            // Map dữ liệu raw từ DB sang format row của Excel
             $rows = $this->mapManualExportRows($records);
         } else {
             if (!$hasPayments) {
@@ -99,8 +118,10 @@ class PaymentAdminController extends Controller
         }
 
         $now = Carbon::now(config('app.timezone'));
+        // Tính toán các chỉ số tổng hợp (tổng tiền, số lượng thành công/thất bại)
         $summary = $this->summarizeExportRows($rows);
 
+        // Chuẩn bị metadata cho file Excel (tiêu đề, thời gian xuất, filter đã dùng)
         $meta = array_merge($summary, [
             'title' => 'Báo cáo thanh toán & giao dịch',
             'subtitle' => $type === 'manual' ? 'Thanh toán thủ công' : 'Thanh toán online',
@@ -109,6 +130,7 @@ class PaymentAdminController extends Controller
             'generatedAt' => $now,
         ]);
 
+        // Sử dụng thư viện Maatwebsite Excel để tạo file
         $export = new PaymentReportExport($rows, $meta);
         $fileName = sprintf('dkmn-payments-%s.xlsx', $now->format('Ymd_His'));
 
@@ -121,8 +143,12 @@ class PaymentAdminController extends Controller
      */
     private function onlinePayments(Request $request, array $filters)
     {
+        // Query và phân trang
         $paginator = $this->onlinePaymentsQuery($filters)->paginate($this->resolvePerPage($request));
+        
+        // Transform dữ liệu trả về cho API
         $data = $paginator->getCollection()->map(function (Payment $payment) {
+            // Lấy thông tin đơn hàng liên quan thông qua ticket
             $order = $payment->ticket?->donHang;
 
             return [
@@ -154,8 +180,8 @@ class PaymentAdminController extends Controller
                 'id' => $payment->id,
                 'orderId' => $order?->id,
                 'amount' => (float) $payment->so_tien,
-                'method' => 'MANUAL',
-                'provider' => $payment->cong_thanh_toan,
+                'method' => 'MANUAL', // Đánh dấu là thủ công
+                'provider' => $payment->cong_thanh_toan, // Ví dụ: tien_mat, chuyen_khoan
                 'status' => $payment->trang_thai,
                 'statusLabel' => $this->mapManualStatusLabel($payment->trang_thai),
                 'paidAt' => optional($payment->thoi_diem_thanh_toan)->toIso8601String(),
@@ -171,8 +197,10 @@ class PaymentAdminController extends Controller
      */
     private function onlinePaymentsQuery(array $filters): Builder
     {
+        // Eager load ticket và donHang để lấy thông tin đơn hàng liên quan
         $query = Payment::query()->with('ticket.donHang')->orderByDesc('paid_at');
 
+        // Áp dụng các bộ lọc
         if (!empty($filters['status'])) {
             $query->where('status', $this->mapOnlineStatus($filters['status']));
         }
@@ -286,7 +314,7 @@ class PaymentAdminController extends Controller
                 'perPage' => $perPage,
                 'total' => 0,
             ],
-            'warning' => 'Báº£ng payments chÆ°a sẵn sàng. Vui lòng chạy migrate để kích hoạt dữ liệu giao dịch trực tuyến.',
+            'warning' => 'Bảng payments chưa sẵn sàng. Vui lòng chạy migrate để kích hoạt dữ liệu giao dịch trực tuyến.',
         ]);
     }
 

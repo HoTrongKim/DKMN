@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Quyền hạn (Roles)
+ * Định nghĩa các vai trò trong hệ thống: Quản trị, Nhân viên, Hỗ trợ
+ */
 class QuyenHanSeeder extends Seeder
 {
     public function run(): void

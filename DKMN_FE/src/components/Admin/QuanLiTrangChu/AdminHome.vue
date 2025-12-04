@@ -359,6 +359,22 @@ const mapNoticeType = (type) => {
   return dict[type] || 'Thông báo'
 }
 
+/**
+ * Tải dữ liệu tổng quan cho bảng điều khiển.
+ * 
+ * API: `GET /admin/statistics/overview`
+ * Backend Controller: `AdminStatisticsController::overview` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API lấy dữ liệu tổng quan.
+ * 2. Cập nhật `summary`: Vé hôm nay, doanh thu hôm nay, khách mới, điểm đánh giá.
+ * 3. Cập nhật `counters`: Tổng số chuyến, đơn hàng, khách hàng, doanh thu.
+ * 4. Cập nhật `monthlyRevenue`: Dữ liệu biểu đồ doanh thu tháng.
+ * 5. Cập nhật `recentOrders`: Danh sách đơn hàng gần đây.
+ * 6. Cập nhật `topRoutes`: Tuyến đường phổ biến.
+ * 7. Ghi nhận thời gian cập nhật lần cuối.
+ * 8. Xử lý lỗi và hiển thị thông báo.
+ */
 const loadDashboard = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -407,6 +423,17 @@ const mapAdminNotice = (item) => ({
   createdAt: item.createdAt || item.created_at || item.ngay_tao || null,
 })
 
+/**
+ * Tải danh sách thông báo đã gửi gần đây.
+ * 
+ * API: `GET /admin/notifications`
+ * Backend Controller: `AdminNotificationController::index` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API lấy danh sách thông báo (giới hạn 8 tin mới nhất).
+ * 2. Map dữ liệu trả về vào `adminNotices`.
+ * 3. Xử lý lỗi nếu có.
+ */
 const loadAdminNotifications = async () => {
   notifyError.value = ''
   try {
@@ -436,6 +463,23 @@ const loadCustomerOptions = async () => {
   }
 }
 
+/**
+ * Gửi thông báo cho khách hàng.
+ * 
+ * API: `POST /admin/notifications`
+ * Backend Controller: `AdminNotificationController::store` (dự đoán)
+ * 
+ * Logic:
+ * 1. Validate form: Yêu cầu tiêu đề và nội dung.
+ * 2. Chuẩn bị payload:
+ *    - `title`, `message`, `type`.
+ *    - `recipientIds`: Danh sách ID khách hàng đã chọn.
+ *    - `recipientEmails`: Danh sách email nhập tay (nếu có).
+ * 3. Gọi API gửi thông báo.
+ * 4. Xử lý kết quả:
+ *    - Thành công: Hiển thị thông báo, reset form, tải lại danh sách thông báo.
+ *    - Thất bại: Hiển thị lỗi.
+ */
 const sendNotification = async () => {
   notifyError.value = ''
   notifyMessage.value = ''
@@ -496,6 +540,20 @@ const closeDeleteModal = () => {
   }
 }
 
+/**
+ * Xác nhận xóa thông báo.
+ * 
+ * API: `DELETE /admin/notifications/{id}`
+ * Backend Controller: `AdminNotificationController::destroy` (dự đoán)
+ * 
+ * Logic:
+ * 1. Lấy ID thông báo cần xóa từ `deleteModal`.
+ * 2. Gọi API xóa thông báo.
+ * 3. Xử lý kết quả:
+ *    - Thành công: Hiển thị thông báo, xóa khỏi danh sách `adminNotices`, tải lại danh sách.
+ *    - Thất bại: Hiển thị lỗi.
+ * 4. Đóng modal và reset trạng thái.
+ */
 const confirmDelete = async () => {
   const noticeId = deleteModal.value.notice?.id
   if (!noticeId || deletingNoticeId.value) return
