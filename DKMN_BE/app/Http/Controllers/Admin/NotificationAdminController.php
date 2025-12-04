@@ -20,6 +20,9 @@ class NotificationAdminController extends Controller
      * Danh sách notification gần đây (limit tối đa 100)
      * Eager load: nguoiDung
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request)
     {
         $limitInput = $request->input('limit', 20);
@@ -34,6 +37,7 @@ class NotificationAdminController extends Controller
             ->map(fn (ThongBao $notification) => $this->transform($notification))
             ->values();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $notifications,
@@ -48,9 +52,13 @@ class NotificationAdminController extends Controller
      * Hỗ trợ gửi theo recipientIds hoặc recipientEmails
      * Chỉ gửi cho user có vai_tro != 'quan_tri'
      */
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'title' => 'required|string|max:200',
             'message' => 'required|string|max:2000',
             'type' => [
@@ -82,7 +90,8 @@ class NotificationAdminController extends Controller
         $users = $usersQuery->get()->unique('id');
 
         if ($users->isEmpty()) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không tìm thấy khách hàng phù hợp để gửi thông báo.',
             ], 422);
@@ -102,6 +111,7 @@ class NotificationAdminController extends Controller
 
         ThongBao::insert($rows);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã gửi thông báo đến khách hàng.',
@@ -115,10 +125,14 @@ class NotificationAdminController extends Controller
     /**
      * Xóa notification
      */
+        /**
+     * Xóa bản ghi theo ID
+     */
     public function destroy(ThongBao $thongBao)
     {
         $thongBao->delete();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã xóa thông báo.',

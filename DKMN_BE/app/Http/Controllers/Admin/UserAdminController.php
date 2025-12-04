@@ -27,9 +27,13 @@ class UserAdminController extends Controller
      * Danh sách người dùng có filter: keyword, status (active/locked), role (admin/customer)
      * Trả về paginated data
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'keyword' => 'nullable|string|max:150',
             'status' => 'nullable|string|in:active,locked',
             'role' => 'nullable|string|in:customer,admin',
@@ -64,9 +68,13 @@ class UserAdminController extends Controller
      * Tạo người dùng mới (admin hoặc customer)
      * Require: name, email, phone, password, role, status
      */
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|string|email|max:100|unique:nguoi_dungs,email',
             'phone' => 'nullable|string|max:20',
@@ -75,15 +83,18 @@ class UserAdminController extends Controller
             'status' => ['required', Rule::in(['active', 'locked'])],
         ]);
 
+        // Thao tác database
         $user = NguoiDung::create([
             'ho_ten' => $validated['name'],
             'email' => Str::lower($validated['email']),
             'so_dien_thoai' => $validated['phone'] ?? null,
-            'mat_khau' => Hash::make($validated['password']),
+            'mat_khau' => // Xử lý mã hóa/kiểm tra password
+        Hash::make($validated['password']),
             'vai_tro' => $validated['role'] === 'admin' ? 'quan_tri' : 'khach_hang',
             'trang_thai' => $validated['status'] === 'active' ? 'hoat_dong' : 'khoa',
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $this->transformUser($user),
@@ -94,9 +105,13 @@ class UserAdminController extends Controller
      * Cập nhật thông tin người dùng
      * Cho phép sửa: name, email, phone, role, status, password
      */
+        /**
+     * Cập nhật bản ghi theo ID
+     */
     public function update(Request $request, NguoiDung $nguoiDung)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'name' => 'nullable|string|max:100',
             'email' => [
                 'nullable',
@@ -134,7 +149,8 @@ class UserAdminController extends Controller
         }
 
         if (!empty($validated['password'])) {
-            $payload['mat_khau'] = Hash::make($validated['password']);
+            $payload['mat_khau'] = // Xử lý mã hóa/kiểm tra password
+        Hash::make($validated['password']);
         }
 
         if (!empty($payload)) {
@@ -142,6 +158,7 @@ class UserAdminController extends Controller
             $nguoiDung->fill($payload)->save();
         }
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $this->transformUser($nguoiDung->fresh()),
@@ -154,7 +171,8 @@ class UserAdminController extends Controller
      */
     public function updateStatus(Request $request, NguoiDung $nguoiDung)
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'status' => ['required', Rule::in(['active', 'locked'])],
         ]);
 
@@ -163,6 +181,7 @@ class UserAdminController extends Controller
             'ngay_cap_nhat' => now(),
         ])->save();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $this->transformUser($nguoiDung->fresh()),
@@ -174,11 +193,15 @@ class UserAdminController extends Controller
      * Kiểm tra không cho xóa chính mình, nullify foreign keys trước khi xóa
      * Sử dụng DB transaction để đảm bảo tính toàn vẹn dữ liệu
      */
+        /**
+     * Xóa bản ghi theo ID
+     */
     public function destroy(Request $request, NguoiDung $nguoiDung)
     {
         $authId = $request->user()?->id;
         if ($authId && $nguoiDung->id === (int) $authId) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Khong the xoa tai khoan dang dang nhap.',
             ], 422);
@@ -200,12 +223,14 @@ class UserAdminController extends Controller
             });
         } catch (\Throwable $exception) {
             report($exception);
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Khong the xoa nguoi dung do dang duoc su dung o khu vuc khac.',
             ], 422);
         }
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Da xoa nguoi dung.',

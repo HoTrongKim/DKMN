@@ -19,6 +19,9 @@ class OrderClientController extends Controller
      * Danh sách đơn hàng của user hiện tại (paginated)
      * Eager load: chuyến đi, trạm, nhà vận hành, ticket, thanh toán
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -44,12 +47,16 @@ class OrderClientController extends Controller
      * Chi tiết đơn hàng: order info + items (passengers/seats) + payments
      * Kiểm tra ownership trước khi trả dữ liệu
      */
+        /**
+     * Lấy chi tiết một bản ghi theo ID
+     */
     public function show(Request $request, DonHang $donHang): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
 
         if ((int) $donHang->nguoi_dung_id !== (int) $user->id) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không có quyền xem đơn hàng này.',
             ], 403);
@@ -86,6 +93,7 @@ class OrderClientController extends Controller
             ];
         });
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $order,
@@ -165,14 +173,16 @@ class OrderClientController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if ((int) $donHang->nguoi_dung_id !== (int) $user->id) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không có quyền thao tác trên đơn hàng này.',
             ], 403);
         }
 
         if (!in_array($donHang->trang_thai, ['cho_xu_ly', 'da_xac_nhan', 'cho_thanh_toan'])) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không thể hủy đơn hàng ở trạng thái hiện tại.',
             ], 422);
@@ -195,6 +205,7 @@ class OrderClientController extends Controller
             });
         });
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Hủy đơn hàng thành công.',

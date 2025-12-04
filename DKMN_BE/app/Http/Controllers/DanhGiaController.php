@@ -49,6 +49,7 @@ class DanhGiaController extends Controller
                 ];
             });
 
+        // Trả về JSON response
         return response()->json(['data' => $ratings]);
     }
 }

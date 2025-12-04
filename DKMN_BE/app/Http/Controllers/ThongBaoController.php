@@ -17,6 +17,7 @@ class ThongBaoController extends Controller
      */
     public function getData()
     {
+        // Trả về JSON response
         return response()->json(['data' => ThongBao::orderByDesc('ngay_tao')->get()]);
     }
 
@@ -25,7 +26,8 @@ class ThongBaoController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'message' => 'Unauthenticated',
             ], 401);
         }
@@ -51,6 +53,7 @@ class ThongBaoController extends Controller
             ->map(fn (ThongBao $notification) => $this->transform($notification, $user->id))
             ->values();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $notifications,
@@ -62,7 +65,8 @@ class ThongBaoController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'message' => 'Unauthenticated',
             ], 401);
         }
@@ -81,6 +85,7 @@ class ThongBaoController extends Controller
 
         $updated = $query->update(['da_doc' => 1]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => [
@@ -97,7 +102,8 @@ class ThongBaoController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'message' => 'Unauthenticated',
             ], 401);
         }
@@ -118,6 +124,7 @@ class ThongBaoController extends Controller
             ->map(fn (ThongBao $notification) => $this->transform($notification, $user->id))
             ->values();
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $messages,
@@ -129,7 +136,8 @@ class ThongBaoController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-          return response()->json([
+          // Trả về JSON response
+        return response()->json([
               'message' => 'Unauthenticated',
           ], 401);
         }
@@ -150,6 +158,7 @@ class ThongBaoController extends Controller
 
         $updated = $query->update(['da_doc' => 1]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => [

@@ -26,12 +26,17 @@ class ThanhToanController extends Controller
      */
     public function getData()
     {
+        // Trả về JSON response
         return response()->json(['data' => ThanhToan::orderByDesc('ngay_tao')->get()]);
     }
 
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $data = // Validate dữ liệu từ request
+        $request->validate([
             'donHangId' => 'required|integer|exists:don_hangs,id',
             'congThanhToan' => 'required|string|max:50',
             'soTien' => 'required|numeric|min:0',
@@ -45,7 +50,8 @@ class ThanhToanController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Yeu cau dang nhap truoc khi cap nhat thanh toan.',
             ], 401);
@@ -53,7 +59,8 @@ class ThanhToanController extends Controller
 
         $isAdmin = strtolower((string) ($user->vai_tro ?? '')) === 'quan_tri';
         if (!$isAdmin && (int) $donHang->nguoi_dung_id !== (int) $user->id) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Khong co quyen cap nhat thanh toan cho don hang nay.',
             ], 403);
@@ -63,7 +70,8 @@ class ThanhToanController extends Controller
         $providedAmount = round((float) $data['soTien'], 2);
 
         if (abs($expectedAmount - $providedAmount) > 0.01) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Số tiền thanh toán không khớp với tổng đơn hàng.',
                 'expected' => $expectedAmount,
@@ -71,6 +79,7 @@ class ThanhToanController extends Controller
             ], 422);
         }
 
+        // Thao tác database
         $payment = ThanhToan::create([
             'don_hang_id' => $donHang->id,
             'ma_thanh_toan' => $this->generatePaymentCode(),
@@ -91,6 +100,7 @@ class ThanhToanController extends Controller
 
         $this->notifyTicketOwner($donHang, $data['trangThai']);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Lưu trạng thái thanh toán thành công',

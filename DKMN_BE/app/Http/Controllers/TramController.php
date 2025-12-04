@@ -57,6 +57,7 @@ class TramController extends Controller
             $trams = $resolver();
         }
 
+        // Trả về JSON response
         return response()->json(['data' => $trams]);
     }
 }

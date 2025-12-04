@@ -18,6 +18,9 @@ class RatingClientController extends Controller
      * Danh sách đánh giá của user hiện tại
      * Optional filter: tripId
      */
+        /**
+     * Lấy danh sách dữ liệu với phân trang và filter
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -42,6 +45,7 @@ class RatingClientController extends Controller
                 ];
             });
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $ratings,
@@ -54,11 +58,15 @@ class RatingClientController extends Controller
      * Rating từ 1-5 sao, comment tối đa 500 ký tự
      * Status mặc định: cho_duyet (chờ admin duyệt)
      */
+        /**
+     * Tạo mới bản ghi
+     */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
 
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'tripId' => 'required|integer|exists:chuyen_dis,id',
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:500',
@@ -71,14 +79,16 @@ class RatingClientController extends Controller
             ->first();
 
         if (!$order) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Không tìm thấy đơn hàng hợp lệ cho chuyến đi này.',
             ], 422);
         }
 
         if (!in_array($order->trang_thai, ['hoan_tat', 'da_xac_nhan'])) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Đơn hàng chưa hoàn tất, không thể đánh giá.',
             ], 422);
@@ -91,12 +101,14 @@ class RatingClientController extends Controller
             ->first();
 
         if ($existing) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Bạn đã đánh giá chuyến đi này.',
             ], 409);
         }
 
+        // Thao tác database
         $rating = DanhGia::create([
             'nguoi_dung_id' => $user->id,
             'chuyen_di_id' => $validated['tripId'],
@@ -107,6 +119,7 @@ class RatingClientController extends Controller
             'ngay_tao' => now(),
         ]);
 
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'message' => 'Đã ghi nhận đánh giá. Hệ thống sẽ duyệt trong thời gian sớm nhất.',

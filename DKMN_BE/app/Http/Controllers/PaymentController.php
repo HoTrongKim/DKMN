@@ -43,7 +43,8 @@ class PaymentController extends Controller
             $channelRule[] = Rule::in($providerKeys);
         }
 
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'ticketId' => 'required|integer|exists:tickets,id',
             'channel' => $channelRule,
             'testMode' => 'nullable|boolean',
@@ -55,7 +56,8 @@ class PaymentController extends Controller
         }
         if (TicketHoldService::isExpired($ticket)) {
             TicketHoldService::expireTicket($ticket);
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Phiên giữ ghế đã hết hạn. Vui lòng đặt lại chuyến.',
             ], 410);
@@ -91,7 +93,8 @@ class PaymentController extends Controller
         $expiresAt = Carbon::now()->addMinutes((int) config('payments.intent_expiration_minutes', 15));
 
         $payment = DB::transaction(function () use ($ticket, $provider, $amount, $idempotencyKey, $expiresAt) {
-            $payment = Payment::create([
+            // Thao tác database
+        $payment = Payment::create([
                 'ticket_id' => $ticket->id,
                 'method' => 'QR',
                 'provider' => $provider->key(),
@@ -136,7 +139,8 @@ class PaymentController extends Controller
      */
     public function handleQrWebhook(Request $request): JsonResponse
     {
-        $payload = $request->validate([
+        $payload = // Validate dữ liệu từ request
+        $request->validate([
             'providerRef' => 'required|string|max:150',
             'amount_vnd' => 'required|integer|min:0',
             'status' => 'required|string',
@@ -144,7 +148,8 @@ class PaymentController extends Controller
 
         $signature = $request->header('X-Signature');
         if (!$signature) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Missing signature',
             ], 401);
@@ -157,15 +162,18 @@ class PaymentController extends Controller
         );
 
         if (!hash_equals($expectedSignature, $signature)) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Invalid signature',
             ], 401);
         }
 
+        // Thao tác database
         $payment = Payment::where('provider_ref', $payload['providerRef'])->first();
         if (!$payment) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Payment not found',
             ], 404);
@@ -185,7 +193,8 @@ class PaymentController extends Controller
                 'webhook_idempotency_key' => $idempotencyKey,
             ]);
 
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Amount mismatch',
                 'data' => $this->serializePayment($payment->fresh()),
@@ -235,7 +244,8 @@ class PaymentController extends Controller
      */
     public function confirmOnboard(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = // Validate dữ liệu từ request
+        $request->validate([
             'ticketId' => 'required|integer|exists:tickets,id',
             'operatorId' => 'nullable|string|max:100',
             'note' => 'nullable|string|max:500',
@@ -249,7 +259,8 @@ class PaymentController extends Controller
         }
         if (TicketHoldService::isExpired($ticket)) {
             TicketHoldService::expireTicket($ticket);
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Phiên giữ ghế đã hết hạn. Vui lòng đặt lại chuyến.',
             ], 410);
@@ -271,7 +282,8 @@ class PaymentController extends Controller
 
         $ticketForMail = null;
         $payment = DB::transaction(function () use ($ticket, $amount, $validated, $method, &$ticketForMail) {
-            $payment = Payment::create([
+            // Thao tác database
+        $payment = Payment::create([
                 'ticket_id' => $ticket->id,
                 'method' => $method,
                 'provider' => $validated['provider'] ?? ($method === 'QR' ? 'vietqr' : 'cash_onboard'),
@@ -304,7 +316,8 @@ class PaymentController extends Controller
 
         $ticket = $payment->ticket;
         if (!$ticket) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Khong tim thay ve tuong ung.',
             ], 404);
@@ -322,7 +335,8 @@ class PaymentController extends Controller
         $user = $request->user('sanctum') ?? $request->user();
 
         if (!$user) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Yeu cau dang nhap.',
             ], 401);
@@ -335,7 +349,8 @@ class PaymentController extends Controller
 
         $ownerId = $ticket->donHang?->nguoi_dung_id;
         if ((int) $ownerId !== (int) $user->id) {
-            return response()->json([
+            // Trả về JSON response
+        return response()->json([
                 'status' => false,
                 'message' => 'Khong co quyen thao tac tren ve nay.',
             ], 403);
@@ -349,6 +364,7 @@ class PaymentController extends Controller
      */
     private function respondWithPayment(Payment $payment, int $status = 200): JsonResponse
     {
+        // Trả về JSON response
         return response()->json([
             'status' => true,
             'data' => $this->serializePayment($payment->fresh()),
