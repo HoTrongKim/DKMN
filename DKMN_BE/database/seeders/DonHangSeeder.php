@@ -6,6 +6,11 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Đơn hàng (Orders)
+ * Tạo các đơn hàng mẫu với nhiều trạng thái khác nhau (chờ xử lý, hoàn tất, hủy...)
+ * Dùng để test luồng xử lý đơn hàng và thống kê
+ */
 class DonHangSeeder extends Seeder
 {
     public function run(): void

@@ -60,15 +60,32 @@ export default {
     this.fetchProfile();
   },
   methods: {
+    /**
+     * Tải thông tin hồ sơ quản trị viên từ Backend.
+     * 
+     * Logic hoạt động:
+     * 1. Gọi API `GET /dkmn/me` để lấy thông tin người dùng hiện tại từ session/token.
+     *    - Backend (Laravel): `AuthController::me()` hoặc `UserController::show()`.
+     *    - Trả về: Object chứa `ho_ten`, `email`, `so_dien_thoai`, `vai_tro`, ...
+     * 2. Map dữ liệu từ response vào `this.profile`.
+     *    - Sử dụng fallback value nếu field bị null.
+     * 3. Kiểm tra `localStorage` ('userInfo') để lấy avatar đã cache (nếu có),
+     *    vì API `/dkmn/me` có thể chưa trả về URL avatar đầy đủ hoặc cần lấy từ client-side cache.
+     * 4. Xử lý lỗi: Nếu API lỗi, hiển thị toast error.
+     */
     async fetchProfile() {
       this.isLoading = true;
       try {
         const { data } = await api.get('/dkmn/me');
         const info = data?.data || {};
+        
+        // Map response fields to component state
         this.profile.name = info.ho_ten || "Quản trị DKMN";
         this.profile.email = info.email || "admin@dkmn.com";
         this.profile.phone = info.so_dien_thoai || "";
         this.profile.role = info.vai_tro || info.role || "Quản trị";
+
+        // Check local storage for cached avatar
         const raw = localStorage.getItem('userInfo');
         if (raw) {
           const cached = JSON.parse(raw);
@@ -83,6 +100,16 @@ export default {
         this.isLoading = false;
       }
     },
+    /**
+     * Xử lý xem trước ảnh đại diện khi người dùng chọn file.
+     * 
+     * Logic hoạt động:
+     * 1. Lắng nghe sự kiện `change` từ input file.
+     * 2. Kiểm tra nếu có file được chọn.
+     * 3. Sử dụng `FileReader` để đọc file dưới dạng DataURL (base64).
+     * 4. Gán kết quả vào `this.profile.avatar` để hiển thị ngay lập tức trên UI (Client-side preview).
+     * Lưu ý: Ảnh chưa được upload lên server tại bước này, chỉ upload khi gọi `saveProfile`.
+     */
     previewAvatar(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -92,19 +119,37 @@ export default {
       };
       reader.readAsDataURL(file);
     },
+    /**
+     * Lưu thông tin hồ sơ đã chỉnh sửa lên Server.
+     * 
+     * Logic hoạt động:
+     * 1. Gọi API `PUT /dkmn/me` với payload gồm `ho_ten`, `so_dien_thoai`.
+     *    - Backend: `AuthController::updateProfile` (hoặc tương đương).
+     *    - Backend sẽ validate dữ liệu và update vào DB.
+     * 2. Cập nhật `localStorage` ('userInfo') để đồng bộ dữ liệu mới (bao gồm cả avatar base64 nếu có).
+     *    - Lưu ý: Trong thực tế, nên upload avatar qua API upload riêng (multipart/form-data) để lấy URL ảnh, 
+     *      nhưng ở đây đang lưu base64 hoặc URL vào local storage tạm thời.
+     * 3. Dispatch event `dkmn:auth-changed` để các component khác (như Navbar/Sidebar) cập nhật UI.
+     * 4. Hiển thị thông báo thành công hoặc lỗi.
+     */
     async saveProfile() {
       this.isSaving = true;
       try {
+        // Call API to update profile info
         await api.put('/dkmn/me', {
           ho_ten: this.profile.name,
           so_dien_thoai: this.profile.phone,
         });
+
+        // Update Local Storage
         const raw = localStorage.getItem('userInfo');
         const info = raw ? JSON.parse(raw) : {};
         info.ho_ten = this.profile.name;
         info.so_dien_thoai = this.profile.phone;
-        info.avatar = this.profile.avatar;
+        info.avatar = this.profile.avatar; // Saving avatar (potentially base64) to local storage
         localStorage.setItem('userInfo', JSON.stringify(info));
+
+        // Notify other components
         window.dispatchEvent(new CustomEvent('dkmn:auth-changed', { detail: { isLoggedIn: true } }));
         this.$toast?.success?.('Đã lưu thông tin quản trị.');
       } catch (error) {

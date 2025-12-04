@@ -6,6 +6,10 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Thanh toán (Legacy)
+ * Tạo lịch sử giao dịch cho các đơn hàng (Momo, ZaloPay, Bank...)
+ */
 class ThanhToanSeeder extends Seeder
 {
     public function run(): void

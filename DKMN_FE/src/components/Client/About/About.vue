@@ -107,6 +107,13 @@
 
 <script>
 export default {
+  /**
+   * Component: About
+   * 
+   * Mô tả: Trang giới thiệu về DKMN.
+   * Loại: Static Component (Không có logic nghiệp vụ phức tạp hay gọi API).
+   * Dữ liệu: Các thông tin được hardcode trong `data` (missions, features, stats, values).
+   */
   name: 'About',
   data() {
     return {

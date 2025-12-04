@@ -50,10 +50,13 @@ class PaymentController extends Controller
             'testMode' => 'nullable|boolean',
         ]);
 
+        // Load ticket và kiểm tra quyền sở hữu
         $ticket = Ticket::with('donHang')->findOrFail($validated['ticketId']);
         if ($response = $this->guardTicketOwner($request, $ticket)) {
             return $response;
         }
+        
+        // Kiểm tra xem vé có bị hết hạn giữ chỗ không
         if (TicketHoldService::isExpired($ticket)) {
             TicketHoldService::expireTicket($ticket);
             // Trả về JSON response
@@ -75,6 +78,7 @@ class PaymentController extends Controller
             $amount = (int) config('payments.default_fare_vnd', 1200);
         }
 
+        // Kiểm tra Idempotency Key để tránh tạo trùng payment cho cùng 1 request
         $idempotencyKey = $request->header('Idempotency-Key');
         if ($idempotencyKey) {
             $existing = Payment::query()
@@ -92,9 +96,10 @@ class PaymentController extends Controller
 
         $expiresAt = Carbon::now()->addMinutes((int) config('payments.intent_expiration_minutes', 15));
 
+        // Bắt đầu transaction tạo payment
         $payment = DB::transaction(function () use ($ticket, $provider, $amount, $idempotencyKey, $expiresAt) {
-            // Thao tác database
-        $payment = Payment::create([
+            // Tạo record payment với trạng thái PENDING
+            $payment = Payment::create([
                 'ticket_id' => $ticket->id,
                 'method' => 'QR',
                 'provider' => $provider->key(),
@@ -104,13 +109,15 @@ class PaymentController extends Controller
                 'expires_at' => $expiresAt,
             ]);
 
+            // Gọi provider để generate QR code payload (image URL, content)
             $qrPayload = $provider->generateQr($payment->amount_vnd, $payment);
             $providerRef = $qrPayload['providerRef'] ?? strtoupper(sprintf('%s-%s', $provider->key(), $payment->id));
             $qrUrl = $qrPayload['qrImageUrl'] ?? null;
 
+            // Cập nhật thông tin QR vào payment record
             $payment->provider_ref = $providerRef;
             $payment->qr_image_url = $qrUrl;
-            $payment->checksum = $this->paymentService->computeChecksum($payment);
+            $payment->checksum = $this->paymentService->computeChecksum($payment); // Checksum để verify sau này
             $payment->save();
 
             return $payment->fresh();
@@ -155,6 +162,7 @@ class PaymentController extends Controller
             ], 401);
         }
 
+        // Verify signature để đảm bảo request từ đúng nguồn (VietQR/SePay)
         $expectedSignature = hash_hmac(
             'sha256',
             json_encode($payload, JSON_UNESCAPED_UNICODE),
@@ -213,14 +221,17 @@ class PaymentController extends Controller
             return $this->respondWithPayment($payment->fresh());
         }
 
+        // Transaction xử lý webhook thành công
         $ticketForMail = null;
         DB::transaction(function () use ($payment, $idempotencyKey, &$ticketForMail) {
+            // Cập nhật trạng thái payment thành SUCCEEDED
             $payment->update([
                 'status' => Payment::STATUS_SUCCEEDED,
                 'paid_at' => now(),
                 'webhook_idempotency_key' => $idempotencyKey,
             ]);
 
+            // Cập nhật trạng thái vé (đã thanh toán) và số tiền đã trả
             $ticket = $payment->ticket()->lockForUpdate()->first();
             if ($ticket) {
                 $this->paymentService->setAmountOnTicket($ticket, $payment->amount_vnd, $payment->id);

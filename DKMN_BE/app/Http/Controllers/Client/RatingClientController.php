@@ -18,20 +18,26 @@ class RatingClientController extends Controller
      * Danh sách đánh giá của user hiện tại
      * Optional filter: tripId
      */
-        /**
-     * Lấy danh sách dữ liệu với phân trang và filter
+    /**
+     * Danh sách đánh giá của user hiện tại
+     * Optional filter: tripId
+     * Logic:
+     * - Lấy user hiện tại
+     * - Query bảng danh_gias theo user_id
+     * - Nếu có tripId thì lọc thêm theo chuyến đi
+     * - Trả về danh sách đã được map format
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
 
         $ratings = DanhGia::query()
-            ->where('nguoi_dung_id', $user->id)
+            ->where('nguoi_dung_id', $user->id) // Chỉ lấy đánh giá của user này
             ->when(
                 $request->integer('tripId'),
-                fn ($query, $tripId) => $query->where('chuyen_di_id', $tripId)
+                fn ($query, $tripId) => $query->where('chuyen_di_id', $tripId) // Lọc theo chuyến đi nếu có
             )
-            ->orderByDesc('ngay_tao')
+            ->orderByDesc('ngay_tao') // Mới nhất lên đầu
             ->get()
             ->map(function (DanhGia $rating) {
                 return [
@@ -65,17 +71,19 @@ class RatingClientController extends Controller
     {
         $user = $request->user('sanctum') ?? $request->user();
 
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate input
+        $validated = $request->validate([
             'tripId' => 'required|integer|exists:chuyen_dis,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:500',
+            'rating' => 'required|integer|min:1|max:5', // Số sao từ 1 đến 5
+            'comment' => 'nullable|string|max:500', // Nhận xét tùy chọn
         ]);
 
+        // 1. Tìm đơn hàng hợp lệ của user cho chuyến đi này
+        // Đơn hàng phải là của user và thuộc chuyến đi được chọn
         $order = DonHang::query()
             ->where('nguoi_dung_id', $user->id)
             ->where('chuyen_di_id', $validated['tripId'])
-            ->orderByDesc('ngay_tao')
+            ->orderByDesc('ngay_tao') // Lấy đơn mới nhất nếu có nhiều đơn
             ->first();
 
         if (!$order) {
@@ -86,6 +94,8 @@ class RatingClientController extends Controller
             ], 422);
         }
 
+        // 2. Kiểm tra trạng thái đơn hàng
+        // Chỉ cho phép đánh giá khi đơn hàng đã hoàn tất hoặc đã xác nhận (đã đi)
         if (!in_array($order->trang_thai, ['hoan_tat', 'da_xac_nhan'])) {
             // Trả về JSON response
         return response()->json([
@@ -94,6 +104,7 @@ class RatingClientController extends Controller
             ], 422);
         }
 
+        // 3. Kiểm tra xem đã đánh giá chưa (mỗi đơn/chuyến chỉ được đánh giá 1 lần)
         $existing = DanhGia::query()
             ->where('nguoi_dung_id', $user->id)
             ->where('chuyen_di_id', $validated['tripId'])
@@ -108,14 +119,14 @@ class RatingClientController extends Controller
             ], 409);
         }
 
-        // Thao tác database
+        // 4. Tạo đánh giá mới
         $rating = DanhGia::create([
             'nguoi_dung_id' => $user->id,
             'chuyen_di_id' => $validated['tripId'],
             'don_hang_id' => $order->id,
             'diem' => $validated['rating'],
             'nhan_xet' => $validated['comment'] ?? null,
-            'trang_thai' => 'cho_duyet',
+            'trang_thai' => 'cho_duyet', // Mặc định chờ duyệt
             'ngay_tao' => now(),
         ]);
 

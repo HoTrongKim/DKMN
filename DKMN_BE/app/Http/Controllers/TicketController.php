@@ -18,8 +18,8 @@ class TicketController extends Controller
     /**
      * Danh sách tickets của user hiện tại hoặc tất cả (nếu admin)
      */
-        /**
-     * Lấy danh sách dữ liệu với phân trang và filter
+    /**
+     * Danh sách tickets của user hiện tại hoặc tất cả (nếu admin)
      */
     public function index(Request $request): JsonResponse
     {
@@ -32,10 +32,12 @@ class TicketController extends Controller
             ], 401);
         }
 
+        // Pagination limit
         $limitInput = $request->input('limit', 10);
         $limit = is_numeric($limitInput) ? (int) $limitInput : 10;
         $limit = max(1, min(50, $limit));
 
+        // Query tickets của user
         $tickets = Ticket::query()
             ->with([
                 'donHang',
@@ -66,6 +68,10 @@ class TicketController extends Controller
         ]);
     }
 
+    /**
+     * Lấy vé mới nhất của user
+     * Dùng để hiển thị "Chuyến đi sắp tới" hoặc vé vừa đặt
+     */
     public function latest(Request $request): JsonResponse
     {
         $user = $request->user('sanctum') ?? $request->user();
@@ -77,6 +83,7 @@ class TicketController extends Controller
             ], 401);
         }
 
+        // Lấy vé mới nhất theo created_at
         $ticket = Ticket::query()
             ->with([
                 'donHang',

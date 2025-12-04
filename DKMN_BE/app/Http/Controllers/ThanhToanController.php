@@ -35,8 +35,8 @@ class ThanhToanController extends Controller
      */
     public function store(Request $request)
     {
-        $data = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate dữ liệu thanh toán
+        $data = $request->validate([
             'donHangId' => 'required|integer|exists:don_hangs,id',
             'congThanhToan' => 'required|string|max:50',
             'soTien' => 'required|numeric|min:0',
@@ -57,6 +57,7 @@ class ThanhToanController extends Controller
             ], 401);
         }
 
+        // Kiểm tra quyền: Admin hoặc chính chủ đơn hàng
         $isAdmin = strtolower((string) ($user->vai_tro ?? '')) === 'quan_tri';
         if (!$isAdmin && (int) $donHang->nguoi_dung_id !== (int) $user->id) {
             // Trả về JSON response
@@ -66,6 +67,7 @@ class ThanhToanController extends Controller
             ], 403);
         }
 
+        // Validate số tiền thanh toán khớp với đơn hàng
         $expectedAmount = round((float) $donHang->tong_tien, 2);
         $providedAmount = round((float) $data['soTien'], 2);
 
@@ -79,7 +81,7 @@ class ThanhToanController extends Controller
             ], 422);
         }
 
-        // Thao tác database
+        // Tạo bản ghi thanh toán mới
         $payment = ThanhToan::create([
             'don_hang_id' => $donHang->id,
             'ma_thanh_toan' => $this->generatePaymentCode(),
@@ -91,6 +93,7 @@ class ThanhToanController extends Controller
             'thoi_diem_thanh_toan' => $data['thoiDiemThanhToan'] ?? Carbon::now(),
         ]);
 
+        // Nếu thanh toán thành công, cập nhật trạng thái đơn hàng
         if ($data['trangThai'] === 'thanh_cong') {
             $donHang->update([
                 'trang_thai' => 'da_xac_nhan',
@@ -98,6 +101,7 @@ class ThanhToanController extends Controller
             ]);
         }
 
+        // Gửi email thông báo vé cho khách hàng
         $this->notifyTicketOwner($donHang, $data['trangThai']);
 
         // Trả về JSON response

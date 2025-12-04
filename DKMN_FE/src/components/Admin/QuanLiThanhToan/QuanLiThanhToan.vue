@@ -561,6 +561,16 @@ const normalizeTransaction = (row) => {
   }
 }
 
+/**
+ * Cập nhật trạng thái hiển thị của các cổng thanh toán.
+ * 
+ * Logic:
+ * 1. Tính toán tổng hợp số liệu (amount, count) cho từng cổng từ danh sách giao dịch hiện tại.
+ * 2. Cập nhật mảng `gateways` với thông tin mới:
+ *    - Trạng thái `up`/`down` dựa trên cấu hình `gatewaySettings`.
+ *    - `latency`, `uptime` giả lập (hoặc lấy từ API nếu có).
+ *    - `amount`, `count` từ kết quả tổng hợp.
+ */
 const applyGatewayToggles = (list = transactions.value) => {
   const summary = list.reduce(
     (acc, txn) => {
@@ -590,6 +600,24 @@ const applyGatewayToggles = (list = transactions.value) => {
   })
 }
 
+/**
+ * Tải danh sách giao dịch thanh toán từ server.
+ * 
+ * API: `GET /admin/payments`
+ * Backend Controller: `AdminPaymentController::index` (dự đoán)
+ * 
+ * Logic:
+ * 1. Chuẩn bị tham số phân trang và lọc:
+ *    - `page`, `perPage`.
+ *    - `dateFrom`, `dateTo`: Khoảng thời gian.
+ *    - `status`: Trạng thái giao dịch.
+ *    - `type`, `method`: Loại cổng thanh toán (nếu có chọn filter gateway).
+ * 2. Gọi API lấy danh sách giao dịch.
+ * 3. Chuẩn hóa dữ liệu trả về (`normalizeTransaction`).
+ * 4. Cập nhật `transactions` và thông tin phân trang (`total`, `lastPage`).
+ * 5. Cập nhật trạng thái cổng thanh toán (`applyGatewayToggles`).
+ * 6. Xử lý lỗi và hiển thị thông báo.
+ */
 const fetchTransactions = async () => {
   isLoading.value = true
   tableError.value = ''
@@ -627,6 +655,20 @@ const fetchTransactions = async () => {
   }
 }
 
+/**
+ * Tải dữ liệu thống kê KPI (Doanh thu, tỉ lệ hủy vé).
+ * 
+ * API:
+ * - `GET /admin/statistics/overview`: Tổng quan doanh thu hôm nay.
+ * - `GET /admin/statistics/report?period=month`: Doanh thu và tỉ lệ hủy tháng này.
+ * - `GET /admin/statistics/report?period=quarter`: Doanh thu quý này.
+ * Backend Controller: `AdminStatisticsController` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi song song 3 API để lấy dữ liệu.
+ * 2. Cập nhật object `kpi` với dữ liệu trả về.
+ * 3. Xử lý lỗi nếu có (fallback về 0).
+ */
 const loadKpi = async () => {
   kpiLoading.value = true
   kpiError.value = ''
@@ -654,6 +696,20 @@ const loadKpi = async () => {
   }
 }
 
+/**
+ * Xuất báo cáo giao dịch ra file Excel.
+ * 
+ * API: `GET /admin/payments/export`
+ * Backend Controller: `AdminPaymentController::export` (dự đoán)
+ * 
+ * Logic:
+ * 1. Chuẩn bị tham số lọc tương tự như `fetchTransactions` nhưng giới hạn lớn hơn (limit=5000).
+ * 2. Gọi API với `responseType: 'blob'` để nhận file binary.
+ * 3. Tạo Blob từ response data.
+ * 4. Tạo URL object và thẻ `<a>` ẩn để kích hoạt tải xuống trình duyệt.
+ * 5. Đặt tên file dựa trên header `content-disposition` hoặc timestamp hiện tại.
+ * 6. Xử lý lỗi (đọc blob lỗi để lấy message JSON nếu có).
+ */
 const exportReport = async () => {
   exportLoading.value = true
   window.$toast?.info?.('Đang tạo báo cáo...')

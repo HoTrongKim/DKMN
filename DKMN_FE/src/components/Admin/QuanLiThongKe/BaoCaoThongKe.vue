@@ -154,6 +154,21 @@ const chartSubtitle = computed(() => {
   return `Theo ${map[filterPeriod.value] || "khoảng thời gian"}`;
 });
 
+/**
+ * Tải dữ liệu báo cáo thống kê từ server.
+ * 
+ * API: `GET /admin/statistics/report`
+ * Backend Controller: `AdminStatisticsController::report` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API với tham số `period` (week, month, quarter, year).
+ * 2. Cập nhật `statistics` với các số liệu tổng quan:
+ *    - Doanh thu, số vé, tỉ lệ hủy, đánh giá TB.
+ *    - Top tuyến đường, top nhà xe.
+ * 3. Cập nhật `timeseries` cho biểu đồ (`normalizeSeries`).
+ * 4. Vẽ lại biểu đồ (`renderChart`).
+ * 5. Xử lý lỗi và hiển thị thông báo.
+ */
 const fetchStatistics = async () => {
   loading.value = true;
   errorMessage.value = "";
@@ -201,6 +216,17 @@ const formatRange = (range) => {
 
 onMounted(() => fetchStatistics());
 
+/**
+ * Chuẩn hóa dữ liệu chuỗi thời gian cho biểu đồ.
+ * 
+ * Logic:
+ * 1. Nếu có dữ liệu `raw` từ API:
+ *    - Map các trường `revenue`, `tickets`, `cancelled`.
+ *    - Giới hạn tối đa 12 điểm dữ liệu.
+ * 2. Nếu không có dữ liệu (fallback):
+ *    - Tạo dữ liệu giả lập dựa trên số liệu tổng quan (`fallbackStats`).
+ *    - Phân bổ ngẫu nhiên theo số điểm (8 điểm).
+ */
 const normalizeSeries = (raw, fallbackStats) => {
   if (Array.isArray(raw) && raw.length > 0) {
     return raw
@@ -234,6 +260,21 @@ const loadChartJs = async () => {
   return module.Chart || window.Chart;
 };
 
+/**
+ * Vẽ biểu đồ thống kê sử dụng Chart.js.
+ * 
+ * Logic:
+ * 1. Tải thư viện Chart.js (dynamic import).
+ * 2. Hủy biểu đồ cũ nếu tồn tại.
+ * 3. Chuẩn bị dữ liệu datasets:
+ *    - Line chart: Doanh thu (có gradient fill).
+ *    - Bar chart: Số vé đã đặt.
+ *    - Line chart (dashed): Số vé hủy.
+ * 4. Cấu hình options:
+ *    - Tooltip custom hiển thị tiền tệ.
+ *    - Trục Y format số tiền.
+ *    - Responsive và interaction mode.
+ */
 const renderChart = async () => {
   if (!chartCanvas.value) return;
   const Chart = await loadChartJs();

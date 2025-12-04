@@ -65,8 +65,8 @@ class ChuyenDiController extends Controller
      */
     public function search(Request $request)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate input request
+        $validated = $request->validate([
             'vehicleType' => 'required|in:bus,train,plane',
             'from' => 'required_without:fromId|nullable|string|max:100',
             'fromId' => 'required_without:from|nullable|integer|exists:tinh_thanhs,id',
@@ -83,15 +83,18 @@ class ChuyenDiController extends Controller
             'companyId' => 'nullable|integer|exists:nha_van_hanhs,id',
         ]);
 
+        // Map loại phương tiện từ request sang DB value
         $vehicleTypeKey = $validated['vehicleType'];
         $vehicleTypeDb = self::VEHICLE_TYPE_MAP[$vehicleTypeKey] ?? null;
         $passengers = (int) ($validated['passengers'] ?? 1);
 
+        // Tìm tỉnh đi và tỉnh đến (theo ID hoặc tên)
         $fromCity = $this->findTinhThanhById($validated['fromId'] ?? null)
             ?? $this->resolveTinhThanh($validated['from'] ?? '');
         $toCity = $this->findTinhThanhById($validated['toId'] ?? null)
             ?? $this->resolveTinhThanh($validated['to'] ?? '');
 
+        // Nếu không tìm thấy tỉnh thành hợp lệ, trả về lỗi
         if (!$fromCity || !$toCity) {
             // Trả về JSON response
         return response()->json([
@@ -100,8 +103,10 @@ class ChuyenDiController extends Controller
             ], 422);
         }
 
+        // Tính toán khoảng thời gian trong ngày (00:00:00 -> 23:59:59)
         [$departureStart, $departureEnd] = $this->dateBounds($validated['departureDate']);
 
+        // Tìm trạm đón (pickup station)
         $pickupStation = $this->findTramById($validated['pickupStationId'] ?? null)
             ?? $this->resolveTram(
                 $validated['pickupStation'] ?? null,
@@ -109,6 +114,7 @@ class ChuyenDiController extends Controller
                 $vehicleTypeKey
             );
 
+        // Tìm trạm trả (dropoff station)
         $dropoffStation = $this->findTramById($validated['dropoffStationId'] ?? null)
             ?? $this->resolveTram(
                 $validated['dropoffStation'] ?? null,
@@ -116,11 +122,14 @@ class ChuyenDiController extends Controller
                 $vehicleTypeKey
             );
 
+        // Xác định ID nhà vận hành và từ khóa tên nhà vận hành
         $companyId = $validated['companyId'] ?? null;
         $companyKeyword = $companyId ? null : $this->normalizeCompanyKeyword($validated['company'] ?? null);
 
+        // Kiểm tra xem DB đã có cột tỉnh thành cho chuyến đi chưa
         $hasProvinceColumns = $this->hasTripProvinceColumns();
 
+        // Xây dựng query cơ bản
         $baseQuery = ChuyenDi::query()
             ->with([
                 'nhaVanHanh',
@@ -129,23 +138,31 @@ class ChuyenDiController extends Controller
                 'noiDiTinhThanh',
                 'noiDenTinhThanh',
             ])
+            // Lọc theo loại phương tiện (qua nhà vận hành)
             ->when($vehicleTypeDb, function ($query) use ($vehicleTypeDb) {
                 $query->whereHas('nhaVanHanh', fn ($q) => $q->where('loai', $vehicleTypeDb));
             })
+            // Lọc theo ID nhà vận hành cụ thể
             ->when($companyId, fn ($query) => $query->where('nha_van_hanh_id', $companyId))
+            // Lọc theo khoảng thời gian khởi hành (trong ngày)
             ->whereBetween('gio_khoi_hanh', [$departureStart, $departureEnd])
+            // Lọc theo tên nhà vận hành (nếu có)
             ->when($companyKeyword, function ($query) use ($companyKeyword) {
                 $query->whereHas('nhaVanHanh', function ($q) use ($companyKeyword) {
                     $q->where('ten', 'like', "%{$companyKeyword}%");
                 });
             })
+            // Lọc theo số lượng hành khách (kiểm tra ghế còn trống)
             ->when($passengers, function ($query) use ($passengers) {
                 $query->where(function ($sub) use ($passengers) {
+                    // Trường hợp 1: Có cột ghe_con và đủ chỗ
                     $sub->where('ghe_con', '>=', $passengers)
+                        // Trường hợp 2: ghe_con null (chưa cập nhật), check tong_ghe
                         ->orWhere(function ($fallback) use ($passengers) {
                             $fallback->whereNull('ghe_con')
                                 ->where('tong_ghe', '>=', $passengers);
                         })
+                        // Trường hợp 3: ghe_con <= 0 (lỗi data?), check tong_ghe
                         ->orWhere(function ($fallback) use ($passengers) {
                             $fallback->where('ghe_con', '<=', 0)
                                 ->where('tong_ghe', '>=', $passengers);

@@ -29,22 +29,38 @@ class TripAdminController extends Controller
     /**
      * Danh sách chuyến đi có filter phức tạp: keyword, status, type, operatorId, dateFrom, dateTo
      * Eager load: nhà vận hành, trạm đi/đến, tỉnh thành
+     * Logic:
+     * - Tìm kiếm theo ID chuyến hoặc tên nhà xe/trạm
+     * - Lọc theo trạng thái (normalized), loại phương tiện, nhà xe
+     * - Lọc theo khoảng thời gian khởi hành
+     * - Sắp xếp giảm dần theo giờ khởi hành
+     */
+    /**
+     * Danh sách chuyến đi có filter phức tạp: keyword, status, type, operatorId, dateFrom, dateTo
+     * Eager load: nhà vận hành, trạm đi/đến, tỉnh thành
+     * Logic:
+     * - Tìm kiếm theo ID chuyến hoặc tên nhà xe/trạm
+     * - Lọc theo trạng thái (normalized), loại phương tiện, nhà xe
+     * - Lọc theo khoảng thời gian khởi hành
+     * - Sắp xếp giảm dần theo giờ khởi hành
      */
         /**
      * Lấy danh sách dữ liệu với phân trang và filter
      */
     public function index(Request $request)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
-            'keyword' => 'nullable|string|max:150',
-            'status' => 'nullable|string|in:AVAILABLE,SOLD_OUT,CANCELLED,CON_VE,HET_VE,HUY,con_ve,het_ve,huy',
-            'type' => 'nullable|string|in:bus,train,plane',
-            'operatorId' => 'nullable|integer|exists:nha_van_hanhs,id',
-            'dateFrom' => 'nullable|date',
-            'dateTo' => 'nullable|date|after_or_equal:dateFrom',
+        // Validate các tham số lọc đầu vào
+        $validated = $request->validate([
+            'keyword' => 'nullable|string|max:150', // Từ khóa tìm kiếm
+            'status' => 'nullable|string|in:AVAILABLE,SOLD_OUT,CANCELLED,CON_VE,HET_VE,HUY,con_ve,het_ve,huy', // Trạng thái (hỗ trợ cả tiếng Anh/Việt)
+            'type' => 'nullable|string|in:bus,train,plane', // Loại phương tiện
+            'operatorId' => 'nullable|integer|exists:nha_van_hanhs,id', // Lọc theo nhà xe
+            'dateFrom' => 'nullable|date', // Ngày khởi hành từ
+            'dateTo' => 'nullable|date|after_or_equal:dateFrom', // Ngày khởi hành đến
         ]);
 
+        // Eager load các quan hệ để hiển thị thông tin đầy đủ và tối ưu query
+        // Load cả tỉnh thành của trạm đi/đến và tỉnh thành trực tiếp của chuyến (nếu có)
         $query = ChuyenDi::query()
             ->with([
                 'nhaVanHanh',
@@ -53,36 +69,47 @@ class TripAdminController extends Controller
                 'noiDiTinhThanh',
                 'noiDenTinhThanh',
             ])
-            ->orderByDesc('gio_khoi_hanh');
+            ->orderByDesc('gio_khoi_hanh'); // Sắp xếp chuyến mới nhất lên đầu
 
+        // Xử lý tìm kiếm từ khóa
         if (!empty($validated['keyword'])) {
             $keyword = Str::lower(trim($validated['keyword']));
             $query->where(function ($sub) use ($keyword) {
+                // Tìm chính xác theo ID chuyến đi
                 $sub->where('id', (int) $keyword)
+                    // Hoặc tìm theo tên nhà xe
                     ->orWhereHas('nhaVanHanh', fn ($q) => $q->where('ten', 'like', "%{$keyword}%"))
+                    // Hoặc tìm theo tên trạm đi
                     ->orWhereHas('tramDi', fn ($q) => $q->where('ten', 'like', "%{$keyword}%"))
+                    // Hoặc tìm theo tên trạm đến
                     ->orWhereHas('tramDen', fn ($q) => $q->where('ten', 'like', "%{$keyword}%"));
             });
         }
 
+        // Xử lý lọc theo trạng thái
         if (!empty($validated['status'])) {
+            // Chuẩn hóa status về dạng DB (CON_VE, HET_VE, HUY)
             $status = $this->normalizeStatus($validated['status']);
             if ($status) {
                 $query->where('trang_thai', $status);
             }
         }
 
+        // Xử lý lọc theo loại phương tiện
         if (!empty($validated['type'])) {
+            // Map từ frontend type (bus/train) sang DB type (xe_khach/tau_hoa)
             $type = $this->mapFrontendTypeToInternal($validated['type']);
             if ($type) {
                 $query->whereHas('nhaVanHanh', fn ($q) => $q->where('loai', $type));
             }
         }
 
+        // Xử lý lọc theo nhà xe cụ thể
         if (!empty($validated['operatorId'])) {
             $query->where('nha_van_hanh_id', $validated['operatorId']);
         }
 
+        // Xử lý lọc theo khoảng thời gian khởi hành
         if (!empty($validated['dateFrom'])) {
             $query->where('gio_khoi_hanh', '>=', Carbon::parse($validated['dateFrom'])->startOfDay());
         }
@@ -91,6 +118,7 @@ class TripAdminController extends Controller
             $query->where('gio_khoi_hanh', '<=', Carbon::parse($validated['dateTo'])->endOfDay());
         }
 
+        // Phân trang và transform dữ liệu
         $paginator = $query->paginate($this->resolvePerPage($request));
         $data = $paginator->getCollection()
             ->map(fn (ChuyenDi $trip) => $this->transformTrip($trip));
@@ -106,6 +134,7 @@ class TripAdminController extends Controller
      */
     public function show(ChuyenDi $chuyenDi)
     {
+        // Load các quan hệ cần thiết cho chi tiết chuyến đi
         $chuyenDi->load([
             'nhaVanHanh',
             'tramDi.tinhThanh',
@@ -131,11 +160,16 @@ class TripAdminController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate và chuẩn bị dữ liệu payload
         $payload = $this->validateTripPayload($request);
 
-        // Thao tác database
+        // Tạo chuyến đi mới
         $trip = ChuyenDi::create($payload);
+        
+        // Đồng bộ ghế cho chuyến đi (tạo ghế trống dựa trên tổng số ghế)
         TripSeatSynchronizer::sync($trip);
+        
+        // Reload lại model với các quan hệ để trả về response đầy đủ
         $trip = $trip->fresh([
             'nhaVanHanh',
             'tramDi.tinhThanh',
@@ -162,6 +196,7 @@ class TripAdminController extends Controller
      */
     public function update(Request $request, ChuyenDi $chuyenDi)
     {
+        // Validate dữ liệu cập nhật (cho phép partial update)
         $payload = $this->validateTripPayload($request, true);
 
         if (!empty($payload)) {
@@ -169,6 +204,7 @@ class TripAdminController extends Controller
             $chuyenDi->fill($payload)->save();
         }
 
+        // Đồng bộ lại ghế nếu tổng số ghế thay đổi
         TripSeatSynchronizer::sync($chuyenDi);
 
         $chuyenDi->load([
@@ -195,6 +231,7 @@ class TripAdminController extends Controller
      */
     public function destroy(ChuyenDi $chuyenDi)
     {
+        // Kiểm tra ràng buộc toàn vẹn dữ liệu
         if ($chuyenDi->donHangs()->exists()) {
             // Trả về JSON response
         return response()->json([
@@ -218,16 +255,17 @@ class TripAdminController extends Controller
      */
     public function notify(Request $request, ChuyenDi $chuyenDi)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
-            'message' => 'required|string|max:1000',
-            'channels' => ['required', 'array', 'min:1'],
+        // Validate thông tin gửi thông báo
+        $validated = $request->validate([
+            'message' => 'required|string|max:1000', // Nội dung thông báo
+            'channels' => ['required', 'array', 'min:1'], // Kênh gửi: email, app
             'channels.*' => ['required', Rule::in(['email', 'app', 'sms'])],
-            'recipientIds' => ['required', 'array', 'min:1'],
+            'recipientIds' => ['required', 'array', 'min:1'], // Danh sách ID người nhận
             'recipientIds.*' => ['integer', 'exists:nguoi_dungs,id'],
         ]);
 
         $channels = collect($validated['channels'])->unique()->values()->all();
+        // Lấy danh sách người dùng cần gửi (loại trừ admin)
         $recipients = NguoiDung::query()
             ->whereIn('id', $validated['recipientIds'])
             ->where('vai_tro', '!=', 'quan_tri')
@@ -248,7 +286,9 @@ class TripAdminController extends Controller
         $appCount = 0;
         $emailCount = 0;
 
+        // Duyệt qua từng người nhận và gửi thông báo theo các kênh đã chọn
         foreach ($recipients as $recipient) {
+            // Gửi thông báo in-app
             if (in_array('app', $channels, true)) {
                 ThongBao::create([
                     'nguoi_dung_id' => $recipient->id,
@@ -260,6 +300,7 @@ class TripAdminController extends Controller
                 $appCount++;
             }
 
+            // Gửi email thông báo
             if (in_array('email', $channels, true) && !empty($recipient->email)) {
                 Mail::to($recipient->email)->send(
                     new TripCustomerNotificationMail($recipient, $chuyenDi, $validated['message'], $summary)
@@ -328,6 +369,7 @@ class TripAdminController extends Controller
     private function validateTripPayload(Request $request, bool $isUpdate = false): array
     {
         $hasProvinceColumns = $this->hasTripProvinceColumns();
+        // Rule validate cho province ID (chỉ bắt buộc nếu DB có cột này)
         $provinceRule = $hasProvinceColumns
             ? [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:tinh_thanhs,id']
             : ['nullable', 'integer', 'exists:tinh_thanhs,id'];
@@ -336,10 +378,10 @@ class TripAdminController extends Controller
             'operatorId' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:nha_van_hanhs,id'],
             'fromProvinceId' => $provinceRule,
             'toProvinceId' => $provinceRule,
-            'fromStationId' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:trams,id', 'different:toStationId'],
+            'fromStationId' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:trams,id', 'different:toStationId'], // Trạm đi/đến phải khác nhau
             'toStationId' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'exists:trams,id'],
             'departureTime' => [$isUpdate ? 'sometimes' : 'required', 'date'],
-            'arrivalTime' => [$isUpdate ? 'sometimes' : 'required', 'date', 'after:departureTime'],
+            'arrivalTime' => [$isUpdate ? 'sometimes' : 'required', 'date', 'after:departureTime'], // Giờ đến phải sau giờ đi
             'basePrice' => [$isUpdate ? 'sometimes' : 'required', 'numeric', 'min:0'],
             'totalSeats' => [$isUpdate ? 'sometimes' : 'required', 'integer', 'min:1', 'max:200'],
             'remainingSeats' => ['nullable', 'integer', 'min:0'],
@@ -351,6 +393,7 @@ class TripAdminController extends Controller
         $fromStationModel = null;
         $toStationModel = null;
 
+        // Map dữ liệu từ request sang DB columns
         if (array_key_exists('operatorId', $validated)) {
             $payload['nha_van_hanh_id'] = $validated['operatorId'];
         }
@@ -360,6 +403,8 @@ class TripAdminController extends Controller
         if ($hasProvinceColumns && array_key_exists('toProvinceId', $validated)) {
             $payload['noi_den_tinh_thanh_id'] = $validated['toProvinceId'];
         }
+        
+        // Xử lý trạm đi
         if (array_key_exists('fromStationId', $validated)) {
             $payload['tram_di_id'] = $validated['fromStationId'];
             // Thao tác database
@@ -370,6 +415,8 @@ class TripAdminController extends Controller
                 ]);
             }
         }
+        
+        // Xử lý trạm đến
         if (array_key_exists('toStationId', $validated)) {
             $payload['tram_den_id'] = $validated['toStationId'];
             // Thao tác database
@@ -380,6 +427,8 @@ class TripAdminController extends Controller
                 ]);
             }
         }
+        
+        // Tự động điền province ID từ trạm nếu chưa có và validate consistency
         if ($hasProvinceColumns) {
             if (!array_key_exists('noi_di_tinh_thanh_id', $payload) && $fromStationModel) {
                 $payload['noi_di_tinh_thanh_id'] = $fromStationModel->tinh_thanh_id;
@@ -387,6 +436,7 @@ class TripAdminController extends Controller
             if (!array_key_exists('noi_den_tinh_thanh_id', $payload) && $toStationModel) {
                 $payload['noi_den_tinh_thanh_id'] = $toStationModel->tinh_thanh_id;
             }
+            // Đảm bảo trạm thuộc đúng tỉnh đã chọn
             $this->validateStationProvinceConsistency($fromStationModel, $payload['noi_di_tinh_thanh_id'] ?? null, 'fromProvinceId');
             $this->validateStationProvinceConsistency($toStationModel, $payload['noi_den_tinh_thanh_id'] ?? null, 'toProvinceId');
         }
@@ -402,12 +452,14 @@ class TripAdminController extends Controller
         }
         if (array_key_exists('totalSeats', $validated)) {
             $payload['tong_ghe'] = $validated['totalSeats'];
+            // Nếu tạo mới và không set remainingSeats thì mặc định bằng totalSeats
             if (!isset($validated['remainingSeats']) && !$isUpdate) {
                 $payload['ghe_con'] = $validated['totalSeats'];
             }
         }
         if (array_key_exists('remainingSeats', $validated)) {
             $remaining = $validated['remainingSeats'];
+            // Đảm bảo số ghế còn lại không vượt quá tổng số ghế
             if (isset($payload['tong_ghe'])) {
                 $remaining = min($payload['tong_ghe'], $remaining);
             }
@@ -470,6 +522,7 @@ class TripAdminController extends Controller
         $fromProvinceName = $trip->noiDiTinhThanh->ten ?? $from?->tinhThanh?->ten;
         $toProvinceName = $trip->noiDenTinhThanh->ten ?? $to?->tinhThanh?->ten;
 
+        // Tính toán trạng thái hiển thị (ví dụ: đã hoàn thành nếu quá giờ)
         $derivedStatus = $this->deriveStatus($trip);
 
         return [
@@ -528,6 +581,7 @@ class TripAdminController extends Controller
         }
 
         $arrival = $trip->gio_den;
+        // Nếu đã quá giờ đến thì coi như đã hoàn thành
         if ($arrival && $arrival->isPast()) {
             return [
                 'code' => 'COMPLETED',

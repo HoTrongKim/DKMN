@@ -7,6 +7,10 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Seeder dữ liệu Vé (Tickets) - Bảng mới thay thế cho Chi tiết đơn hàng cũ
+ * Tạo vé dựa trên đơn hàng đã có, tính toán giá vé, phụ phí và trạng thái thanh toán
+ */
 class TicketSeeder extends Seeder
 {
     public function run(): void

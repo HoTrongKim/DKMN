@@ -264,6 +264,19 @@ const selectUser = (id) => {
   selectedId.value = id;
 };
 
+/**
+ * Tải danh sách người dùng từ server.
+ * 
+ * API: `GET /admin/users`
+ * Backend Controller: `AdminUserController::index` (dự đoán)
+ * 
+ * Logic:
+ * 1. Chuẩn bị tham số lọc (`keyword`, `status`, `role`).
+ * 2. Gọi API lấy danh sách người dùng.
+ * 3. Cập nhật `users` và `pagination`.
+ * 4. Kiểm tra xem user đang chọn có còn trong danh sách không, nếu không thì bỏ chọn.
+ * 5. Xử lý lỗi và hiển thị thông báo.
+ */
 const fetchUsers = async (page = 1) => {
   isLoading.value = true;
   emptyMessage.value = 'Đang tải dữ liệu...';
@@ -363,6 +376,25 @@ const buildPayload = () => {
   return payload;
 };
 
+/**
+ * Thêm mới hoặc cập nhật thông tin người dùng.
+ * 
+ * API: 
+ * - Tạo mới: `POST /admin/users`
+ * - Cập nhật: `PATCH /admin/users/{id}`
+ * Backend Controller: `AdminUserController::store` / `AdminUserController::update` (dự đoán)
+ * 
+ * Logic:
+ * 1. Chuẩn bị payload từ form (`buildPayload`).
+ * 2. Nếu là chế độ sửa (`isEditMode`):
+ *    - Gọi API cập nhật.
+ *    - Hiển thị thông báo cập nhật thành công.
+ * 3. Nếu là chế độ thêm mới:
+ *    - Gọi API tạo mới.
+ *    - Hiển thị thông báo thêm mới thành công.
+ * 4. Đóng modal, reset form, tải lại danh sách.
+ * 5. Xử lý lỗi nếu có.
+ */
 const submitForm = async () => {
   formSubmitting.value = true;
   formError.value = '';
@@ -392,6 +424,19 @@ const submitForm = async () => {
   }
 };
 
+/**
+ * Khóa hoặc mở khóa tài khoản người dùng.
+ * 
+ * API: `PATCH /admin/users/{id}/status`
+ * Backend Controller: `AdminUserController::updateStatus` (dự đoán)
+ * 
+ * Logic:
+ * 1. Xác định trạng thái tiếp theo (locked <-> active).
+ * 2. Gọi API cập nhật trạng thái.
+ * 3. Hiển thị thông báo thành công.
+ * 4. Tải lại danh sách người dùng.
+ * 5. Xử lý lỗi nếu có.
+ */
 const lockOrUnlock = async (user) => {
   if (!user || actionLoading.value) return;
   const nextStatus = user.statusCode === 'locked' ? 'active' : 'locked';
@@ -424,6 +469,20 @@ const toggleLock = (user) => {
   lockOrUnlock(user);
 };
 
+/**
+ * Xóa người dùng.
+ * 
+ * API: `DELETE /admin/users/{id}`
+ * Backend Controller: `AdminUserController::destroy` (dự đoán)
+ * 
+ * Logic:
+ * 1. Hiển thị confirm dialog.
+ * 2. Gọi API xóa người dùng.
+ * 3. Hiển thị thông báo thành công.
+ * 4. Nếu user bị xóa đang được chọn, bỏ chọn.
+ * 5. Tải lại danh sách người dùng (về trang 1).
+ * 6. Xử lý lỗi nếu có.
+ */
 const deleteUser = async (user) => {
   if (!user || actionLoading.value) return;
   selectUser(user.id);

@@ -35,7 +35,7 @@ class LienHeController extends Controller
             'noi_dung' => 'required|string|max:5000',
         ]);
 
-        // Thao tác database
+        // Tạo bản ghi liên hệ mới
         $lienHe = LienHe::create([
             'ho_ten' => $validated['ho_ten'],
             'email' => $validated['email'],
@@ -68,6 +68,7 @@ class LienHeController extends Controller
         }
 
         // Search
+        // Tìm kiếm theo từ khóa
         if ($request->has('keyword') && $request->keyword !== '') {
             $keyword = $request->keyword;
             $query->where(function ($q) use ($keyword) {
@@ -118,6 +119,7 @@ class LienHeController extends Controller
 
         $lienHe->update($updateData);
 
+        // Nếu đã trả lời và có nội dung, gửi thông báo cho người dùng
         if ($validated['trang_thai'] === 'da_tra_loi' && !empty($updateData['tra_loi'])) {
             // Thao tác database
         $user = NguoiDung::where('email', $lienHe->email)->first();

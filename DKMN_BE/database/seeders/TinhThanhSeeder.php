@@ -5,10 +5,15 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Tỉnh/Thành phố
+ * Danh sách 63 tỉnh thành Việt Nam (mẫu)
+ */
 class TinhThanhSeeder extends Seeder
 {
     public function run(): void
     {
+        // Danh sách tỉnh thành mẫu (không đầy đủ 63 nhưng đủ dùng demo)
         $cities = [
             ['ten' => "Hà Nội", 'ma' => 'HN'],
             ['ten' => "Hải Phòng", 'ma' => 'HP'],

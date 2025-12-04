@@ -35,21 +35,37 @@ class VnpayController extends Controller
      * Tạo payment record và build URL chuyển hướng đến VNPAY
      * Hỗ trợ idempotency key để tránh tạo payment trùng lặp
      */
+    /**
+     * Khởi tạo payment intent với VNPAY
+     * Tạo payment record và build URL chuyển hướng đến VNPAY
+     * Hỗ trợ idempotency key để tránh tạo payment trùng lặp
+     * Logic:
+     * - Validate thông tin vé và các tham số thanh toán
+     * - Kiểm tra quyền sở hữu vé và thời gian giữ vé
+     * - Tính toán số tiền cần thanh toán (hỗ trợ test mode)
+     * - Kiểm tra idempotency key để trả về payment đã tồn tại (nếu có)
+     * - Tạo payment record mới trong DB transaction
+     * - Build URL thanh toán VNPAY và trả về cho client
+     */
     public function init(Request $request): JsonResponse
     {
+        // 1. Validate request
         $validated = $request->validate([
             'ticketId' => 'required|integer|exists:tickets,id',
-            'bankCode' => 'nullable|string|max:50',
-            'locale' => 'nullable|string|in:vn,en',
-            'orderInfo' => 'nullable|string|max:255',
-            'returnUrl' => 'nullable|url|max:255',
-            'testMode' => 'nullable|boolean',
+            'bankCode' => 'nullable|string|max:50', // Mã ngân hàng (nếu user chọn trước)
+            'locale' => 'nullable|string|in:vn,en', // Ngôn ngữ hiển thị
+            'orderInfo' => 'nullable|string|max:255', // Nội dung thanh toán
+            'returnUrl' => 'nullable|url|max:255', // URL redirect sau khi thanh toán
+            'testMode' => 'nullable|boolean', // Chế độ test (dùng số tiền ảo)
         ]);
 
+        // 2. Load ticket và kiểm tra quyền
         $ticket = Ticket::with('donHang')->findOrFail($validated['ticketId']);
         if ($response = $this->guardTicketOwner($request, $ticket)) {
             return $response;
         }
+        
+        // 3. Kiểm tra thời gian giữ vé (ticket hold expiration)
         if (TicketHoldService::isExpired($ticket)) {
             TicketHoldService::expireTicket($ticket);
             return response()->json([
@@ -58,16 +74,20 @@ class VnpayController extends Controller
             ], 410);
         }
 
+        // 4. Tính toán số tiền thanh toán
         $fare = $this->paymentService->computeFare($ticket);
         $amount = (int) ($fare['totalAmount'] ?? 0);
 
+        // Xử lý số tiền cho chế độ test
         if ($request->boolean('testMode')) {
             $amount = (int) config('payments.test_amount_vnd', $amount ?: 0);
         }
+        // Fallback số tiền mặc định nếu tính toán ra <= 0 (tránh lỗi VNPAY)
         if ($amount <= 0) {
             $amount = (int) config('payments.default_fare_vnd', 1200);
         }
 
+        // 5. Xử lý Idempotency Key (tránh trùng lặp giao dịch)
         $idempotencyKey = $request->header('Idempotency-Key');
         if ($idempotencyKey) {
             $existing = Payment::query()
@@ -83,6 +103,7 @@ class VnpayController extends Controller
             }
         }
 
+        // 6. Tạo Payment Record mới
         $expiresAt = Carbon::now()->addMinutes(
             (int) config('payments.vnpay.expire_minutes', config('payments.intent_expiration_minutes', 15))
         );
@@ -98,6 +119,7 @@ class VnpayController extends Controller
                 'expires_at' => $expiresAt,
             ]);
 
+            // Tạo tham chiếu tạm thời và checksum bảo mật
             $payment->provider_ref = 'VNPAY-' . $payment->id;
             $payment->checksum = $this->paymentService->computeChecksum($payment);
             $payment->save();
@@ -105,6 +127,7 @@ class VnpayController extends Controller
             return $payment->fresh();
         });
 
+        // 7. Build VNPAY URL
         try {
             $payData = $this->vnpayService->buildPayUrl($payment, [
                 'bank_code' => $validated['bankCode'] ?? null,
@@ -114,6 +137,7 @@ class VnpayController extends Controller
                 'ip_addr' => $request->ip(),
             ]);
         } catch (\Throwable $e) {
+            // Xóa payment nếu build URL thất bại (do cấu hình lỗi)
             $payment->delete();
 
             return response()->json([
@@ -122,6 +146,7 @@ class VnpayController extends Controller
             ], 503);
         }
 
+        // Cập nhật provider_ref thực tế từ VNPAY (txn_ref)
         $payment->provider_ref = $payData['txn_ref'];
         $payment->save();
 
@@ -137,15 +162,23 @@ class VnpayController extends Controller
      * Xử lý IPN (Instant Payment Notification) từ VNPAY
      * Verify signature, kiểm tra amount, cập nhật status payment
      * VNPAY gọi webhook này khi thanh toán thành công/thất bại
+     * Logic:
+     * - Verify signature của VNPAY gửi sang
+     * - Tìm payment dựa trên vnp_TxnRef
+     * - Kiểm tra số tiền thanh toán (cho phép sai số nhỏ)
+     * - Cập nhật trạng thái payment (thành công/thất bại)
+     * - Nếu thành công: cập nhật ticket, gửi email xác nhận
      */
     public function ipn(Request $request): JsonResponse
     {
         $payload = $request->all();
 
+        // 1. Verify Signature
         if (!$this->vnpayService->verifySignature($payload)) {
             return $this->ipnResponse('97', 'Invalid signature');
         }
 
+        // 2. Tìm Payment
         $txnRef = $payload['vnp_TxnRef'] ?? null;
         if (!$txnRef || !is_string($txnRef)) {
             return $this->ipnResponse('01', 'Missing transaction reference');
@@ -156,7 +189,8 @@ class VnpayController extends Controller
             return $this->ipnResponse('01', 'Payment not found');
         }
 
-        $amount = (int) round(((int) ($payload['vnp_Amount'] ?? 0)) / 100);
+        // 3. Kiểm tra số tiền (Amount Check)
+        $amount = (int) round(((int) ($payload['vnp_Amount'] ?? 0)) / 100); // VNPAY amount nhân 100
         $allowedDelta = (int) config('payments.allowed_amount_delta', 0);
 
         if (abs($amount - (int) $payment->amount_vnd) > $allowedDelta) {
@@ -168,13 +202,16 @@ class VnpayController extends Controller
             return $this->ipnResponse('04', 'Amount mismatch');
         }
 
+        // 4. Kiểm tra trạng thái hiện tại (Idempotency)
         if ($payment->status === Payment::STATUS_SUCCEEDED) {
             return $this->ipnResponse('00', 'Payment already confirmed', $payment);
         }
 
+        // 5. Xử lý kết quả giao dịch
         $responseCode = (string) ($payload['vnp_ResponseCode'] ?? '');
         $txnStatus = (string) ($payload['vnp_TransactionStatus'] ?? '');
 
+        // Giao dịch thất bại
         if ($responseCode !== '00' || $txnStatus !== '00') {
             $payment->update([
                 'status' => Payment::STATUS_FAILED,
@@ -185,6 +222,7 @@ class VnpayController extends Controller
             return $this->ipnResponse('00', 'Payment recorded as failed', $payment);
         }
 
+        // Giao dịch thành công -> Hoàn tất thanh toán
         $ticket = $this->completePayment(
             $payment,
             $amount,
@@ -192,6 +230,7 @@ class VnpayController extends Controller
             $payload['vnp_TransactionNo'] ?? ($payload['vnp_BankTranNo'] ?? $payment->provider_ref)
         );
 
+        // Gửi thông báo/email
         if ($ticket) {
             $this->ticketNotificationService->sendTicketBookedMail($ticket, $payment->fresh());
             $this->paymentSuccessNotifier->send($ticket, $payment->fresh());
@@ -222,11 +261,13 @@ class VnpayController extends Controller
         $responseCode = (string) ($payload['vnp_ResponseCode'] ?? '');
         $txnStatus = (string) ($payload['vnp_TransactionStatus'] ?? '');
 
+        // Verify signature và check status thành công
         if ($this->vnpayService->verifySignature($payload)
             && $responseCode === '00'
             && $txnStatus === '00'
             && $payment->status !== Payment::STATUS_SUCCEEDED
         ) {
+            // Hoàn tất thanh toán nếu chưa xử lý qua IPN
             $ticket = $this->completePayment(
                 $payment,
                 $amount,
@@ -261,6 +302,7 @@ class VnpayController extends Controller
         $ticketForMail = null;
 
         DB::transaction(function () use ($payment, $amount, $idempotencyKey, $providerRef, &$ticketForMail) {
+            // Cập nhật trạng thái thanh toán
             $payment->update([
                 'status' => Payment::STATUS_SUCCEEDED,
                 'paid_at' => now(),
@@ -269,6 +311,7 @@ class VnpayController extends Controller
                 'amount_vnd' => PriceNormalizer::clamp($amount),
             ]);
 
+            // Cập nhật thông tin vé (lock row để tránh race condition)
             $ticket = $payment->ticket()->lockForUpdate()->first();
             if ($ticket) {
                 $this->paymentService->setAmountOnTicket($ticket, $payment->amount_vnd, $payment->id);

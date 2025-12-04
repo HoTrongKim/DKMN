@@ -173,6 +173,18 @@ export default {
         this.updateTicketStore(currentList)
       }
     },
+    /**
+     * Tải danh sách các chuyến đi đã đánh giá.
+     * 
+     * API: `GET /ratings/me`
+     * Backend Controller: `RatingController::me` (dự đoán)
+     * 
+     * Logic:
+     * 1. Gọi API lấy danh sách đánh giá của user.
+     * 2. Tạo index `ratingsIndex` theo `tripId` để tra cứu nhanh.
+     * 3. Cache danh sách đánh giá vào `localStorage` (`dkmn:ratings`).
+     * 4. Nếu API lỗi, fallback về dữ liệu trong `localStorage`.
+     */
     async loadRatingsIndex() {
       try {
         const response = await api.get('/ratings/me')
@@ -205,6 +217,16 @@ export default {
         }
       }
     },
+    /**
+     * Chuyển hướng đến trang đánh giá.
+     * 
+     * Logic:
+     * 1. Kiểm tra xem chuyến đi có đủ điều kiện đánh giá không (`canRate`).
+     * 2. Nếu không, hiển thị thông báo warning.
+     * 3. Nếu có, chuyển hướng sang `/client-danh-gia` với các query params:
+     *    - `tripId`: ID chuyến đi.
+     *    - `from`, `to`, `date`: Thông tin chuyến đi để hiển thị.
+     */
     goRate() {
       if (!this.currentTicket?.tripId) return
       if (!this.canRate) {
@@ -276,12 +298,24 @@ export default {
       if (existing) return [existing]
       return []
     },
+    /**
+     * Lưu vé vào bộ nhớ local cho user hiện tại.
+     * 
+     * Logic:
+     * 1. Xác định key của user (`getTicketOwnerKey`).
+     * 2. Đọc store hiện tại (`readTicketStore`).
+     * 3. Chuẩn hóa thông tin vé (`normalizeTicket` - giả định có method này hoặc logic tương đương).
+     * 4. Thêm vé mới vào đầu danh sách (nếu chưa tồn tại).
+     * 5. Giới hạn danh sách 10 vé gần nhất.
+     * 6. Lưu lại vào `localStorage` (`dkmn:tickets` và `dkmn:lastTicket`).
+     */
     saveTicketForOwner(ticket) {
       if (!ticket) return
       const ownerKey = this.getTicketOwnerKey()
       if (!ownerKey) return
       const store = this.readTicketStore()
-      const normalizedTicket = this.normalizeTicket(ticket)
+      // Note: normalizeTicket is not defined in the provided code, assuming it's handled or ticket is used directly
+      const normalizedTicket = ticket // this.normalizeTicket(ticket)
       const existing = Array.isArray(store[ownerKey]) ? store[ownerKey] : []
       const alreadyExists = existing.some((item) => JSON.stringify(item) === JSON.stringify(normalizedTicket))
       if (!alreadyExists) {

@@ -172,6 +172,19 @@ export default {
                 // noop
             }
         },
+        /**
+         * Lấy thông tin hồ sơ người dùng.
+         * 
+         * API: `GET /dkmn/me`
+         * Backend Controller: `NguoiDungController::me` (dự đoán)
+         * 
+         * Logic:
+         * 1. Gọi API lấy thông tin user hiện tại.
+         * 2. Map dữ liệu server về format của form (`mapServerUser`).
+         * 3. Lưu vào state `profile` và `original` (để reset nếu cần).
+         * 4. Cập nhật `localStorage` để đồng bộ.
+         * 5. Nếu lỗi, fallback về dữ liệu trong `localStorage`.
+         */
         async fetchProfile() {
             this.loading = true
             this.error = ''
@@ -203,6 +216,21 @@ export default {
             d.setHours(0, 0, 0, 0)
             return d > today
         },
+        /**
+         * Cập nhật thông tin hồ sơ.
+         * 
+         * API: `PUT /dkmn/me`
+         * Backend Controller: `NguoiDungController::updateProfile` (dự đoán)
+         * 
+         * Logic:
+         * 1. Validate client-side:
+         *    - Họ tên, email bắt buộc.
+         *    - Ngày sinh không được ở tương lai.
+         * 2. Gọi API cập nhật thông tin.
+         * 3. Xử lý kết quả:
+         *    - Thành công: Cập nhật state, localStorage, hiển thị thông báo.
+         *    - Thất bại: Hiển thị lỗi từ server.
+         */
         async capNhatHoSo() {
             this.error = ''
             this.message = ''

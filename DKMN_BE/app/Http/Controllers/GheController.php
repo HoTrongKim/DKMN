@@ -25,11 +25,14 @@ class GheController extends Controller
     }
     public function getByChuyenDi(ChuyenDi $chuyenDi)
     {
+        // Đồng bộ trạng thái ghế mới nhất (nếu cần)
         TripSeatSynchronizer::sync($chuyenDi);
+        // Eager load các quan hệ
         $chuyenDi->loadMissing(['ghes', 'nhaVanHanh', 'tramDi.tinhThanh', 'tramDen.tinhThanh']);
 
+        // Map danh sách ghế sang format API
         $seats = $chuyenDi->ghes
-            ->sortBy('so_ghe', SORT_NATURAL)
+            ->sortBy('so_ghe', SORT_NATURAL) // Sắp xếp theo số ghế tự nhiên (1, 2, 10 thay vì 1, 10, 2)
             ->values()
             ->map(function (Ghe $ghe) {
                 return [
@@ -45,6 +48,7 @@ class GheController extends Controller
                 ];
             });
 
+        // Xây dựng layout hiển thị ghế (ma trận)
         $seatLayout = $this->buildSeatLayout($seats, $chuyenDi);
 
         // Trả về JSON response

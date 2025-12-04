@@ -151,6 +151,22 @@ const statusLabel = (status) => statusMap[status] || 'Chờ duyệt'
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—')
 
+/**
+ * Tải danh sách đánh giá từ server.
+ * 
+ * API: `GET /admin/ratings`
+ * Backend Controller: `AdminRatingController::index` (dự đoán)
+ * 
+ * Logic:
+ * 1. Gọi API với các tham số phân trang và lọc:
+ *    - `page`: Trang hiện tại.
+ *    - `rating`: Lọc theo số sao (1-5).
+ *    - `status`: Lọc theo trạng thái (cho_duyet, chap_nhan, tu_choi).
+ *    - `search`: Từ khóa tìm kiếm.
+ * 2. Cập nhật danh sách `reviews` và thông tin phân trang `pagination`.
+ * 3. Reset trạng thái chọn (`selected`, `selectAll`).
+ * 4. Xử lý lỗi và hiển thị thông báo nếu có.
+ */
 const fetchReviews = async (page = 1) => {
   loading.value = true
   errorMessage.value = ''
@@ -196,6 +212,20 @@ const requireSelection = () => {
   return true
 }
 
+/**
+ * Cập nhật trạng thái cho các đánh giá đã chọn.
+ * 
+ * API: `PATCH /admin/ratings/{id}`
+ * Backend Controller: `AdminRatingController::update` (dự đoán)
+ * 
+ * Logic:
+ * 1. Kiểm tra xem có đánh giá nào được chọn không (`requireSelection`).
+ * 2. Duyệt qua danh sách ID đã chọn và gọi API cập nhật trạng thái cho từng item.
+ *    - Sử dụng `Promise.all` để chạy song song.
+ * 3. Hiển thị thông báo thành công tương ứng với trạng thái mới.
+ * 4. Tải lại danh sách đánh giá để cập nhật UI.
+ * 5. Xử lý lỗi nếu có.
+ */
 const updateStatus = async (status) => {
   if (!requireSelection()) return
   loading.value = true
@@ -218,6 +248,21 @@ const updateStatus = async (status) => {
 const approveSelected = () => updateStatus('chap_nhan')
 const hideSelected = () => updateStatus('tu_choi')
 
+/**
+ * Xóa các đánh giá đã chọn.
+ * 
+ * API: `DELETE /admin/ratings/{id}`
+ * Backend Controller: `AdminRatingController::destroy` (dự đoán)
+ * 
+ * Logic:
+ * 1. Kiểm tra xem có đánh giá nào được chọn không.
+ * 2. Hiển thị confirm dialog xác nhận xóa.
+ * 3. Duyệt qua danh sách ID đã chọn và gọi API xóa từng item.
+ *    - Sử dụng `Promise.all` để chạy song song.
+ * 4. Hiển thị thông báo thành công.
+ * 5. Tải lại danh sách đánh giá.
+ * 6. Xử lý lỗi nếu có.
+ */
 const deleteSelected = async () => {
   if (!requireSelection()) return
   if (!confirm('Bạn chắc chắn muốn xóa các đánh giá đã chọn?')) return

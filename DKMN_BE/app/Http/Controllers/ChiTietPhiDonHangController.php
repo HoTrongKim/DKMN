@@ -15,6 +15,7 @@ class ChiTietPhiDonHangController extends Controller
      */
     public function getData()
     {
+        // Trả về danh sách chi tiết phí, sắp xếp theo thời gian tạo giảm dần
         return response()->json(['data' => ChiTietPhiDonHang::orderByDesc('ngay_tao')->get()]);
     }
 }

@@ -57,6 +57,8 @@ class PaymentWebhookController extends Controller
             return $this->respond(false, 'IP not allowed', 403);
         }
 
+        // Xác thực Token và API Key từ header hoặc body
+        // SePay gửi token trong Authorization header hoặc body param
         $tokenOk = $expectedToken === '' || (is_string($providedToken) && hash_equals($expectedToken, trim($providedToken)));
         $apiOk = $expectedApiKey === '' || (is_string($providedApiKey) && hash_equals($expectedApiKey, trim($providedApiKey)));
 
@@ -95,9 +97,10 @@ class PaymentWebhookController extends Controller
             ]);
         }
 
+        // Tìm payment pending khớp với order code
         $payment = $this->reconcileService->findMatchingPayment($orderCode, $amount);
         if (!$payment && $amount > 0) {
-            // In case bank payload is missing/rounded amount, fall back to matching by order code only.
+            // Nếu không khớp amount (có thể do bank làm tròn hoặc trừ phí), thử tìm theo order code thôi
             $payment = $this->reconcileService->findMatchingPayment($orderCode, 0);
         }
         if (!$payment) {
@@ -107,6 +110,7 @@ class PaymentWebhookController extends Controller
             ]);
         }
 
+        // Lấy mã tham chiếu giao dịch ngân hàng
         $refNo = Arr::get($payload, 'transaction_no')
             ?? Arr::get($payload, 'txn_id')
             ?? Arr::get($payload, 'ref_no')
@@ -114,6 +118,7 @@ class PaymentWebhookController extends Controller
             ?? Arr::get($payload, 'bank_ref')
             ?? $payment->provider_ref;
 
+        // Đánh dấu payment thành công và xử lý vé
         $this->reconcileService->markPaymentSuccess($payment, $refNo);
 
         return $this->respond(true, 'Payment reconciled', 200, [

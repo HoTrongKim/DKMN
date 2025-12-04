@@ -1419,12 +1419,32 @@ export default {
       }
       return null;
     },
+    /**
+     * Khởi tạo dữ liệu ban đầu cho trang chủ.
+     * 
+     * Logic:
+     * 1. Gọi song song `fetchCities` và `fetchCompanies` để lấy danh sách tỉnh thành và nhà xe.
+     * 2. Gọi `fetchStationsFor` cho cả điểm đi và điểm đến (nếu có default).
+     * 3. Gọi `fetchPortalNotices` để lấy thông báo từ hệ thống.
+     */
     async bootstrapData() {
       await Promise.all([this.fetchCities(), this.fetchCompanies()]);
       this.fetchStationsFor("from");
       this.fetchStationsFor("to");
       this.fetchPortalNotices();
     },
+    /**
+     * Lấy danh sách tỉnh thành phố.
+     * 
+     * API: `GET /dkmn/tinh-thanh/get-data`
+     * Backend Controller: `TinhThanhController::getData` (dự đoán)
+     * 
+     * Logic:
+     * - Gọi API lấy danh sách.
+     * - Map dữ liệu vào `this.cities` để hiển thị dropdown.
+     * - Tạo `cityIdMap` để map từ tên thành phố sang ID khi search.
+     * - Fallback: Sử dụng danh sách mặc định (Hà Nội, TP.HCM, Đà Nẵng) nếu API lỗi.
+     */
     async fetchCities() {
       const applyFallback = () => {
         this.cities = DEFAULT_CITY_FALLBACKS.map((city) => city.name);
@@ -1453,6 +1473,20 @@ export default {
         applyFallback();
       }
     },
+    /**
+     * Lấy danh sách bến xe/ga/sân bay theo tỉnh thành.
+     * 
+     * @param {string} position - 'from' (điểm đi) hoặc 'to' (điểm đến).
+     * 
+     * API: `GET /dkmn/tram/get-data`
+     * Backend Controller: `TramController::getData` (dự đoán)
+     * 
+     * Logic:
+     * - Xác định loại trạm (bến xe, ga tàu, sân bay) dựa trên `vehicleType`.
+     * - Lấy ID tỉnh thành từ `cityIdMap`.
+     * - Gọi API với tham số `tinh_thanh_id` và `loai`.
+     * - Cập nhật `pickupStations` hoặc `dropoffStations` tương ứng.
+     */
     async fetchStationsFor(position) {
       const cityName = this.searchForm[position];
       const stationType = this.stationTypeForVehicle(
@@ -1514,6 +1548,17 @@ export default {
           return "ben_xe";
       }
     },
+    /**
+     * Lấy danh sách nhà vận hành (nhà xe, hãng bay, đường sắt).
+     * 
+     * API: `GET /dkmn/nha-van-hanh/get-data`
+     * Backend Controller: `NhaVanHanhController::getData` (dự đoán)
+     * 
+     * Logic:
+     * - Gọi API, có thể filter theo loại phương tiện nếu cần.
+     * - Cập nhật `this.companies` cho dropdown filter.
+     * - Tạo `companyIdMap` để map tên sang ID.
+     */
     async fetchCompanies() {
       try {
         const params = {};
@@ -1621,6 +1666,25 @@ export default {
       if (!label) return null;
       return this.companyIdMap[this.normalizeKey(label)] || null;
     },
+    /**
+     * Tìm kiếm chuyến đi theo tiêu chí.
+     * 
+     * API: `POST /dkmn/chuyen-di/search`
+     * Backend Controller: `ChuyenDiController::search` (dự đoán)
+     * 
+     * Logic:
+     * 1. Validate form (nơi đi, nơi đến, ngày đi, số khách).
+     * 2. Chuẩn bị payload:
+     *    - Map tên thành phố/trạm sang ID tương ứng.
+     *    - Format ngày tháng.
+     * 3. Gọi API search.
+     * 4. Xử lý kết quả:
+     *    - Map dữ liệu trả về qua `normalizeTrip` để chuẩn hóa field name.
+     *    - Cập nhật `this.trips` và `this.meta`.
+     *    - Tính toán lại `priceLimits` cho bộ lọc giá.
+     *    - Scroll xuống phần kết quả.
+     * 5. Xử lý lỗi: Hiển thị toast error.
+     */
     async searchTrips() {
       if (!this.isSearchValid || this.isLoadingTrips) return;
 
@@ -1941,6 +2005,20 @@ export default {
       if (typeof value === "number") return value === 1;
       return false;
     },
+    /**
+     * Chọn chuyến đi và tải sơ đồ ghế.
+     * 
+     * @param {Object} trip - Thông tin chuyến đi được chọn.
+     * 
+     * API: `GET /dkmn/chuyen-di/{id}/ghe`
+     * Backend Controller: `ChuyenDiController::getSeats` (dự đoán)
+     * 
+     * Logic:
+     * 1. Gọi API lấy thông tin chi tiết và sơ đồ ghế của chuyến đi.
+     * 2. Parse dữ liệu ghế (`getSeatEntries`, `buildSeatLayout`).
+     * 3. Mở modal chọn ghế (`seatModal.visible = true`).
+     * 4. Cập nhật state `seatModal` với layout và danh sách ghế.
+     */
     async selectTrip(trip) {
       if (!trip?.id) return;
       this.isLoadingSeats = true;
@@ -2304,6 +2382,19 @@ export default {
       this.seatModal.layout = [];
       this.seatModal.seats = [];
     },
+    /**
+     * Xác nhận chọn ghế và chuyển sang trang thanh toán.
+     * 
+     * Logic:
+     * 1. Kiểm tra số lượng ghế đã chọn.
+     * 2. Tính tổng tiền tạm tính.
+     * 3. Format danh sách ghế đã chọn (tên ghế, số ghế).
+     * 4. Điều hướng sang `/client-thanh-toan` với các query params:
+     *    - `tripId`: ID chuyến đi.
+     *    - `seats`: Danh sách ghế (chuỗi).
+     *    - `total`: Tổng tiền.
+     *    - Các thông tin khác (nơi đi, đến, ngày giờ...).
+     */
     confirmSeats() {
       const selectedCount = (this.seatModal?.seatsSelected || []).length;
       if (selectedCount === 0) {
@@ -2780,6 +2871,7 @@ export default {
   color: #8bf0ff;
   background: linear-gradient(120deg, #7ce7ff, #bae6fd);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

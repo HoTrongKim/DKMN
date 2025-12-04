@@ -5,12 +5,16 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Nhà vận hành (Hãng xe, Hãng bay, Đường sắt)
+ */
 class NhaVanHanhSeeder extends Seeder
 {
     public function run(): void
     {
         $timestamp = now();
 
+        // Danh sách nhà vận hành mẫu cho 3 loại phương tiện
         $records = [
             ['id'=>1,'ten'=>'Phuong Trang (Futa)','loai'=>'xe_khach','mo_ta'=>'Nha xe tuyen truong','lien_he_dien_thoai'=>'19006067','lien_he_email'=>'support@futa.vn','trang_thai'=>'hoat_dong','ngay_tao'=>$timestamp],
             ['id'=>2,'ten'=>'Thanh Buoi','loai'=>'xe_khach','mo_ta'=>'Dich vu chat luong','lien_he_dien_thoai'=>'19006079','lien_he_email'=>'cs@thanhbuoi.com','trang_thai'=>'hoat_dong','ngay_tao'=>$timestamp],

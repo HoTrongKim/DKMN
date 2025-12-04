@@ -110,6 +110,24 @@ export default {
         }
     },
     methods: {
+        /**
+         * Xử lý đăng nhập người dùng.
+         * 
+         * Logic hoạt động:
+         * 1. Validate form client-side (email, password).
+         * 2. Gọi API `POST /nguoi-dung/dang-nhap`.
+         *    - Backend: `NguoiDungController::dangNhap`.
+         *    - Backend kiểm tra credentials (email, password).
+         *    - Nếu đúng: Tạo token (Sanctum/JWT), trả về token + user info.
+         * 3. Xử lý kết quả thành công:
+         *    - Lưu token vào localStorage (`token`, `key_client`).
+         *    - Lưu user info vào localStorage (`userInfo`).
+         *    - Dispatch event `dkmn:auth-changed` để cập nhật UI toàn app.
+         *    - Điều hướng (Redirect):
+         *      + Nếu là Admin: về `/admin`.
+         *      + Nếu là Client: về trang chủ `/` hoặc trang trước đó (`redirect` query param).
+         * 4. Xử lý lỗi: Hiển thị thông báo lỗi từ server.
+         */
         async dangNhap() {
             if (this.isLoading) return;
 

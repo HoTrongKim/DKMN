@@ -26,23 +26,37 @@ class UserAdminController extends Controller
     /**
      * Danh sách người dùng có filter: keyword, status (active/locked), role (admin/customer)
      * Trả về paginated data
+     * Logic:
+     * - Tìm kiếm theo tên, email hoặc số điện thoại
+     * - Lọc theo trạng thái hoạt động và vai trò người dùng
+     * - Sắp xếp theo ngày tạo mới nhất
+     */
+    /**
+     * Danh sách người dùng có filter: keyword, status (active/locked), role (admin/customer)
+     * Trả về paginated data
+     * Logic:
+     * - Tìm kiếm theo tên, email hoặc số điện thoại
+     * - Lọc theo trạng thái hoạt động và vai trò người dùng
+     * - Sắp xếp theo ngày tạo mới nhất
      */
         /**
      * Lấy danh sách dữ liệu với phân trang và filter
      */
     public function index(Request $request)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
-            'keyword' => 'nullable|string|max:150',
-            'status' => 'nullable|string|in:active,locked',
-            'role' => 'nullable|string|in:customer,admin',
+        // Validate các tham số lọc đầu vào
+        $validated = $request->validate([
+            'keyword' => 'nullable|string|max:150', // Từ khóa tìm kiếm
+            'status' => 'nullable|string|in:active,locked', // Trạng thái tài khoản
+            'role' => 'nullable|string|in:customer,admin', // Vai trò người dùng
         ]);
 
-        $query = NguoiDung::query()->orderByDesc('ngay_tao');
+        $query = NguoiDung::query()->orderByDesc('ngay_tao'); // Mới nhất lên đầu
 
+        // Xử lý tìm kiếm từ khóa
         if (!empty($validated['keyword'])) {
             $keyword = Str::lower(trim($validated['keyword']));
+            // Tìm kiếm trong tên, email hoặc số điện thoại (nhóm điều kiện OR)
             $query->where(function ($sub) use ($keyword) {
                 $sub->where('ho_ten', 'like', "%{$keyword}%")
                     ->orWhere('email', 'like', "%{$keyword}%")
@@ -50,14 +64,19 @@ class UserAdminController extends Controller
             });
         }
 
+        // Xử lý lọc theo trạng thái
         if (!empty($validated['status'])) {
+            // Map từ frontend status (active/locked) sang DB status (hoat_dong/khoa)
             $query->where('trang_thai', $validated['status'] === 'active' ? 'hoat_dong' : 'khoa');
         }
 
+        // Xử lý lọc theo vai trò
         if (!empty($validated['role'])) {
+            // Map từ frontend role (admin/customer) sang DB role (quan_tri/khach_hang)
             $query->where('vai_tro', $validated['role'] === 'admin' ? 'quan_tri' : 'khach_hang');
         }
 
+        // Phân trang và transform dữ liệu
         $paginator = $query->paginate($this->resolvePerPage($request));
         $data = $paginator->getCollection()->map(fn (NguoiDung $user) => $this->transformUser($user));
 
@@ -73,17 +92,17 @@ class UserAdminController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate thông tin tạo mới
+        $validated = $request->validate([
             'name' => 'required|string|max:100',
-            'email' => 'required|string|email|max:100|unique:nguoi_dungs,email',
+            'email' => 'required|string|email|max:100|unique:nguoi_dungs,email', // Email phải duy nhất
             'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6', // Mật khẩu tối thiểu 6 ký tự
             'role' => ['required', Rule::in(['customer', 'admin'])],
             'status' => ['required', Rule::in(['active', 'locked'])],
         ]);
 
-        // Thao tác database
+        // Tạo user mới với mật khẩu đã hash
         $user = NguoiDung::create([
             'ho_ten' => $validated['name'],
             'email' => Str::lower($validated['email']),
@@ -110,15 +129,15 @@ class UserAdminController extends Controller
      */
     public function update(Request $request, NguoiDung $nguoiDung)
     {
-        $validated = // Validate dữ liệu từ request
-        $request->validate([
+        // Validate dữ liệu cập nhật (cho phép partial update)
+        $validated = $request->validate([
             'name' => 'nullable|string|max:100',
             'email' => [
                 'nullable',
                 'string',
                 'email',
                 'max:100',
-                Rule::unique('nguoi_dungs', 'email')->ignore($nguoiDung->id),
+                Rule::unique('nguoi_dungs', 'email')->ignore($nguoiDung->id), // Email duy nhất trừ chính user này
             ],
             'phone' => 'nullable|string|max:20',
             'role' => 'nullable|string|in:customer,admin',
@@ -128,6 +147,7 @@ class UserAdminController extends Controller
 
         $payload = [];
 
+        // Chỉ cập nhật các trường có trong request
         if (!empty($validated['name'])) {
             $payload['ho_ten'] = $validated['name'];
         }
@@ -148,6 +168,7 @@ class UserAdminController extends Controller
             $payload['trang_thai'] = $validated['status'] === 'active' ? 'hoat_dong' : 'khoa';
         }
 
+        // Nếu có đổi mật khẩu thì hash lại
         if (!empty($validated['password'])) {
             $payload['mat_khau'] = // Xử lý mã hóa/kiểm tra password
         Hash::make($validated['password']);
@@ -198,6 +219,7 @@ class UserAdminController extends Controller
      */
     public function destroy(Request $request, NguoiDung $nguoiDung)
     {
+        // Không cho phép tự xóa tài khoản đang đăng nhập
         $authId = $request->user()?->id;
         if ($authId && $nguoiDung->id === (int) $authId) {
             // Trả về JSON response
@@ -208,17 +230,22 @@ class UserAdminController extends Controller
         }
 
         try {
+            // Sử dụng transaction để đảm bảo xóa sạch hoặc rollback nếu lỗi
             DB::transaction(function () use ($nguoiDung) {
                 $userId = $nguoiDung->id;
 
+                // Set null cho các quan hệ thay vì xóa (để giữ lịch sử)
                 DonHang::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
                 ThongBao::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
                 NhatKyHoatDong::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
                 PhanHoi::where('nguoi_dung_id', $userId)->update(['nguoi_dung_id' => null]);
                 PhanHoi::where('nguoi_phu_trach', $userId)->update(['nguoi_phu_trach' => null]);
                 HuyVe::where('nguoi_xu_ly', $userId)->update(['nguoi_xu_ly' => null]);
+                
+                // Xóa đánh giá của user
                 DanhGia::where('nguoi_dung_id', $userId)->delete();
 
+                // Cuối cùng xóa user
                 $nguoiDung->delete();
             });
         } catch (\Throwable $exception) {

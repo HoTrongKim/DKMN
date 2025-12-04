@@ -846,6 +846,20 @@ const TICKET_HOLD_MINUTES = 10;
       },
 
         // ✅ Nút thanh toán dùng chung cho tất cả
+        /**
+         * Bắt đầu quy trình thanh toán.
+         * 
+         * Logic:
+         * 1. Kiểm tra điều kiện thanh toán (đã chọn ghế, chưa hết hạn giữ ghế).
+         * 2. Đồng bộ lại thông tin ghế (`syncSeatIdentifiers`).
+         * 3. Gọi API tạo đơn hàng (`POST /dkmn/don-hang`).
+         *    - Backend: `DonHangController::store` (dự đoán).
+         *    - Backend sẽ tạo đơn hàng và vé ở trạng thái "pending".
+         * 4. Bắt đầu đếm ngược thời gian giữ ghế (`startHoldCountdown`).
+         * 5. Dựa vào phương thức thanh toán đã chọn:
+         *    - Nếu là "Thanh toán sau" (`later`): Gọi `handleOnboardPayment`.
+         *    - Nếu là MoMo/Ngân hàng: Gọi `prepareQrPayment`.
+         */
         async startPayment() {
           if (!this.canPay) return;
           await this.syncSeatIdentifiers();
@@ -945,6 +959,20 @@ const TICKET_HOLD_MINUTES = 10;
           }
         },
 
+        /**
+         * Xác nhận thanh toán QR code.
+         * 
+         * Logic:
+         * 1. Kiểm tra trạng thái giữ ghế.
+         * 2. Poll trạng thái thanh toán từ server (`pollPaymentStatus`).
+         *    - API: `GET /dkmn/payments/{id}/status`.
+         * 3. Nếu thanh toán thành công (`SUCCEEDED`):
+         *    - Ghi nhận thanh toán (`recordPayment`).
+         *    - Cập nhật UI thành công.
+         *    - Lưu vé vào local storage.
+         *    - Chuyển hướng sang trang vé đã đặt.
+         * 4. Nếu thất bại hoặc chưa hoàn tất: Hiển thị thông báo tương ứng.
+         */
         async finalizeQrPayment() {
           if (!this.ticketId) {
             throw new Error("Không tìm thấy vé để xác nhận");
@@ -1007,6 +1035,18 @@ const TICKET_HOLD_MINUTES = 10;
           }
           return null;
         },
+        /**
+         * Chuẩn bị thông tin thanh toán QR (MoMo/Ngân hàng).
+         * 
+         * API: `POST /dkmn/payments/qr/init`
+         * Backend Controller: `PaymentController::initQr` (dự đoán)
+         * 
+         * Logic:
+         * 1. Gọi API để khởi tạo giao dịch thanh toán.
+         * 2. Nhận về thông tin QR (`qrImageUrl`, `paymentId`, `amount`).
+         * 3. Hiển thị modal QR để người dùng quét.
+         * 4. Cập nhật trạng thái chờ thanh toán.
+         */
         async prepareQrPayment() {
           this.resetQrModal();
           this.qrModal.visible = true;
@@ -1063,6 +1103,18 @@ const TICKET_HOLD_MINUTES = 10;
           }
         },
 
+        /**
+         * Xử lý thanh toán sau (trên xe).
+         * 
+         * API: `POST /dkmn/payments/onboard/confirm`
+         * Backend Controller: `PaymentController::confirmOnboard` (dự đoán)
+         * 
+         * Logic:
+         * 1. Gọi API xác nhận phương thức thanh toán là `CASH_ONBOARD`.
+         * 2. Ghi nhận thanh toán với trạng thái "chờ" (`recordPayment`).
+         * 3. Hiển thị modal hướng dẫn thanh toán sau.
+         * 4. Lưu vé vào local storage và chuyển hướng.
+         */
         async handleOnboardPayment() {
           if (!this.ensureHoldActive()) {
             return;

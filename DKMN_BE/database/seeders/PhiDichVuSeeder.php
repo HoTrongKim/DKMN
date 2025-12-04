@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Seeder dữ liệu Phí dịch vụ
+ * Tạo các loại phí mặc định: Bảo hiểm, Phí phục vụ, Phí đổi vé
+ */
 class PhiDichVuSeeder extends Seeder
 {
     public function run(): void

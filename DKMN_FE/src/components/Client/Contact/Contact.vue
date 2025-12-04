@@ -220,6 +220,18 @@ export default {
     }
   },
   methods: {
+    /**
+     * Gửi form liên hệ.
+     * 
+     * Logic hoạt động:
+     * 1. Set trạng thái `isSubmitting` = true để disable nút gửi.
+     * 2. Gọi API `POST /dkmn/lien-he`.
+     *    - Backend: `LienHeController::store` (dự đoán).
+     *    - Payload: ho_ten, email, so_dien_thoai, chu_de, noi_dung.
+     * 3. Xử lý kết quả:
+     *    - Thành công: Hiển thị thông báo, reset form, tự động ẩn thông báo sau 5s.
+     *    - Thất bại: Hiển thị lỗi từ server.
+     */
     async submitForm() {
       this.isSubmitting = true
       this.submitMessage = ''

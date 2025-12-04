@@ -125,6 +125,19 @@ export default {
       this.to = q.to ? String(q.to) : ''
       this.date = q.date ? String(q.date) : ''
     },
+    /**
+     * Kiểm tra xem người dùng đã đánh giá chuyến đi này chưa.
+     * 
+     * API: `GET /ratings/me`
+     * Backend Controller: `RatingController::me` (dự đoán)
+     * 
+     * Logic:
+     * - Gọi API với `tripId` để lấy đánh giá của user hiện tại cho chuyến đi này.
+     * - Nếu có dữ liệu (`record` tồn tại):
+     *   - Set `alreadyRated` = true.
+     *   - Fill lại rating và comment cũ.
+     *   - Hiển thị thông báo.
+     */
     async checkExistingRating() {
       if (!this.tripId) return
       this.loading = true
@@ -160,6 +173,22 @@ export default {
         console.warn('Cannot persist rating cache', error)
       }
     },
+    /**
+     * Gửi đánh giá mới lên server.
+     * 
+     * API: `POST /ratings`
+     * Backend Controller: `RatingController::store` (dự đoán)
+     * 
+     * Logic:
+     * 1. Validate: Phải có `tripId` và `rating` > 0.
+     * 2. Gọi API tạo đánh giá mới.
+     * 3. Xử lý thành công:
+     *    - Hiển thị thông báo cảm ơn.
+     *    - Set trạng thái `alreadyRated` = true.
+     *    - Lưu cache local (`persistLocalRating`).
+     *    - Chuyển hướng về trang vé đã đặt sau 1.2s.
+     * 4. Xử lý lỗi: Hiển thị toast error.
+     */
     async submitRating() {
       if (!this.tripId || this.rating === 0 || this.submitting) return
       
