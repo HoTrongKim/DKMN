@@ -1,71 +1,57 @@
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 
-const BUSY_ERROR_CODES = new Set(["EBUSY", "EPERM"]);
+const BUSY_ERROR_CODES = new Set(['EBUSY', 'EPERM'])
 
 const retryBusyRead = ({ retries = 5, delay = 40 } = {}) => ({
-  name: "hmr-busy-read-retry",
-  enforce: "pre",
+  name: 'hmr-busy-read-retry',
+  enforce: 'pre',
   handleHotUpdate(ctx) {
-    const originalRead = ctx.read.bind(ctx);
-    let cached;
+    const originalRead = ctx.read.bind(ctx)
+    let cached
 
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
     ctx.read = async () => {
       if (!cached) {
         cached = (async () => {
-          let lastError;
+          let lastError
           for (let attempt = 0; attempt < retries; attempt++) {
             try {
-              return await originalRead();
+              return await originalRead()
             } catch (error) {
               if (!BUSY_ERROR_CODES.has(error?.code)) {
-                throw error;
+                throw error
               }
-              lastError = error;
-              const waitMs = delay * (attempt + 1);
+              lastError = error
+              const waitMs = delay * (attempt + 1)
               ctx.server?.config.logger?.warn?.(
-                `[hmr-busy-read-retry] ${error.code} while reading ${ctx.file}. Retrying in ${waitMs}ms...`
-              );
-              await sleep(waitMs);
+                `[hmr-busy-read-retry] ${error.code} while reading ${ctx.file}. Retrying in ${waitMs}ms...`,
+              )
+              await sleep(waitMs)
             }
           }
-          throw lastError;
-        })();
+          throw lastError
+        })()
       }
-      return cached;
-    };
+      return cached
+    }
   },
-});
+})
 
-const proxyTarget = process.env.VITE_PROXY_TARGET || "http://127.0.0.1:8000";
+const proxyTarget = process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:8000'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [retryBusyRead(), vue()],
-  base: "/",
-  build: {
-    outDir: "dist",
-    assetsDir: "assets",
-    sourcemap: false,
-    minify: "terser",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ["vue", "vue-router"],
-        },
-      },
-    },
-  },
   server: {
-    host: "0.0.0.0",
+    host: '0.0.0.0',
     port: Number(process.env.VITE_DEV_PORT) || 5174,
     proxy: {
-      "/api": {
+      '/api': {
         target: proxyTarget,
         changeOrigin: true,
       },
     },
   },
-});
+})

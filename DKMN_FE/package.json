@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
-    "terser": "^5.44.1",
     "vite": "^4.5.11"
   }
 }
