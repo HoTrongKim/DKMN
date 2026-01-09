@@ -12,7 +12,16 @@ return new class extends Migration
         // Modify the enum column to include 'inbox'
         // Since Laravel doesn't support changing enum values easily with Schema builder for existing columns without doctrine/dbal and it's tricky with enums,
         // raw SQL is often safer for MySQL.
-        DB::statement("ALTER TABLE thong_baos MODIFY COLUMN loai ENUM('info','warning','success','error','trip_update','inbox') DEFAULT 'info'");
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'mysql') {
+            DB::statement("ALTER TABLE thong_baos MODIFY COLUMN loai ENUM('info','warning','success','error','trip_update','inbox') DEFAULT 'info'");
+        } elseif ($driver === 'pgsql') {
+             // Drop the old constraint if it exists
+            DB::statement("ALTER TABLE thong_baos DROP CONSTRAINT IF EXISTS thong_baos_loai_check");
+            // Add new constraint with 'inbox'
+            DB::statement("ALTER TABLE thong_baos ADD CONSTRAINT thong_baos_loai_check CHECK (loai::text IN ('info', 'warning', 'success', 'error', 'trip_update', 'inbox'))");
+        }
     }
 
     public function down(): void

@@ -17,10 +17,16 @@ return new class extends Migration {
         }
 
         // Use raw SQL to avoid doctrine/dbal requirement when altering ENUM
-        DB::statement("
-            ALTER TABLE thong_baos
-            MODIFY loai ENUM('info','warning','success','error','trip_update','inbox') DEFAULT 'info'
-        ");
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'mysql') {
+            DB::statement("ALTER TABLE thong_baos MODIFY loai ENUM('info','warning','success','error','trip_update','inbox') DEFAULT 'info'");
+        } elseif ($driver === 'pgsql') {
+            // Drop the old constraint if it exists (Laravel naming convention: table_column_check)
+            DB::statement("ALTER TABLE thong_baos DROP CONSTRAINT IF EXISTS thong_baos_loai_check");
+            // Add new constraint with 'inbox'
+            DB::statement("ALTER TABLE thong_baos ADD CONSTRAINT thong_baos_loai_check CHECK (loai::text IN ('info', 'warning', 'success', 'error', 'trip_update', 'inbox'))");
+        }
     }
 
     public function down(): void

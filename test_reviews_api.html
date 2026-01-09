@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test DKMN Reviews API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .review-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .stars {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 DKMN Reviews API Tester</h1>
+        
+        <div id="status"></div>
+        
+        <button onclick="testAPI()">📡 Test API Connection</button>
+        <button onclick="testDirectBackend()">🔗 Test Direct Backend</button>
+        
+        <h2>API Response:</h2>
+        <pre id="response">Click button to test...</pre>
+        
+        <h2>Formatted Reviews:</h2>
+        <div id="reviews"></div>
+    </div>
+
+    <script>
+        const API_ENDPOINTS = [
+            'http://localhost/DKMN_BE/public/api/dkmn/danh-gia/public',
+            'http://127.0.0.1/DKMN_BE/public/api/dkmn/danh-gia/public',
+            'http://localhost:8000/api/dkmn/danh-gia/public',
+            'http://127.0.0.1:8000/api/dkmn/danh-gia/public',
+        ];
+
+        function setStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status ' + type;
+            statusDiv.innerHTML = message;
+        }
+
+        async function testAPI() {
+            setStatus('🔄 Testing API endpoints...', 'info');
+            const responseDiv = document.getElementById('response');
+            const reviewsDiv = document.getElementById('reviews');
+            
+            for (const endpoint of API_ENDPOINTS) {
+                setStatus(`🔄 Trying: ${endpoint}`, 'info');
+                
+                try {
+                    const response = await fetch(endpoint + '?limit=12');
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        setStatus(`✅ Success! Connected to: ${endpoint}`, 'success');
+                        responseDiv.textContent = JSON.stringify(data, null, 2);
+                        
+                        // Display formatted reviews
+                        if (data.data && Array.isArray(data.data)) {
+                            reviewsDiv.innerHTML = '';
+                            data.data.forEach(review => {
+                                const card = document.createElement('div');
+                                card.className = 'review-card';
+                                card.innerHTML = `
+                                    <div class="stars">${'⭐'.repeat(review.rating || 0)}</div>
+                                    <p><strong>${review.customer || 'Unknown'}</strong></p>
+                                    <p>${review.comment || 'No comment'}</p>
+                                    <small>${review.trip || 'No trip info'}</small>
+                                    <br><small style="color: #666;">ID: ${review.id} | Created: ${review.createdAt || 'N/A'}</small>
+                                `;
+                                reviewsDiv.appendChild(card);
+                            });
+                            
+                            if (data.data.length === 0) {
+                                reviewsDiv.innerHTML = '<p class="error">⚠️ API returned successfully but NO reviews found in database!</p>';
+                            }
+                        } else {
+                            reviewsDiv.innerHTML = '<p class="error">⚠️ Unexpected data format</p>';
+                        }
+                        
+                        return; // Success, stop trying other endpoints
+                    }
+                } catch (error) {
+                    console.error('Error with endpoint:', endpoint, error);
+                }
+            }
+            
+            // If we get here, all endpoints failed
+            setStatus('❌ All API endpoints failed! Check your backend server.', 'error');
+            responseDiv.textContent = 'Error: Could not connect to any backend endpoint.\n\nTried:\n' + API_ENDPOINTS.join('\n');
+        }
+
+        async function testDirectBackend() {
+            setStatus('🔄 Testing direct backend connection...', 'info');
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                const endpoint = 'http://localhost/DKMN_BE/public/api/dkmn/danh-gia/public?limit=12';
+                const response = await fetch(endpoint);
+                const text = await response.text();
+                
+                responseDiv.textContent = 'Status: ' + response.status + '\n\n' + text;
+                
+                if (response.ok) {
+                    setStatus('✅ Direct backend connection successful!', 'success');
+                } else {
+                    setStatus('❌ Backend returned error: ' + response.status, 'error');
+                }
+            } catch (error) {
+                setStatus('❌ Connection failed: ' + error.message, 'error');
+                responseDiv.textContent = error.toString();
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            setStatus('👋 Ready to test. Click a button above.', 'info');
+        });
+    </script>
+</body>
+</html>

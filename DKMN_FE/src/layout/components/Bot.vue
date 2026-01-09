@@ -1,7 +1,7 @@
 <template>
   <footer id="contact" class="bot-home ">
     <div class="bot-home__container">
-      <span>© 2025 DKMN. All rights reserved.</span>
+      <span>© 2026 DKMN. All rights reserved.</span>
       <div class="bot-home__links">
         <a href="#">Chính sách bảo mật</a>
         <a href="#">Điều khoản dịch vụ</a>
@@ -14,14 +14,13 @@
 export default {};
 </script>
 <style scoped>
+
 .bot-home {
-  background: radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.2), transparent 40%),
-    radial-gradient(circle at 82% 18%, rgba(14, 165, 233, 0.16), transparent 36%),
-    linear-gradient(135deg, #0b1224, #0f172a 48%, #0b1224);
-  color: #e2e8f0;
+  background: #ffffff;
+  color: #475569;
   padding: 2.5rem 1.5rem;
-  border-top: 1px solid rgba(96, 165, 250, 0.25);
-  box-shadow: 0 -10px 30px rgba(5, 9, 20, 0.35);
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 6px rgba(0,0,0,0.02);
 }
 
 .bot-home__container {
@@ -42,16 +41,15 @@ export default {};
 }
 
 .bot-home__links a {
-  color: #cbd5e1;
+  color: #64748b;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.92rem;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .bot-home__links a:hover {
-  color: #fff;
-  transform: translateY(-1px);
+  color: #2474E5;
 }
 
 @media (max-width: 576px) {
@@ -64,4 +62,5 @@ export default {};
     justify-content: center;
   }
 }
+
 </style>

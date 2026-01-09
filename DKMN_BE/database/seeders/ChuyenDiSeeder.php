@@ -33,10 +33,8 @@ class ChuyenDiSeeder extends Seeder
 
     public function run(): void
     {
-        Schema::disableForeignKeyConstraints();
-        DB::table('chuyen_dis')->delete();
-        // Schema::enableForeignKeyConstraints();
-
+        // Data cleanup is handled by DatabaseSeeder
+        
         $operatorLookup = $this->buildLookupMap(
             DB::table('nha_van_hanhs')->get(['id', 'ten'])
         );
@@ -178,6 +176,8 @@ class ChuyenDiSeeder extends Seeder
 
         $routes = [];
         $provinceIds = array_keys($provinceNames);
+        // Limit to 10 provinces for demo/production to avoid timeout on free tier
+        $provinceIds = array_slice($provinceIds, 0, 10);
         $count = count($provinceIds);
 
         for ($i = 0; $i < $count; $i++) {

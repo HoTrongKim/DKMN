@@ -69,6 +69,9 @@ Route::prefix('dkmn')->group(function () {
     
     // Cấu hình hệ thống (banner, contact info...)
     Route::get('/cau-hinh/get-data', [CauHinhHeThongController::class, 'getData']);
+    
+    // Lấy đánh giá hiển thị trang chủ
+    Route::get('/danh-gia/public', [DanhGiaController::class, 'getData']);
 
     // Gửi liên hệ/phản hồi (Contact form)
     Route::post('/lien-he', [LienHeController::class, 'store']);

@@ -1,231 +1,270 @@
 ﻿<template>
   <div class="container-fluid">
-    <!-- Hero Section with Carousel -->
-    <section class="hero-modern">
-      <!-- Carousel Background -->
-      <div class="hero-carousel">
-        <div 
-          v-for="(slide, index) in heroSlides" 
-          :key="index"
-          class="carousel-slide"
-          :class="{ active: currentSlide === index }"
-        >
-          <img :src="slide.image" :alt="slide.title" class="carousel-bg-image" />
-          <div class="slide-overlay"></div>
-        </div>
-      </div>
+    <GioiThieu />
+    <!-- Hero Section with Search -->
+    <section
+      class="hero position-relative"
+      @mousemove="handleParallax"
+      @mouseleave="resetParallax"
+    >
+      <!-- Decorative background -->
+      <span class="blob blob-1"></span>
+      <span class="blob blob-2"></span>
+      <span class="blob blob-3"></span>
+      <span class="hero__grid"></span>
+      <div class="hero__overlay"></div>
+      <div class="hero__snow"></div>
 
-      <!-- Hero Content -->
-      <div class="hero-content-wrapper">
-        <!-- Animated Hero Title from Slides -->
-        <div class="hero-text-animated">
-          <transition name="fade-slide" mode="out-in">
-            <div :key="currentSlide" class="hero-main-content">
-              <span class="hero-eyebrow">✈️ Hệ thống đặt vé trực tuyến</span>
-              <h1 class="hero-title">
-                {{ heroSlides[currentSlide].title }}
-              </h1>
-              <p class="hero-subtitle-text">
-                {{ heroSlides[currentSlide].subtitle }}
+      <!-- Content -->
+      <div class="hero__content">
+        <div class="hero__cursor-glow" :style="mouseGlowStyle"></div>
+        <div class="hero__glass shadow-lg">
+          <div class="hero__grid-modern">
+            <div class="hero__text-block">
+              <div class="hero__badge">
+                <span class="pulse"></span>
+                Chuyến đi siêu tiện lợi, <span class="hero__title-highlight">đặt vé online</span>
+              </div>
+              <!-- <h1 class="hero__title">
+                Trung tâm đặt vé lớn và <span class="hero__title-highlight"> đứng đầu nước Việt Nam</span>
+                <span class="hero__title-contrast">DKMN</span>
+              </h1> -->
+              <p class="hero__subtitle text-white">
+               An toàn của bạn là ưu tiên hàng đầu của chúng tôi. Đặt vé xe khách, tàu hỏa và máy bay một cách nhanh chóng và tiện lợi với DKMN.
               </p>
-            </div>
-          </transition>
-        </div>
-        
-        <!-- Hero Stats -->
-        <div class="hero-stats">
-          <div class="stat-item">
-            <div class="stat-icon">👥</div>
-            <span class="stat-number">50K+</span>
-            <span class="stat-label">Khách hàng</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-icon">🚌</div>
-            <span class="stat-number">1000+</span>
-            <span class="stat-label">Chuyến/ngày</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-icon">⭐</div>
-            <span class="stat-number">4.9</span>
-            <span class="stat-label">Đánh giá</span>
-          </div>
-        </div>
-      </div>
+              <!-- <div class="hero__actions">
+                <button class="hero-btn hero-btn--primary" @click="scrollToSearch">
+                  Đặt vé ngay
+                </button>
+                <button class="hero-btn hero-btn--ghost" @click="scrollToSearch">
+                  Xem lịch chạy
+                </button>
+              </div> -->
 
-          <div id="search" class="search-form">
-            <!-- Header with Tabs -->
-            <div class="search-header">
-              <div class="search-title">
-                <i class="bx bx-search-alt"></i>
-                <span>Tìm chuyến đi của bạn</span>
+              <div class="hero__ticket-card">
+                <div class="hero__ticket-icon">
+                  <i :class="heroTicketDisplay.iconClass"></i>
+                </div>
+                <div>
+                  <p class="ticket-eyebrow">Vé điện tử</p>
+                  <p class="ticket-route">
+                    {{ heroTicketDisplay.from }} → {{ heroTicketDisplay.to }}
+                  </p>
+                  <p class="ticket-meta">
+                    Khởi hành: {{ heroTicketDisplay.departure || "—" }}
+                  </p>
+                  <p class="ticket-meta">
+                    Bến đón: {{ heroTicketDisplay.pickup || "—" }} · Bến trả: {{ heroTicketDisplay.dropoff || "—" }}
+                  </p>
+                </div>
               </div>
-              <div class="search-tabs">
-                <button 
-                  class="tab-btn" 
-                  :class="{ active: searchType === 'one-way' }"
-                  @click="searchType = 'one-way'"
-                >
-                  Một chiều
-                </button>
-                <button 
-                  class="tab-btn" 
-                  :class="{ active: searchType === 'round-trip' }"
-                  @click="searchType = 'round-trip'"
-                >
-                  Khứ hồi
-                </button>
+
+              <div class="hero__stats">
+                <div class="hero__stat">
+                  <span class="hero__stat-value">+120</span>
+                  <span class="hero__stat-label">Tuyến xe khách</span>
+                </div>
+                <div class="hero__stat">
+                  <span class="hero__stat-value">48</span>
+                  <span class="hero__stat-label">Chuyến tàu/ngày</span>
+                </div>
+                <div class="hero__stat">
+                  <span class="hero__stat-value">24/7</span>
+                  <span class="hero__stat-label">Hỗ trợ</span>
+                </div>
               </div>
             </div>
 
-            <!-- Main Search Inputs -->
-            <div class="search-grid">
+            <div class="hero__scene-block">
+              <div class="hero__scene" :style="parallaxLayer(18)">
+                <div class="hero__floating-squares">
+                  <span class="floating-square floating-square--primary"></span>
+                  <span class="floating-square floating-square--secondary"></span>
+                  <span class="floating-square floating-square--tertiary"></span>
+                </div>
+                <div class="hero__rings">
+                  <span class="ring ring--one"></span>
+                  <span class="ring ring--two"></span>
+                </div>
+
+                <div class="hero__flight-path">
+                  <div class="hero__plane">
+                    <i class="bx bxs-plane-take-off"></i>
+                  </div>
+                </div>
+
+                <div class="hero__merge-line">
+                  <div class="hero__vehicle hero__vehicle--bus">
+                    <i class="bx bx-bus"></i>
+                  </div>
+                  <div class="hero__vehicle hero__vehicle--train">
+                    <i class="bx bx-train"></i>
+                  </div>
+                  <div class="hero__merge-dot"></div>
+                </div>
+
+                <div class="hero__wave hero__wave--ship">
+                  <div class="hero__ship">
+                    <i class="bx bx-ship"></i>
+                  </div>
+                </div>
+
+                <div class="hero__particles">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="search" class="search-form hero__search">
+            <div class="row g-3">
               <!-- Vehicle Type -->
-              <div class="input-group-modern">
-                <label class="input-label">Phương tiện</label>
-                <div class="input-wrapper">
-                  <i class="bx input-icon" :class="{
-                    'bx-bus': searchForm.vehicleType === 'bus' || !searchForm.vehicleType,
-                    'bx-train': searchForm.vehicleType === 'train',
-                    'bx-plane-alt': searchForm.vehicleType === 'plane'
-                  }"></i>
-                  <select v-model="searchForm.vehicleType" class="form-select-modern">
-                    <option value="">Chọn phương tiện</option>
-                    <option value="bus">Xe khách</option>
-                    <option value="train">Tàu hỏa</option>
-                    <option value="plane">Máy bay</option>
-                  </select>
-                </div>
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold"
+                  >Loại phương tiện</label
+                >
+                <select v-model="searchForm.vehicleType" class="form-select">
+                  <option value="">Chọn phương tiện</option>
+                  <option value="bus">Xe khách</option>
+                  <option value="train">Tàu hỏa</option>
+                  <option value="plane">Máy bay</option>
+                </select>
               </div>
 
-              <!-- From Station -->
-              <div class="input-group-modern">
-                <label class="input-label">Nơi đi</label>
-                <div class="input-wrapper">
-                  <i class="bx bx-map-pin input-icon"></i>
-                  <select v-model="searchForm.from" class="form-select-modern">
-                    <option value="" disabled>Chọn nơi đi</option>
-                    <option v-for="city in cities" :key="city" :value="city">
-                      {{ city }}
-                    </option>
-                  </select>
-                </div>
+              <!-- From -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold">Nơi đi</label>
+                <select v-model="searchForm.from" class="form-select">
+                  <option value="" disabled>Chọn nơi đi</option>
+                  <option v-for="city in cities" :key="city" :value="city">
+                    {{ city }}
+                  </option>
+                </select>
               </div>
 
-              <!-- Swap Button -->
-              <button class="btn-swap" @click="swapLocations" title="Đổi địa điểm">
-                <i class="bx bx-transfer-alt"></i>
-              </button>
-
-              <!-- To Station -->
-              <div class="input-group-modern">
-                <label class="input-label">Nơi đến</label>
-                <div class="input-wrapper">
-                  <i class="bx bx-map input-icon"></i>
-                  <select v-model="searchForm.to" class="form-select-modern">
-                    <option value="" disabled>Chọn nơi đến</option>
-                    <option v-for="city in cities" :key="city" :value="city">
-                      {{ city }}
-                    </option>
-                  </select>
-                </div>
+              <!-- To -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold">Nơi đến</label>
+                <select v-model="searchForm.to" class="form-select">
+                  <option value="" disabled>Chọn nơi đến</option>
+                  <option v-for="city in cities" :key="city" :value="city">
+                    {{ city }}
+                  </option>
+                </select>
               </div>
 
-              <!-- Date -->
-              <div class="input-group-modern">
-                <label class="input-label">Ngày đi</label>
-                <div class="input-wrapper">
-                  <i class="bx bx-calendar input-icon"></i>
+              <!-- Departure Date -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold">Ngày đi</label>
+                <input
+                  v-model="searchForm.departureDate"
+                  type="date"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <!-- Pickup/Drop-off Stations (for buses) -->
+              <div
+                class="col-md-3"
+                v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.from"
+              >
+                <label class="form-label text-white fw-semibold">{{ pickupLabel }}</label>
+                <select v-model="searchForm.pickupStation" class="form-select">
+                  <option value="" disabled>Chọn điểm đón</option>
+                  <option
+                    v-for="station in availablePickupStations"
+                    :key="'pickup-' + station"
+                    :value="station"
+                  >
+                    {{ station }}
+                  </option>
+                </select>
+              </div>
+
+              <div
+                class="col-md-3"
+                v-if="['bus','train','plane'].includes(searchForm.vehicleType) && searchForm.to"
+              >
+                <label class="form-label text-white fw-semibold">{{ dropoffLabel }}</label>
+                <select v-model="searchForm.dropoffStation" class="form-select">
+                  <option value="" disabled>Chọn điểm trả</option>
+                  <option
+                    v-for="station in availableDropoffStations"
+                    :key="'dropoff-' + station"
+                    :value="station"
+                  >
+                    {{ station }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Passengers -->
+              <div class="col-md-3">
+                <label class="form-label text-white fw-semibold"
+                  >Số hành khách</label
+                >
+                <select v-model="searchForm.passengers" class="form-select">
+                  <option value="1">1 hành khách</option>
+                  <option value="2">2 hành khách</option>
+                  <option value="3">3 hành khách</option>
+                  <option value="4">4 hành khách</option>
+                  <option value="5">5 hành khách</option>
+                  <option value="5+">Khác</option>
+                </select>
+                <div v-if="searchForm.passengers === '5+'" class="mt-2">
                   <input
-                    v-model="searchForm.departureDate"
-                    type="date"
-                    class="form-control-modern"
+                    v-model.number="customPassengers"
+                    type="number"
+                    min="6"
+                    class="form-control"
+                    placeholder="Nhập số hành khách "
                   />
                 </div>
               </div>
-              
-              <!-- Submit Button Desktop -->
-              <button
-                @click="searchTrips"
-                class="search-submit-btn"
-                :disabled="!isSearchValid || isLoadingTrips"
+
+              <!-- Company/Carrier selection -->
+              <div
+                class="col-md-3"
+                v-if="['bus','train','plane'].includes(searchForm.vehicleType)"
               >
-                <span v-if="isLoadingTrips" class="spinner-border spinner-border-sm me-2"></span>
-                <i v-else class="bx bx-search me-2"></i>
-                {{ isLoadingTrips ? "Đang tìm..." : "Tìm chuyến ngay" }}
-              </button>
-            </div>
+                <label class="form-label text-white fw-semibold">{{ companyLabel }}</label>
+                <select v-model="searchForm.company" class="form-select">
+                  <option value="">Tất cả</option>
+                  <option
+                    v-for="name in availableCompanies"
+                    :key="'co-' + name"
+                    :value="name"
+                  >
+                    {{ name }}
+                  </option>
+                </select>
+              </div>
 
-            <!-- Advanced Filters (Second Row) -->
-            <div class="search-grid mt-3" style="grid-template-columns: repeat(3, 1fr);" v-if="['bus','train','plane'].includes(searchForm.vehicleType)">
-               <!-- Pickup Station -->
-               <div class="input-group-modern" v-if="searchForm.from">
-                 <label class="input-label">{{ pickupLabel }}</label>
-                 <div class="input-wrapper">
-                   <i class="bx bx-current-location input-icon"></i>
-                   <select v-model="searchForm.pickupStation" class="form-select-modern">
-                     <option value="" disabled>Chọn điểm đón</option>
-                     <option
-                       v-for="station in availablePickupStations"
-                       :key="'pickup-' + station"
-                       :value="station"
-                     >
-                       {{ station }}
-                     </option>
-                   </select>
-                 </div>
-               </div>
-               
-               <!-- Dropoff Station -->
-               <div class="input-group-modern" v-if="searchForm.to">
-                 <label class="input-label">{{ dropoffLabel }}</label>
-                 <div class="input-wrapper">
-                   <i class="bx bx-target-lock input-icon"></i>
-                   <select v-model="searchForm.dropoffStation" class="form-select-modern">
-                     <option value="" disabled>Chọn điểm trả</option>
-                     <option
-                       v-for="station in availableDropoffStations"
-                       :key="'dropoff-' + station"
-                       :value="station"
-                     >
-                       {{ station }}
-                     </option>
-                   </select>
-                 </div>
-               </div>
-
-               <!-- Passengers -->
-               <div class="input-group-modern">
-                 <label class="input-label">Hành khách</label>
-                 <div class="input-wrapper">
-                   <i class="bx bx-user input-icon"></i>
-                   <select v-model="searchForm.passengers" class="form-select-modern">
-                     <option value="1">1 Khách</option>
-                     <option value="2">2 Khách</option>
-                     <option value="3">3 Khách</option>
-                     <option value="4">4 Khách</option>
-                     <option value="5">5 Khách</option>
-                     <option value="5+">Nhiều hơn</option>
-                   </select>
-                 </div>
-                 <div v-if="searchForm.passengers === '5+'" class="mt-2">
-                    <input
-                      v-model.number="customPassengers"
-                      type="number"
-                      min="6"
-                      class="form-control-modern"
-                      placeholder="Số khách"
-                      style="padding-left: 1rem"
-                    />
-                 </div>
-               </div>
+              <!-- Search Button -->
+              <div class="col-md-6 d-flex align-items-end">
+                <button
+                  @click="searchTrips"
+                  class="btn btn-primary btn-lg w-100 search-btn"
+                  :disabled="!isSearchValid || isLoadingTrips"
+                >
+                  <span v-if="isLoadingTrips" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="bx bx-search me-2"></i>
+                  {{ isLoadingTrips ? "Đang tìm..." : "Tìm chuyến" }}
+                </button>
+              </div>
             </div>
 
             <div v-if="searchError" class="alert alert-danger mt-3 mb-0">
               {{ searchError }}
             </div>
           </div>
+        </div>
+      </div>
     </section>
 
 
@@ -565,11 +604,6 @@
 
    
     
-    <!-- Popular Routes Section -->
-    <div v-if="!showResults" id="popular-routes">
-      <PopularRoutes />
-    </div>
-
     <!-- Search Results Section -->
     <section v-if="showResults" class="results-section py-5">
       <div class="container">
@@ -744,93 +778,102 @@
 
             <!-- Trip Cards -->
             <div class="trip-cards">
-              <transition-group name="trip-list" tag="div">
-                <div
-                  v-for="trip in sortedTrips"
-                  :key="trip.id"
-                  class="trip-card-modern"
-                >
-                  <!-- Image Column -->
-                  <div class="trip-card-image-col">
-                    <img :src="getTripImage(trip)" class="trip-card-image" loading="lazy" alt="Vehicle Image" />
-                    <div style="position: absolute; top: 12px; left: 12px; z-index: 2;">
-                         <span class="badge-premium shadow-sm">{{ trip.vehicleType }}</span>
+              <div
+                v-for="trip in sortedTrips"
+                :key="trip.id"
+                class="trip-card mb-3"
+              >
+                <div class="trip-card__header">
+                  <div>
+                    <h6 class="mb-1 text-dark">{{ trip.company }}</h6>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="vehicle-badge">{{ trip.vehicleType }}</span>
+                      <small class="text-muted">
+                        {{ trip.fromCity }} → {{ trip.toCity }}
+                      </small>
                     </div>
                   </div>
-
-                  <!-- Content Column -->
-                  <div class="trip-card-content-col">
-                  <!-- Header -->
-                  <div class="trip-header">
-                    <div class="company-info">
-                      <div class="company-logo-placeholder">
-                        <i class="bx" :class="{
-                          'bx-bus': trip.vehicleTypeKey === 'bus' || !trip.vehicleTypeKey,
-                          'bx-train': trip.vehicleTypeKey === 'train',
-                          'bx-plane-alt': trip.vehicleTypeKey === 'plane'
-                        }"></i>
-                      </div>
-                      <div>
-                        <h4 class="company-name">{{ trip.company }}</h4>
-                        <div class="trip-badges">
-                          <span class="badge-rating">
-                            <i class="bx bxs-star"></i> {{ trip.rating }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="price-display">
-                      <span class="price-amount">{{ formatPrice(trip.displayPrice || trip.price) }}</span>
-                      <span class="price-unit">/khách</span>
-                    </div>
-                  </div>
-
-                  <!-- Timeline -->
-                  <div class="trip-timeline my-2">
-                    <div class="timeline-point text-start">
-                      <span class="time-large">{{ trip.departureTime || "--:--" }}</span>
-                      <span class="location-label">{{ trip.fromStation }}</span>
-                    </div>
-                    
-                    <div class="timeline-connector">
-                      <span class="duration-badge">{{ trip.duration || "—" }}</span>
-                      <div class="route-line"></div>
-                      <small class="text-muted mt-1">{{ trip.seatType }}</small>
-                    </div>
-
-                    <div class="timeline-point text-end">
-                      <span class="time-large">{{ trip.arrivalTime || "--:--" }}</span>
-                      <span class="location-label">{{ trip.toStation }}</span>
-                    </div>
-                  </div>
-                  
-                  <!-- Sub Info (Pickup/Dropoff) -->
-                  <div class="d-flex justify-content-between text-muted small mb-3 px-2">
-                     <span v-if="trip.pickupStationName">Đón: {{ trip.pickupStationName }}</span>
-                     <span v-if="trip.dropoffStationName" class="ms-auto">Trả: {{ trip.dropoffStationName }}</span>
-                  </div>
-
-                  <!-- Footer -->
-                  <div class="card-footer-actions mt-auto">
-                    <div class="trip-amenities">
-                      <span class="amenity-item" v-if="trip.freeCancel">
-                        <i class="bx bx-check-shield"></i> Hủy miễn phí
-                      </span>
-                      <span class="amenity-item">
-                        <i class="bx bx-chair"></i> {{ trip.availableSeats }} ghế trống
-                      </span>
-                    </div>
-                    <button
-                      @click="selectTrip(trip)"
-                      class="btn-select"
-                      :disabled="isLoadingSeats"
-                    >
-                      {{ isLoadingSeats ? "Đang tải..." : "Chọn ghế" }}
-                    </button>
-                  </div>
+                  <div class="trip-card__rating">
+                    <i class="bx bxs-star text-warning"></i>
+                    <span>{{ trip.rating }}</span>
                   </div>
                 </div>
-              </transition-group>
+
+                <div class="trip-card__body">
+                  <div class="trip-schedule">
+                    <div class="schedule-point">
+                      <span class="time">{{ trip.departureTime || "--:--" }}</span>
+                      <small class="text-muted" v-if="trip.departureLabel">
+                        {{ trip.departureLabel }}
+                      </small>
+                      <span class="station">{{ trip.fromStation }}</span>
+                      <small
+                        class="text-muted"
+                        v-if="trip.pickupStationName"
+                      >
+                        Điểm đón: {{ trip.pickupStationName }}
+                      </small>
+                    </div>
+
+                    <div class="schedule-divider">
+                      <span class="duration">{{ trip.duration || "—" }}</span>
+                      <div class="divider-line">
+                        <span class="dot"></span>
+                        <span class="line"></span>
+                        <span class="dot"></span>
+                      </div>
+                    </div>
+
+                    <div class="schedule-point text-end">
+                      <span class="time">{{ trip.arrivalTime || "--:--" }}</span>
+                      <small
+                        class="text-muted"
+                        v-if="trip.departureLabel"
+                      >
+                        {{ trip.departureLabel }}
+                      </small>
+                      <span class="station">{{ trip.toStation }}</span>
+                      <small
+                        class="text-muted"
+                        v-if="trip.dropoffStationName"
+                      >
+                        Điểm trả: {{ trip.dropoffStationName }}
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="trip-card__meta">
+                    <div class="meta-badges">
+                      <span class="meta-badge">{{ trip.seatType }}</span>
+                      <span
+                        v-if="trip.availableSeats > 0"
+                        class="meta-badge available"
+                      >
+                        {{ trip.availableSeats }} ghế trống
+                      </span>
+                      <span
+                        v-if="trip.freeCancel"
+                        class="meta-badge success"
+                        >Hủy miễn phí</span
+                      >
+                    </div>
+
+                    <div class="trip-card__price">
+                      <div class="price">
+                        {{ formatPrice(trip.displayPrice || trip.price) }}
+                      </div>
+                      <small class="text-muted d-block mb-2">/ người</small>
+                      <button
+                        @click="selectTrip(trip)"
+                        class="btn-select"
+                        :disabled="isLoadingSeats"
+                      >
+                        Chọn chỗ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -848,14 +891,6 @@ import api from "../../../services/api";
 import FeaturesSection from "./FeaturesSection.vue";
 import GioiThieu from "./GioiThieu.vue";
 import ReviewsSection from "./ReviewsSection.vue";
-import PopularRoutes from "./PopularRoutes.vue";
-import './TrangChuPremium.css';
-
-// Import vehicle images
-import imgBus1 from '../../../assets/images/hero/bus-travel-1.png';
-import imgBus2 from '../../../assets/images/hero/bus-travel-2.png';
-import imgTrain from '../../../assets/images/hero/train-travel.png';
-import imgPlane from '../../../assets/images/hero/plane-travel.png';
 
 const DEFAULT_CITY_FALLBACKS = [
   { id: 1, name: "Hà Nội" },
@@ -886,12 +921,10 @@ export default {
     GioiThieu,
     FeaturesSection,
     ReviewsSection,
-    PopularRoutes,
   },
   data() {
     return {
       cities: [],
-      searchType: 'one-way', // Added for new search form UI
       cityIdMap: {},
       companies: [],
       pickupStations: [],
@@ -952,29 +985,6 @@ export default {
       portalNotices: [],
       isLoadingNotices: false,
       noticesError: "",
-      currentSlide: 0,
-      heroSlides: [
-        {
-          image: imgBus1,
-          title: "Khám Phá Việt Nam",
-          subtitle: "Cùng DKMN - Đặt vé xe, tàu, máy bay dễ dàng"
-        },
-        {
-          image: imgPlane,
-          title: "Bay Cùng DKMN",
-          subtitle: "Săn vé máy bay giá rẻ ngay hôm nay"
-        },
-        {
-          image: imgBus2,
-          title: "Thoải Mái & An Toàn",
-          subtitle: "Xe giường nằm VIP cao cấp"
-        },
-        {
-          image: imgTrain,
-          title: "Hành Trình Đáng Nhớ",
-          subtitle: "Khám phá mọi miền đất nước bằng đường sắt"
-        }
-      ],
     };
   },
   computed: {
@@ -2510,31 +2520,6 @@ export default {
           return "Xe khách";
       }
     },
-    startCarousel() {
-      this.carouselInterval = setInterval(() => {
-        this.currentSlide = (this.currentSlide + 1) % this.heroSlides.length;
-      }, 5000);
-    },
-    stopCarousel() {
-      if (this.carouselInterval) {
-        clearInterval(this.carouselInterval);
-      }
-    },
-    swapLocations() {
-      const temp = this.searchForm.from;
-      this.searchForm.from = this.searchForm.to;
-      this.searchForm.to = temp;
-      
-      // Clear stations when swapping as they might not be valid for new locations
-      this.searchForm.pickupStation = "";
-      this.searchForm.dropoffStation = "";
-    },
-    getTripImage(trip) {
-       if (trip.vehicleTypeKey === 'train') return imgTrain;
-       if (trip.vehicleTypeKey === 'plane') return imgPlane;
-       // Bus fallback: alternate based on ID to act natural
-       return (trip.id % 2 === 0) ? imgBus1 : imgBus2;
-    },
     checkAuthStatus() {
       const token = localStorage.getItem("token");
       const userInfo = localStorage.getItem("userInfo");
@@ -2542,10 +2527,9 @@ export default {
       if (token && userInfo) {
         try {
           this.userInfo = JSON.parse(userInfo);
-          this.isLoggedIn = true;
-        } catch (e) {
-          console.error("Lỗi parsing userInfo:", e);
-          this.isLoggedIn = false;
+        } catch (error) {
+          console.error("Error parsing user info:", error);
+          this.logout();
         }
       }
     },
@@ -2560,7 +2544,6 @@ export default {
   mounted() {
     this.checkAuthStatus();
     this.bootstrapData();
-    this.startCarousel();
     
     // Hiển thị toast chào mừng
     setTimeout(() => {
@@ -2571,9 +2554,6 @@ export default {
         this.$toast.info('Chào mừng đến với hệ thống đặt vé DKMN! 🎫');
       }
     }, 500);
-  },
-  beforeUnmount() {
-    this.stopCarousel();
   },
 };
 </script>
@@ -2593,125 +2573,446 @@ export default {
   min-height: 100vh;
 }
 
-/* Hero Modern with Carousel */
-.hero-modern {
+/* Hero area */
+.hero {
   position: relative;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+  padding: clamp(4rem, 8vw, 7rem) clamp(1.25rem, 5vw, 4rem) 5rem;
   overflow: hidden;
-  padding-top: 80px;
+  color: #fff;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  isolation: isolate;
 }
 
-.hero-carousel {
+.hero__overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  inset: 0;
+  background: radial-gradient(circle at 14% 18%, rgba(94, 234, 212, 0.22), transparent 44%),
+    radial-gradient(circle at 84% 10%, rgba(56, 189, 248, 0.22), transparent 40%),
+    linear-gradient(135deg, #041327, #061a32 52%, #04152e);
+  opacity: 0.96;
 }
 
-.carousel-slide {
+.hero__grid {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 1.5s ease-in-out;
-}
-
-.carousel-slide.active {
-  opacity: 1;
-}
-
-.carousel-bg-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  animation: kenBurns 20s ease-in-out infinite alternate;
-}
-
-@keyframes kenBurns {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.1); }
-}
-
-.slide-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(0, 70, 150, 0.4), rgba(0, 100, 200, 0.4));
+  inset: 10% 5%;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 86px 86px;
+  opacity: 0.25;
   z-index: 1;
 }
 
-.hero-content-wrapper {
+.hero__snow {
+  position: absolute;
+  inset: -6% 0 0 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.9), transparent 55%),
+    radial-gradient(2px 2px at 80px 120px, rgba(255, 255, 255, 0.85), transparent 55%),
+    radial-gradient(3px 3px at 140px 10px, rgba(255, 255, 255, 0.8), transparent 55%),
+    radial-gradient(2px 2px at 200px 160px, rgba(255, 255, 255, 0.9), transparent 55%);
+  background-size: 220px 240px, 260px 320px, 180px 220px, 240px 300px;
+  background-repeat: repeat;
+  opacity: 0.75;
+  mix-blend-mode: screen;
+  animation: snowFall 22s linear infinite;
+}
+
+.hero__snow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 60px 40px, rgba(255, 255, 255, 0.8), transparent 55%),
+    radial-gradient(3px 3px at 160px 120px, rgba(255, 255, 255, 0.85), transparent 55%),
+    radial-gradient(2px 2px at 260px 90px, rgba(255, 255, 255, 0.8), transparent 55%),
+    radial-gradient(2px 2px at 320px 200px, rgba(255, 255, 255, 0.75), transparent 55%);
+  background-size: 280px 320px, 320px 360px, 240px 300px, 300px 360px;
+  background-repeat: repeat;
+  opacity: 0.85;
+  animation: snowFall 32s linear infinite reverse;
+}
+
+.blob {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.35;
+  animation: blobFloat 22s ease-in-out infinite;
+  z-index: 0;
+}
+
+.blob-1 {
+  top: -120px;
+  left: -40px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.7), rgba(37, 99, 235, 0.25));
+}
+
+.blob-2 {
+  bottom: -160px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.48), rgba(16, 185, 129, 0.22));
+  animation-delay: 4s;
+}
+
+.blob-3 {
+  top: 20%;
+  right: 30%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.36), rgba(56, 189, 248, 0.24));
+  animation-delay: 8s;
+}
+
+@keyframes blobFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(25px, -35px, 0) scale(1.05);
+  }
+  66% {
+    transform: translate3d(-30px, 40px, 0) scale(0.95);
+  }
+}
+
+@keyframes snowFall {
+  0% {
+    transform: translateY(-10%);
+  }
+  100% {
+    transform: translateY(18%);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+@keyframes ringSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes squareOrbit {
+  0% {
+    transform: translate3d(-15%, 6%, 0) rotate(0deg) scale(0.92);
+  }
+  25% {
+    transform: translate3d(20%, -12%, 0) rotate(8deg) scale(1.04);
+  }
+  50% {
+    transform: translate3d(45%, 16%, 0) rotate(14deg) scale(1);
+  }
+  75% {
+    transform: translate3d(12%, 24%, 0) rotate(6deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-15%, 6%, 0) rotate(0deg) scale(0.92);
+  }
+}
+
+@keyframes squareOrbitReverse {
+  0% {
+    transform: translate3d(18%, -12%, 0) rotate(0deg) scale(1.05);
+  }
+  20% {
+    transform: translate3d(-5%, 4%, 0) rotate(-6deg) scale(0.95);
+  }
+  55% {
+    transform: translate3d(-35%, -10%, 0) rotate(-12deg) scale(1.04);
+  }
+  80% {
+    transform: translate3d(-8%, 16%, 0) rotate(-4deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(18%, -12%, 0) rotate(0deg) scale(1.05);
+  }
+}
+
+@keyframes squareBob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(8deg) scale(0.96);
+  }
+  40% {
+    transform: translate3d(-18%, 12%, 0) rotate(-6deg) scale(1.04);
+  }
+  70% {
+    transform: translate3d(10%, -14%, 0) rotate(4deg) scale(1.08);
+  }
+}
+
+@keyframes planeFlight {
+  0% {
+    transform: translate(-52%, 35%) rotate(-12deg) scale(0.9);
+  }
+  20% {
+    transform: translate(-10%, 10%) rotate(4deg) scale(1.02);
+  }
+  45% {
+    transform: translate(28%, -10%) rotate(14deg) scale(1.08);
+  }
+  60% {
+    transform: translate(55%, -24%) rotate(6deg) scale(1);
+  }
+  80% {
+    transform: translate(12%, -4%) rotate(2deg) scale(1.06);
+  }
+  100% {
+    transform: translate(-52%, 35%) rotate(-12deg) scale(0.9);
+  }
+}
+
+@keyframes busMerge {
+  0% {
+    transform: translateX(-65%) scale(0.95);
+  }
+  46% {
+    transform: translateX(40%) scale(1);
+  }
+  60% {
+    transform: translateX(32%) scale(1.02);
+  }
+  100% {
+    transform: translateX(-65%) scale(0.95);
+  }
+}
+
+@keyframes trainMerge {
+  0% {
+    transform: translateX(65%) scale(0.95);
+  }
+  46% {
+    transform: translateX(-40%) scale(1);
+  }
+  60% {
+    transform: translateX(-32%) scale(1.02);
+  }
+  100% {
+    transform: translateX(65%) scale(0.95);
+  }
+}
+
+@keyframes waveMove {
+  from {
+    transform: translateX(-20%);
+  }
+  to {
+    transform: translateX(20%);
+  }
+}
+
+@keyframes shipWave {
+  0%,
+  100% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes particleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.hero__content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  margin-bottom: 3rem;
-  max-width: 800px;
-  padding: 0 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: min(1280px, 100%);
+}
+
+.hero__glass {
+  border-radius: 36px;
+  padding: clamp(1.75rem, 4vw, 3.2rem);
+  background: linear-gradient(145deg, rgba(7, 16, 34, 0.7), rgba(7, 26, 44, 0.78));
+  border: 1px solid rgba(99, 255, 255, 0.14);
+  box-shadow: 0 40px 120px rgba(6, 182, 212, 0.14), 0 24px 60px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+.hero__title {
+  font-size: clamp(2.4rem, 4.8vw, 4rem);
+  color: #e0f2fe;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.6rem;
+  line-height: 1.15;
+}
+
+.hero__title-highlight {
+  color: #8bf0ff;
+  background: linear-gradient(120deg, #7ce7ff, #bae6fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero__title-contrast {
+  display: inline-block;
+  padding: 0.12em 0.32em;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.14);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.32);
+}
+
+.hero__subtitle {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+}
+
+.hero__grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+}
+
+.hero__text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
 }
 
 .hero__badge {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  padding: 10px 24px;
-  border-radius: 50px;
-  color: white;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.pulse {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 0 rgba(74, 222, 128, 0.4);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-}
-
-.hero__title-highlight {
-  color: #fbbf24;
-  font-weight: 700;
+  gap: 0.6rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #a5f3fc;
   text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  font-size: 0.72rem;
+  box-shadow: 0 12px 40px rgba(14, 165, 233, 0.35);
 }
 
-.hero__subtitle {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+.hero__badge .pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6);
+  animation: pulseGlow 2s ease-out infinite;
 }
 
-/* Ensure Search Form has correct z-index */
-.hero__search {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
 }
+
+.hero-btn {
+  border-radius: 14px;
+  padding: 0.85rem 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-btn--primary {
+  background: linear-gradient(120deg, #0ea5e9, #22d3ee);
+  color: #0b172a;
+  box-shadow: 0 20px 45px rgba(34, 211, 238, 0.35);
+}
+
+.hero-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 60px rgba(34, 211, 238, 0.45);
+}
+
+.hero-btn--ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0f2fe;
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.hero-btn--ghost:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.75);
+}
+
+.hero__ticket-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(145deg, rgba(30, 41, 89, 0.9), rgba(27, 38, 79, 0.92));
+  border-radius: 18px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  box-shadow: 0 18px 45px rgba(12, 18, 44, 0.5);
+  max-width: 360px;
+}
+
+.hero__ticket-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+  display: grid;
+  place-items: center;
+  color: #0b1224;
+  font-size: 1.4rem;
+  box-shadow: 0 10px 30px rgba(34, 211, 238, 0.45);
+}
+
+.ticket-eyebrow {
+  color: #c7d2fe;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.ticket-route {
+  margin: 2px 0 4px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #eef2ff;
+}
+
+.ticket-meta {
+  margin: 0;
+  color: #c7d2fe;
+  opacity: 0.9;
+}
+
 .hero__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -3042,42 +3343,49 @@ export default {
 }
 
 .search-form {
-  background: #FFFFFF;
-  border-radius: 20px;
-  padding: clamp(1.5rem, 3vw, 2.5rem);
-  border: none;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  max-width: 1200px;
-  margin: 0 auto;
+  background: linear-gradient(135deg, rgba(5, 12, 28, 0.92), rgba(8, 24, 46, 0.86));
+  border-radius: 28px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 22px 60px rgba(14, 116, 144, 0.35);
 }
 
 .search-form .form-label {
-  color: #374151;
-  font-size: 13px;
-  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 .search-form .form-select,
 .search-form .form-control {
-  background: #FFFFFF;
-  border: 2px solid #E5E7EB;
-  border-radius: 10px;
-  color: #1F2937;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  color: #f8fafc;
   min-height: 48px;
-  padding: 12px 16px;
-  font-size: 15px;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-form .form-select:focus,
 .search-form .form-control:focus {
-  border-color: #0064D2;
-  box-shadow: 0 0 0 4px rgba(0, 100, 210, 0.1);
-  outline: none;
-  background: #FFFFFF;
+  border-color: rgba(59, 130, 246, 0.9);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  background: rgba(11, 18, 36, 0.92);
+}
+
+.search-btn {
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9, #22d3ee);
+  border: none;
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 15px 35px rgba(34, 211, 238, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-btn:hover:not(:disabled) {

@@ -15,23 +15,7 @@ class GheSeeder extends Seeder
 {
     public function run(): void
     {
-
-
-        // We can skip truncate if we assume migrate:fresh was run, 
-        // or keep it but handle errors gracefully.
-        // Since DatabaseSeeder disables FK checks, we might not need to do it here again,
-        // but for safety when running individually:
-        Schema::disableForeignKeyConstraints();
-        try {
-            DB::table('ghes')->truncate();
-        } catch (\Exception $e) {
-            try {
-                DB::table('ghes')->delete();
-            } catch (\Exception $e2) {
-                // ignore
-            }
-        }
-        Schema::enableForeignKeyConstraints();
+        // Data cleanup is handled by DatabaseSeeder
 
         $now = now();
 
@@ -63,15 +47,14 @@ class GheSeeder extends Seeder
                 'ngay_tao' => $now,
             ];
 
-            if (count($chunk) >= 100) {
-                DB::reconnect();
+            // Increase chunk size to 1000 for fewer DB calls
+            if (count($chunk) >= 1000) {
                 DB::table('ghes')->insert($chunk);
                 $chunk = [];
             }
         }
 
         if (!empty($chunk)) {
-            DB::reconnect();
             DB::table('ghes')->insert($chunk);
         }
     }
