@@ -39,15 +39,15 @@
                    v-for="notif in notifications" 
                    :key="notif.id" 
                    class="list-group-item d-flex align-items-start gap-2 p-3 border-bottom action-item"
-                   :class="{ 'bg-light': !notif.is_read }"
+                   :class="{ 'bg-light': !notif.read }"
                    @click="handleNotificationClick(notif)"
                  >
                     <div class="icon-box bg-blue-light text-primary rounded-circle p-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                        <i class='bx border-2' :class="getIcon(notif.type)"></i>
                     </div>
                     <div>
-                        <p class="mb-1 fw-semibold small text-dark" style="line-height:1.4;">{{ notif.content }}</p>
-                        <small class="text-muted" style="font-size: 0.75rem;">{{ formatTime(notif.created_at) }}</small>
+                        <p class="mb-1 fw-semibold small text-dark" style="line-height:1.4;">{{ notif.message }}</p>
+                        <small class="text-muted" style="font-size: 0.75rem;">{{ formatTime(notif.createdAt) }}</small>
                     </div>
                  </li>
               </ul>
@@ -187,7 +187,7 @@ export default {
         try {
             const { data } = await api.get('/dkmn/thong-bao');
             this.notifications = data.data || [];
-            this.unreadCount = this.notifications.filter(n => !n.is_read).length;
+            this.unreadCount = this.notifications.filter(n => !n.read).length;
         } catch (e) {
             console.error("Fetch notif error", e);
         }
@@ -195,14 +195,14 @@ export default {
     async markAllRead() {
         try {
             await api.post('/dkmn/thong-bao/mark-read');
-            this.notifications.forEach(n => n.is_read = true);
+            this.notifications.forEach(n => n.read = true);
             this.unreadCount = 0;
         } catch (e) {}
     },
     handleNotificationClick(notif) {
         // Mark as read locally first
-        if (!notif.is_read) {
-            notif.is_read = true;
+        if (!notif.read) {
+            notif.read = true;
             this.unreadCount = Math.max(0, this.unreadCount - 1);
             // Optional: call API to mark single read if needed
         }

@@ -41,40 +41,44 @@ export default {
     return {
       routes: [
         {
-          name: "Sài Gòn - Đà Lạt",
-          image: imgBus1,
-          price: 250000,
-          rating: 4.8,
-          type: "Xe Khách",
-          fromId: 32, // HCM
-          toId: 35 // Lam Dong (Example) - logic to handled by parent if needed
-        },
-        {
-          name: "Hà Nội - Sapa",
-          image: imgBus2,
-          price: 350000,
-          rating: 4.9,
-          type: "Xe Giường Nằm",
-          fromId: 1, // HN
-          toId: 10 // Lao Cai
-        },
-        {
-          name: "Đà Nẵng - Huế",
-          image: imgTrain,
-          price: 120000,
-          rating: 4.7,
-          type: "Tàu Hỏa",
-          fromId: 15, // DN
-          toId: 16 // Hue
-        },
-        {
-          name: "Sài Gòn - Nha Trang",
+          name: "TP. Hồ Chí Minh - Hà Nội",
           image: imgPlane,
-          price: 850000,
+          price: 1990,
           rating: 4.9,
           type: "Máy Bay",
-          fromId: 32, // HCM
-          toId: 28 // Khanh Hoa
+          vehicleTypeKey: "plane",
+          from: "TP. Hồ Chí Minh",
+          to: "Hà Nội"
+        },
+        {
+          name: "TP. Hồ Chí Minh - Đà Nẵng",
+          image: imgTrain,
+          price: 1500,
+          rating: 4.8,
+          type: "Tàu Hỏa",
+          vehicleTypeKey: "train",
+          from: "TP. Hồ Chí Minh",
+          to: "Đà Nẵng"
+        },
+        {
+          name: "TP. Hồ Chí Minh - Gia Lai",
+          image: imgBus1,
+          price: 1200,
+          rating: 4.7,
+          type: "Xe Khách",
+          vehicleTypeKey: "bus",
+          from: "TP. Hồ Chí Minh",
+          to: "Gia Lai"
+        },
+        {
+          name: "Hà Nội - Đà Nẵng",
+          image: imgBus2,
+          price: 1800,
+          rating: 4.9,
+          type: "Xe Giường Nằm",
+          vehicleTypeKey: "bus",
+          from: "Hà Nội",
+          to: "Đà Nẵng"
         }
       ]
     };

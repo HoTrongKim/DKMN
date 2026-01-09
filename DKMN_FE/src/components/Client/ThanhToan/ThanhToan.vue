@@ -139,14 +139,24 @@
               </div>
               <div class="card-body">
                 <ul class="list-group list-group-flush mb-3">
-                  <li class="list-group-item">
+                  <li class="list-group-item" v-if="roundTripData">
+                     <div class="alert alert-info py-2 mb-2 small">
+                        <strong>Chiều đi:</strong> {{ roundTripData.outbound.trip.fromCity }} → {{ roundTripData.outbound.trip.toCity }}<br>
+                        {{ formatRouteDate(roundTripData.outbound.trip.departureDate || roundTripData.outbound.trip.ngay_di) }} · {{ roundTripData.outbound.seats.length }} ghế
+                     </div>
+                     <div class="alert alert-success py-2 mb-0 small">
+                        <strong>Chiều về (Hiện tại):</strong> {{ fromCity }} → {{ toCity }}<br>
+                         {{ formatRouteDate(travelDate) }}
+                     </div>
+                  </li>
+                  <li class="list-group-item" v-else>
                     <div class="d-flex justify-content-between">
                       <span class="fw-semibold">Hành trình</span>
                       <span class="text-muted">{{ fromCity }} → {{ toCity }}</span>
                     </div>
                     <div class="d-flex justify-content-between mt-1">
                       <span class="fw-semibold">Ngày đi</span>
-                      <span class="text-muted">{{ travelDate }}</span>
+                      <span class="text-muted">{{ formatRouteDate(travelDate) }}</span>
                     </div>
                   </li>
                   <li class="list-group-item">
@@ -456,6 +466,7 @@ const TICKET_HOLD_MINUTES = 10;
         holdDeadline: null,
         holdRemainingSeconds: 0,
         holdTimer: null,
+        roundTripData: null,
       };
     },
     mounted() {
@@ -656,8 +667,35 @@ const TICKET_HOLD_MINUTES = 10;
                 .filter(Boolean)
             : [];
         }
-        this.subtotal = Number(q.total) || 0;
-        this.total = this.subtotal;
+
+        
+        // Round Trip Check
+        try {
+            const pending = JSON.parse(localStorage.getItem('pending_round_trip'));
+            const inboundId = Number(q.tripId);
+            if (pending && pending.inbound && pending.inbound.trip && (Number(pending.inbound.trip.id) === inboundId || !inboundId)) {
+                this.roundTripData = pending;
+                const outPrice = Number(pending.outbound.trip.price || pending.outbound.trip.displayPrice || 0);
+                const outSeatsCount = (pending.outbound.seats || []).length;
+                this.subtotal = Number(q.total) || 0;
+                this.total = this.subtotal + (outPrice * outSeatsCount);
+                 this.$toast?.info('Bạn đang thanh toán cho 2 chiều: Đi & Về 🔄');
+            } else {
+                 this.subtotal = Number(q.total) || 0;
+                 this.total = this.subtotal;
+            }
+        } catch (e) {
+             this.subtotal = Number(q.total) || 0;
+             this.total = this.subtotal;
+        }
+      },
+      formatRouteDate(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        if (!Number.isNaN(date.getTime())) {
+             return date.toLocaleDateString("vi-VN");
+        }
+        return value;
       },
       normalizeSeatLabelKey(value) {
         if (value === undefined || value === null) return "";
@@ -885,6 +923,52 @@ const TICKET_HOLD_MINUTES = 10;
           );
           await new Promise((r) => setTimeout(r, 500));
 
+          // ROUND TRIP PAYMENT LOGIC
+          if (this.roundTripData) {
+             try {
+                 // 1. Create Outbound
+                 const outData = this.roundTripData.outbound;
+                 const currentPayload = this.bookingPayload();
+                 
+                 const outPayload = {
+                     tripId: outData.trip.id,
+                     seatIds: outData.seats,
+                     seatLabels: [], 
+                     total: Number(outData.trip.price || 0) * outData.seats.length,
+                     passengers: Number(this.passengers || 1), 
+                     from: outData.trip.fromCity || "", 
+                     to: outData.trip.toCity || "",
+                     pickupStation: outData.pickupStation || "",
+                     dropoffStation: outData.dropoffStation || "",
+                     company: outData.trip.company || "",
+                     gateway: this.selectedGateway,
+                     customerName: currentPayload.customerName,
+                     customerPhone: currentPayload.customerPhone,
+                     customerEmail: currentPayload.customerEmail
+                 };
+                 
+                 this.setStatus("creating", "Đang xử lý khứ hồi", "Đang tạo đơn hàng chiều đi...", 40, true);
+                 await api.post(ORDER_ENDPOINT, outPayload);
+                 
+                 // 2. Create Inbound
+                 this.setStatus("creating", "Đang xử lý khứ hồi", "Đang tạo đơn hàng chiều về...", 80, true);
+                 await api.post(ORDER_ENDPOINT, currentPayload);
+                 
+                 // 3. Success
+                 localStorage.removeItem('pending_round_trip');
+                 this.$toast.success("🎉 Đã đặt thành công 2 vé khứ hồi! Vui lòng thanh toán từng đơn hàng.");
+                 this.$router.push("/client-ve-da-dat");
+                 return;
+             } catch (error) {
+                 const msg = error.response?.data?.message || "Lỗi khi tạo đơn hàng khứ hồi.";
+                 this.setStatus("failed", "Lỗi đặt vé", msg, 0, false);
+                 this.$toast?.error?.(msg);
+                 this.isBooking = false;
+                 return;
+             }
+          }
+
+          // NORMAL FLOW
           try {
             const payload = this.bookingPayload();
             const { data } = await api.post(ORDER_ENDPOINT, payload);

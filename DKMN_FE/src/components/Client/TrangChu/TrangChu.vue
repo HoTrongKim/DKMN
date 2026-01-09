@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="container-fluid">
+  <div>
     <!-- Hero Section with Carousel -->
     <section class="hero-modern">
       <!-- Carousel Background -->
@@ -80,7 +80,7 @@
             </div>
 
             <!-- Main Search Inputs -->
-            <div class="search-grid">
+            <div class="search-grid" :class="{ 'is-round-trip': searchType === 'round-trip' }">
               <!-- Vehicle Type -->
               <div class="input-group-modern">
                 <label class="input-label">Phương tiện</label>
@@ -141,6 +141,20 @@
                     v-model="searchForm.departureDate"
                     type="date"
                     class="form-control-modern"
+                  />
+                </div>
+              </div>
+
+              <!-- Return Date -->
+              <div class="input-group-modern" v-if="searchType === 'round-trip'">
+                <label class="input-label">Ngày về</label>
+                <div class="input-wrapper">
+                  <i class="bx bx-calendar input-icon"></i>
+                  <input
+                    v-model="searchForm.returnDate"
+                    type="date"
+                    class="form-control-modern"
+                    :min="searchForm.departureDate"
                   />
                 </div>
               </div>
@@ -553,7 +567,7 @@
       :disabled="seatModal.seatsSelected.length === 0"
       @click="confirmSeats"
     >
-      Tiếp tục thanh toán
+      {{ bookingStep === 'selecting-outbound' ? 'Chọn vé chiều về' : 'Tiếp tục thanh toán' }}
     </button>
   </div>
 </div>
@@ -567,11 +581,26 @@
     
     <!-- Popular Routes Section -->
     <div v-if="!showResults" id="popular-routes">
-      <PopularRoutes />
+      <PopularRoutes @select-route="handleSelectRoute" />
     </div>
 
     <!-- Search Results Section -->
     <section v-if="showResults" class="results-section py-5">
+      <div v-if="bookingStep === 'selecting-return'" class="container mb-4">
+          <div class="alert alert-primary d-flex align-items-center shadow-sm" style="border-left: 5px solid #0d6efd;">
+             <i class='bx bx-calendar-check fs-2 me-3'></i>
+             <div>
+                <h5 class="alert-heading m-0 mb-1 fw-bold">Bước 2: Chọn chuyến về</h5>
+                <p class="m-0 small opacity-75">
+                  Bạn đang tìm vé: <strong>{{ searchForm.from }}</strong> đi <strong>{{ searchForm.to }}</strong> 
+                  <span v-if="searchForm.departureDate"> - Ngày {{ formatRouteDate(searchForm.departureDate) }}</span>
+                </p>
+             </div>
+             <div class="ms-auto d-none d-md-block">
+               <span class="badge bg-primary">Khứ hồi</span>
+            </div>
+         </div>
+      </div>
       <div class="container">
         <div class="row">
           <!-- Filters Sidebar -->
@@ -918,6 +947,7 @@ export default {
         from: "",
         to: "",
         departureDate: "",
+        returnDate: "",
         passengers: "1",
         pickupStation: "",
         dropoffStation: "",
@@ -942,6 +972,8 @@ export default {
       trips: [],
       userInfo: {},
       heroSelectedTrip: null,
+      bookingStep: 'default',
+      tempOutboundData: null,
       seatModal: {
         visible: false,
         trip: null,
@@ -1678,8 +1710,29 @@ export default {
     async searchTrips() {
       if (!this.isSearchValid || this.isLoadingTrips) return;
 
-      this.isLoadingTrips = true;
       this.searchError = "";
+
+      // Round Trip Logic Initialization
+      if (this.searchType === 'round-trip') {
+          if (!this.searchForm.returnDate && this.bookingStep !== 'selecting-return') {
+              this.searchError = "Vui lòng chọn ngày về cho vé khứ hồi";
+              this.$toast.error(this.searchError);
+              return;
+          }
+           if (this.bookingStep === 'default' || this.bookingStep === 'selecting-return') {
+              // Only reset to outbound if not already in flow? 
+              // Actually if user clicks Search manually, they might want to restart?
+              // If manually clicking search while in 'selecting-return', assume restart or re-filter?
+              // Let's assume restart if inputs changed significantly, but for now force outbound start if 'default'.
+              if (this.bookingStep === 'default') {
+                  this.bookingStep = 'selecting-outbound';
+              }
+          }
+      } else {
+          this.bookingStep = 'default';
+      }
+
+      this.isLoadingTrips = true;
       try {
         const fromLabel = this.searchForm.from || "";
         const toLabel = this.searchForm.to || "";
@@ -2392,6 +2445,55 @@ export default {
         return;
       }
 
+      // ROUND TRIP LOGIC: PHASE 1 (Select Outbound)
+      if (this.searchType === 'round-trip' && this.bookingStep === 'selecting-outbound') {
+          this.tempOutboundData = {
+              trip: this.seatModal.trip,
+              seats: [...this.seatModal.seatsSelected],
+              pickupStation: this.searchForm.pickupStation,
+              dropoffStation: this.searchForm.dropoffStation
+          };
+          
+          this.cancelSeatSelection();
+          
+          // Prepare for Inbound Search
+          this.bookingStep = 'selecting-return';
+          
+          // Swap Locations
+          const oldFrom = this.searchForm.from;
+          const oldTo = this.searchForm.to;
+          this.searchForm.from = oldTo;
+          this.searchForm.to = oldFrom;
+          
+          // Set Date to Return Date
+          this.$toast.info("Đang tìm chuyến về...");
+          this.searchForm.departureDate = this.searchForm.returnDate; // Trigger reactive search? No, explicitly call searchTrips
+          
+          this.searchTrips();
+          
+          // Toast and Scroll
+          this.$toast.success("Đã chọn chiều đi. Vui lòng chọn chuyến về.");
+           this.$nextTick(() => {
+             window.scrollTo({ top: 0, behavior: 'smooth' });
+           });
+          return;
+      }
+
+      // ROUND TRIP LOGIC: PHASE 2 (Select Inbound / Finalize)
+      if (this.bookingStep === 'selecting-return' && this.tempOutboundData) {
+          localStorage.setItem('pending_round_trip', JSON.stringify({
+              outbound: this.tempOutboundData,
+              inbound: {
+                  trip: this.seatModal.trip,
+                  seats: [...this.seatModal.seatsSelected],
+                  pickupStation: this.searchForm.pickupStation,
+                  dropoffStation: this.searchForm.dropoffStation
+              }
+          }));
+          // Continue to generic payment flow (which handles singular trip)
+          // Ideally backend/payment page reads `pending_round_trip` from localStorage
+      }
+
       this.$toast.success(`Đang chuyển đến trang thanh toán với ${selectedCount} ghế đã chọn...`);
       const trip = this.seatModal.trip || {};
       const price = Number(trip.price || trip.displayPrice || 0);
@@ -2532,8 +2634,15 @@ export default {
     getTripImage(trip) {
        if (trip.vehicleTypeKey === 'train') return imgTrain;
        if (trip.vehicleTypeKey === 'plane') return imgPlane;
-       // Bus fallback: alternate based on ID to act natural
        return (trip.id % 2 === 0) ? imgBus1 : imgBus2;
+    },
+    handleSelectRoute(route) {
+       this.searchForm.vehicleType = route.vehicleTypeKey;
+       this.searchForm.from = route.from;
+       this.searchForm.to = route.to;
+       
+       // Scroll to search form (top)
+       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     checkAuthStatus() {
       const token = localStorage.getItem("token");
